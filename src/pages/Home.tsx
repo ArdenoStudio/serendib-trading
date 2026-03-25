@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion, useScroll, useTransform, cubicBezier } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Users, Trophy } from 'lucide-react';
+import { Shield, Users, Trophy, Globe, Gauge, CreditCard, FileCheck } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import HeroSearch from '../components/HeroSearch';
@@ -237,6 +237,124 @@ export default function Home() {
               </span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* FEATURED ARRIVALS CAROUSEL */}
+      <div className="w-full max-w-[1200px] mx-auto mt-24 px-4 pb-20 z-10 relative">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-wide">
+            Featured <span className="text-[#D4AF37]">Arrivals</span>
+          </h2>
+          <button onClick={() => navigate('/inventory')} className="text-sm text-gray-400 hover:text-white transition-colors uppercase tracking-widest font-semibold flex items-center gap-2">
+            View Inventory <span className="text-[#D4AF37]">&rarr;</span>
+          </button>
+        </div>
+        
+        {/* Horizontal Scroll Container */}
+        <div className="flex overflow-x-auto gap-6 pb-8 snap-x scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          {[
+            { id: 1, make: 'Land Rover', model: 'Defender 110 X', year: 2023, price: 'Rs. 95,000,000', mileage: '5,000 km', fuel: 'PHEV', image: '/featured/defender.jpg' },
+            { id: 2, make: 'Mercedes-Benz', model: 'G63 AMG', year: 2022, price: 'Rs. 145,000,000', mileage: '12,000 km', fuel: 'Petrol', image: '/featured/g63.jpg' },
+            { id: 3, make: 'Toyota', model: 'Land Cruiser LC300', year: 2024, price: 'Rs. 110,000,000', mileage: '0 km', fuel: 'Diesel', image: '/featured/lc300.jpg' },
+            { id: 4, make: 'BMW', model: '740i M Sport', year: 2023, price: 'Rs. 85,000,000', mileage: '8,000 km', fuel: 'Hybrid', image: '/featured/bmw7.jpg' }
+          ].map((car) => (
+            <div 
+              key={car.id}
+              className="min-w-[85vw] md:min-w-[360px] flex-shrink-0 snap-center group bg-white/[0.02] backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden hover:bg-white/[0.04] hover:border-[#D4AF37]/30 transition-all duration-500 cursor-pointer"
+              onClick={() => navigate(`/car/${car.id}`)}
+            >
+              {/* Image Container with Hover Zoom */}
+              <div className="w-full h-56 overflow-hidden relative">
+                <div className="absolute top-3 left-3 z-10 bg-[#111111]/80 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  {car.year}
+                </div>
+                <img 
+                  src={car.image} 
+                  alt={`${car.make} ${car.model}`} 
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                />
+                {/* Gradient Overlay for seamless blend */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-transparent opacity-80"></div>
+              </div>
+              
+              {/* Card Content */}
+              <div className="p-6 relative">
+                <h3 className="text-xl font-bold text-white mb-1 group-hover:text-[#D4AF37] transition-colors">
+                  {car.make} {car.model}
+                </h3>
+                
+                {/* Specs Row */}
+                <div className="flex items-center gap-4 text-sm text-gray-400 mb-6 mt-3">
+                  <span className="flex items-center gap-1">
+                    {/* Simple SVG icon for Mileage */}
+                    <svg className="w-4 h-4 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    {car.mileage}
+                  </span>
+                  <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
+                  <span>{car.fuel}</span>
+                </div>
+                
+                {/* Price and Action Row */}
+                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                  <span className="text-lg font-extrabold text-[#D4AF37] tracking-tight">{car.price}</span>
+                  <span className="text-sm font-semibold text-white uppercase tracking-wider opacity-0 transform translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                    View &rarr;
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* WHY CHOOSE US - TRUST PILLARS */}
+      <div className="w-full max-w-[1200px] mx-auto mt-24 md:mt-32 px-4 pb-24 z-10 relative">
+        <div className="flex flex-col items-center mb-16 text-center">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-3xl md:text-4xl font-extrabold text-white tracking-wide mb-4"
+          >
+            Why Choose <span className="text-[#D4AF37]">Serendib</span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-gray-400 max-w-[600px] text-sm md:text-base font-light"
+          >
+            We deliver uncompromising quality, transparent vehicle histories, and a seamless buying experience from global selection to your driveway.
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { title: "Direct Global Imports", desc: "Sourced strictly from trusted, certified partners in the UK & Japan.", icon: Globe },
+            { title: "100% Verified Mileage", desc: "Guaranteed authentic mileage with full documented international history.", icon: Gauge },
+            { title: "Premium Finance", desc: "Exclusive leasing and flexible financing packages tailored to you.", icon: CreditCard },
+            { title: "Hassle-Free RMV", desc: "We professionally handle all clearance, registration, and documentation.", icon: FileCheck },
+          ].map((feature, idx) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: idx * 0.15 }}
+                className="group flex flex-col items-center text-center p-8 bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-2xl hover:bg-white/[0.05] hover:border-[#D4AF37]/30 transition-all duration-500 hover:-translate-y-2"
+              >
+                <div className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-[#D4AF37]/5 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_0_25px_rgba(212,175,55,0.25)] transition-all duration-500">
+                  <Icon className="w-7 h-7 text-gray-400 group-hover:text-[#D4AF37] transition-colors duration-500" />
+                </div>
+                <h3 className="text-white font-bold text-lg mb-3 tracking-wide">{feature.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
 
