@@ -20,7 +20,7 @@ export default function BrandLogoStrip() {
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
         <h3 className="text-center text-[13px] tracking-widest uppercase font-bold text-[#A1A1AA] mb-10">Browse by Make</h3>
-        <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center justify-center gap-6 md:gap-10">
           {brands.map((brand, i) => (
             <motion.div
               key={i}

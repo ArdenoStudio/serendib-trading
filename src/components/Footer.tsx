@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import ArdenoProductionCredit from './ArdenoProductionCredit';
 
 export default function Footer() {
   return (
@@ -10,7 +11,7 @@ export default function Footer() {
       transition={{ duration: 1 }}
       className="bg-[#0A0A0A] border-t border-white/10 pt-20 pb-8 text-gray-400"
     >
-      <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
         
         {/* 4-Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
@@ -100,7 +101,11 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Production Credit */}
+        <ArdenoProductionCredit color="#D4AF37" />
+
       </div>
     </motion.footer>
   );
 }
+

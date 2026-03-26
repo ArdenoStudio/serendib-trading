@@ -29,19 +29,38 @@ export default function LoanCalculator() {
         <div className="p-10 md:p-14 space-y-12">
           <div>
             <label className="block text-[13px] tracking-widest uppercase mb-4 font-bold" style={{ color: '#D1D5DB' }}>Vehicle Price</label>
-            <input type="range" min="1000000" max="50000000" step="500000" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="w-full h-2 rounded-full appearance-none cursor-pointer" style={{ backgroundColor: '#333333', accentColor: '#D4AF37' }} />
-            <div className="mt-4 text-[28px] font-extrabold" style={{ color: '#D4AF37' }}>{fmt(price)}</div>
+            <input 
+              type="range" 
+              min="1000000" 
+              max="100000000" 
+              step="1000000" 
+              value={price} 
+              onChange={(e) => setPrice(Number(e.target.value))} 
+              className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#D4AF37]" 
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} 
+            />
+            <div className="mt-4 text-[32px] font-black" style={{ color: '#D4AF37' }}>{fmt(price)}</div>
           </div>
           <div>
             <label className="block text-[13px] tracking-widest uppercase mb-4 font-bold" style={{ color: '#D1D5DB' }}>Down Payment</label>
-            <input type="range" min="10" max="80" step="5" value={downPayment} onChange={(e) => setDownPayment(Number(e.target.value))} className="w-full h-2 rounded-full appearance-none cursor-pointer" style={{ backgroundColor: '#333333', accentColor: '#D4AF37' }} />
+            <input 
+              type="range" 
+              min="10" 
+              max="80" 
+              step="5" 
+              value={downPayment} 
+              onChange={(e) => setDownPayment(Number(e.target.value))} 
+              className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#D4AF37]" 
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} 
+            />
             <div className="mt-4 flex justify-between items-end">
-              <span className="text-[28px] font-extrabold" style={{ color: '#D4AF37' }}>{downPayment}%</span>
-              <span className="text-[16px] font-bold" style={{ color: '#A1A1AA' }}>{fmt(price * (downPayment / 100))}</span>
+              <span className="text-[28px] font-black" style={{ color: '#D4AF37' }}>{downPayment}%</span>
+              <span className="text-[14px] font-bold text-gray-500">{fmt(price * (downPayment / 100))}</span>
             </div>
           </div>
           <div>
-            <label className="block text-[13px] tracking-widest uppercase mb-4 font-bold" style={{ color: '#D1D5DB' }}>Loan Term (Months)</label>
+            <label className="block text-[13px] tracking-widest uppercase mb-4 font-bold" style={{ color: '#D1D5DB' }}>Repayment Period (Months)</label>
+
             <div className="flex flex-wrap gap-3">
               {[12, 24, 36, 48, 60].map((t) => (
                 <button

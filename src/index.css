@@ -15,11 +15,26 @@
 
 @layer base {
   html {
-    scrollbar-color: #D4AF37 #000000;
     scrollbar-width: thin;
-    background-color: #000000;
-    color: #FFFFFF;
+    scrollbar-color: #D4AF37 #000000;
+    scroll-behavior: smooth;
   }
+
+  /* Chrome/Safari Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #CCA429;
+  }
+
 
   body {
     @apply font-sans antialiased;

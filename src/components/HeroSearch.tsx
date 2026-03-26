@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
+import { Car } from '../data/types';
+import carsData from '../data/cars.json';
 
 export default function HeroSearch() {
   const [condition, setCondition] = useState<'all' | 'New' | 'Registered' | 'Reconditioned'>('all');
@@ -9,7 +12,39 @@ export default function HeroSearch() {
   const [model, setModel] = useState('');
   const [price, setPrice] = useState('');
   const [bodyType, setBodyType] = useState('');
+  const [cars, setCars] = useState<Car[]>(carsData);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchLiveVehicles = async () => {
+      const { data, error } = await supabase.from('cars').select('*');
+      if (!error && data) {
+        setCars(data);
+      }
+    };
+    fetchLiveVehicles();
+  }, []);
+
+  // Dynamically get unique values from live cars state (Available only)
+  const options = useMemo(() => {
+    const availableCars = (cars.length > 0 ? cars : carsData as Car[]).filter(car => !car.is_sold);
+
+    const filteredByCondition = condition === 'all' 
+      ? availableCars 
+      : availableCars.filter(car => car.condition === condition);
+
+    const makes = Array.from(new Set(filteredByCondition.map(car => car.make))).sort();
+    
+    const models = Array.from(new Set(
+      filteredByCondition
+        .filter(car => !make || car.make === make)
+        .map(car => car.model)
+    )).sort();
+
+    const bodyTypes = Array.from(new Set(filteredByCondition.map(car => car.bodyType))).sort();
+
+    return { makes, models, bodyTypes };
+  }, [condition, make]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +58,7 @@ export default function HeroSearch() {
   };
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '16px 24px',
+    padding: window.innerWidth < 640 ? '12px 14px' : '16px 24px',
     fontSize: '14px',
     fontWeight: isActive ? 700 : 500,
     cursor: 'pointer',
@@ -36,7 +71,7 @@ export default function HeroSearch() {
   });
 
   const selectStyle: React.CSSProperties = {
-    padding: '16px 30px 16px 20px', // Added a bit more right padding so text doesn't hit the arrow
+    padding: '16px 30px 16px 20px',
     backgroundColor: '#1A1A1A',
     border: '1px solid rgba(255,255,255,0.2)',
     color: '#FFFFFF',
@@ -58,7 +93,11 @@ export default function HeroSearch() {
           <button
             key={cond}
             type="button"
-            onClick={() => setCondition(cond)}
+            onClick={() => {
+              setCondition(cond);
+              setMake('');
+              setModel('');
+            }}
             style={tabStyle(condition === cond)}
             className="whitespace-nowrap flex-1 hover:bg-white/10"
           >
@@ -73,19 +112,17 @@ export default function HeroSearch() {
         <div className="relative w-full min-w-0">
           <select
             value={make}
-            onChange={(e) => setMake(e.target.value)}
+            onChange={(e) => {
+              setMake(e.target.value);
+              setModel('');
+            }}
             className="focus:outline-none focus:ring-2 focus:ring-[#D4AF37] w-full min-w-0 truncate"
             style={selectStyle}
           >
             <option value="" className={optionClass}>All Makes</option>
-            <option value="Toyota" className={optionClass}>Toyota</option>
-            <option value="Honda" className={optionClass}>Honda</option>
-            <option value="Suzuki" className={optionClass}>Suzuki</option>
-            <option value="Nissan" className={optionClass}>Nissan</option>
-            <option value="Mitsubishi" className={optionClass}>Mitsubishi</option>
-            <option value="Hyundai" className={optionClass}>Hyundai</option>
-            <option value="Mercedes" className={optionClass}>Mercedes</option>
-            <option value="BMW" className={optionClass}>BMW</option>
+            {options.makes.map(m => (
+              <option key={m} value={m} className={optionClass}>{m}</option>
+            ))}
           </select>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
             ▼
@@ -101,11 +138,9 @@ export default function HeroSearch() {
             style={selectStyle}
           >
             <option value="" className={optionClass}>All Models</option>
-            <option value="Prado" className={optionClass}>Prado</option>
-            <option value="Axio" className={optionClass}>Axio</option>
-            <option value="Vezel" className={optionClass}>Vezel</option>
-            <option value="Civic" className={optionClass}>Civic</option>
-            <option value="Wagon R" className={optionClass}>Wagon R</option>
+            {options.models.map(m => (
+              <option key={m} value={m} className={optionClass}>{m}</option>
+            ))}
           </select>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
             ▼
@@ -125,6 +160,7 @@ export default function HeroSearch() {
             <option value="10000000" className={optionClass}>10M LKR</option>
             <option value="20000000" className={optionClass}>20M LKR</option>
             <option value="50000000" className={optionClass}>50M LKR</option>
+            <option value="100000000" className={optionClass}>100M LKR</option>
           </select>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
             ▼
@@ -140,10 +176,9 @@ export default function HeroSearch() {
             style={selectStyle}
           >
             <option value="" className={optionClass}>Body Type</option>
-            <option value="Sedan" className={optionClass}>Sedan</option>
-            <option value="SUV" className={optionClass}>SUV</option>
-            <option value="Hatchback" className={optionClass}>Hatchback</option>
-            <option value="Van" className={optionClass}>Van</option>
+            {options.bodyTypes.map(bt => (
+              <option key={bt} value={bt} className={optionClass}>{bt}</option>
+            ))}
           </select>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
             ▼

@@ -4,10 +4,10 @@ export default function WhatsAppFloat() {
       href="https://wa.me/94756363427" 
       target="_blank" 
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 group flex items-center justify-center w-14 h-14 bg-[#25D366] rounded-full shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] hover:scale-110 transition-all duration-300"
+      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 group flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#25D366] rounded-full shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] hover:scale-110 transition-all duration-300"
     >
       {/* Tooltip */}
-      <div className="absolute right-16 px-3 py-1.5 bg-[#000000] border border-white/10 text-white text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-lg">
+      <div className="absolute right-16 px-3 py-1.5 bg-[#000000] border border-white/10 text-white text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-lg hidden md:block">
         Chat with us
         <div className="absolute top-1/2 -right-1 w-2 h-2 bg-[#000000] border-t border-r border-white/10 transform -translate-y-1/2 rotate-45"></div>
       </div>
