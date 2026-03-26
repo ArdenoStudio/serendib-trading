@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
+import { Analytics } from '@vercel/analytics/react';
 import SplashLoader from './components/SplashLoader';
 import Home from './pages/Home';
 import Inventory from './pages/Inventory';
@@ -94,6 +95,7 @@ export default function App() {
           </ProtectedRoute>
         } />
       </Routes>
+      <Analytics />
     </>
   );
 }
