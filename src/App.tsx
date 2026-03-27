@@ -45,7 +45,7 @@ export default function App() {
       <Analytics />
       
       <ScrollToTop />
-      <ComparisonTray />
+      {!location.pathname.startsWith('/admin') && <ComparisonTray />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/inventory" element={<Inventory />} />
