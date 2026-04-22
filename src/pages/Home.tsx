@@ -236,8 +236,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 4-item grid — perfectly centered */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 5-item grid — perfectly centered */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
           {[
             { name: 'SUV',      path: '/inventory?bodyType=SUV',      image: '/car-types/suv.png' },
             { name: 'Sedan',    path: '/inventory?bodyType=Sedan',    image: '/car-types/sedan.png' },
