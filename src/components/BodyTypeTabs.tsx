@@ -5,7 +5,7 @@ interface BodyTypeTabsProps {
   onTabChange: (tab: string) => void;
 }
 
-const tabs = ['All', 'Sedan', 'SUV', 'Hatchback', 'Luxury', 'MPV', 'Van', 'Pick-up'];
+const tabs = ['All', 'Sedan', 'SUV', 'Hatchback', 'Luxury', 'MPV', 'Crossover', 'Van', 'Pick-up'];
 
 export default function BodyTypeTabs({ activeTab, onTabChange }: BodyTypeTabsProps) {
   return (

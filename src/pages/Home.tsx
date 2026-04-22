@@ -236,14 +236,15 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 5-item grid — perfectly centered */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        {/* 6-item grid — perfectly centered */}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-6">
           {[
             { name: 'SUV',      path: '/inventory?bodyType=SUV',      image: '/car-types/suv.png' },
             { name: 'Sedan',    path: '/inventory?bodyType=Sedan',    image: '/car-types/sedan.png' },
             { name: 'Hatchback',path: '/inventory?bodyType=Hatchback',image: '/car-types/hatchback.png' },
             { name: 'Luxury',   path: '/inventory?bodyType=Luxury',   image: '/car-types/rolls-royce.png' },
             { name: 'MPV',      path: '/inventory?bodyType=MPV',      image: '/car-types/car.png' },
+            { name: 'Crossover',path: '/inventory?bodyType=Crossover',image: '/car-types/suv.png' },
           ].map((type, idx) => (
             <motion.button
               key={type.name}
