@@ -12,10 +12,10 @@ export default function Footer() {
       className="bg-[#0A0A0A] border-t border-white/10 pt-20 pb-8 text-gray-400"
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
-        
+
         {/* 4-Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
-          
+
           {/* Column 1: Brand */}
           <div className="flex flex-col">
             <h2 className="text-white font-extrabold text-2xl tracking-widest mb-6 uppercase">
@@ -38,8 +38,8 @@ export default function Footer() {
                 { name: 'Contact', path: '/contact' }
               ].map((link) => (
                 <li key={link.name}>
-                  <Link 
-                    to={link.path} 
+                  <Link
+                    to={link.path}
                     className="group flex items-center text-sm font-medium transition-colors hover:text-[#D4AF37]"
                   >
                     <span className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 mr-2 text-[#D4AF37]">
@@ -102,7 +102,7 @@ export default function Footer() {
         </div>
 
         {/* Production Credit */}
-        <ArdenoProductionCredit color="#D4AF37" />
+        <ArdenoProductionCredit color="#ffffffff" />
 
       </div>
     </motion.footer>
