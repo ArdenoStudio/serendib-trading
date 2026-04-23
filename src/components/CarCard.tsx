@@ -82,7 +82,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           <motion.img
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            src={`${car.image}&w=600&q=70`}
+            src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image}
             alt={`${car.make} ${car.model}`}
             width={384}
             height={240}

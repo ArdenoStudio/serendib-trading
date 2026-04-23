@@ -431,7 +431,7 @@ export default function Home() {
                   </div>
                   
                   <motion.img 
-                    src={`${car.image}&w=600&q=70`} 
+                    src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image} 
                     alt={`${car.year} ${car.make} ${car.model}`} 
                     width={420}
                     height={288}
