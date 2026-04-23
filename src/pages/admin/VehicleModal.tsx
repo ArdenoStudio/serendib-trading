@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Sparkles, ImagePlus, Trash2, Tag, Plus } from 'lucide-react';
-import { supabase, uploadVehicleImage, parseVehicleText } from '../../lib/supabase';
+import { supabase, uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle } from '../../lib/supabase';
 
 export interface VehicleFormData {
   id?: string;
@@ -49,6 +49,11 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   const [newFeature, setNewFeature] = useState('');
   const heroRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const [dynamicKB, setDynamicKB] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    fetchDynamicKnowledge().then(setDynamicKB);
+  }, []);
 
   const set = (k: keyof VehicleFormData, v: any) => setForm(f => ({ ...f, [k]: v }));
 
@@ -89,15 +94,26 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     set('gallery', (form.gallery ?? []).filter((_, i) => i !== idx));
   };
 
+  const [parseStatus, setParseStatus] = useState('');
+
   const handleParse = () => {
     if (!pasteText.trim()) return;
     setParsing(true);
+    setParseStatus('Extracting key data...');
+    
     setTimeout(() => {
-      const parsed = parseVehicleText(pasteText);
-      setForm(f => ({ ...f, ...parsed }));
-      setParsing(false);
-      setTab('form');
-    }, 600);
+      setParseStatus('Analyzing vehicle model...');
+      setTimeout(() => {
+        setParseStatus('Inferring missing specifications...');
+        setTimeout(() => {
+          const parsed = parseVehicleText(pasteText, dynamicKB);
+          setForm(f => ({ ...f, ...parsed }));
+          setParsing(false);
+          setParseStatus('');
+          setTab('form');
+        }, 800);
+      }, 600);
+    }, 400);
   };
 
   const addFeature = () => {
@@ -119,6 +135,10 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
         const { error } = await supabase.from('cars').insert([data]);
         if (error) throw error;
       }
+      
+      // Learn from this save to improve future parsing
+      await learnFromVehicle(form);
+
       onSaved();
       onClose();
     } catch (err: any) {
@@ -170,7 +190,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                 />
                 <button onClick={handleParse} disabled={parsing || !pasteText.trim()}
                   className="px-8 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-xs rounded-xl hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-2">
-                  {parsing ? <><span className="animate-spin">⟳</span> Parsing...</> : <><Sparkles className="w-4 h-4" />Parse & Fill Form</>}
+                  {parsing ? <><span className="animate-spin">⟳</span> {parseStatus}</> : <><Sparkles className="w-4 h-4" />Parse & Intelligence Fill</>}
                 </button>
               </motion.div>
             ) : (
