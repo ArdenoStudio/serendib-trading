@@ -211,16 +211,16 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div><label className={lbl}>Price (LKR)</label><input required type="number" value={form.price} onChange={e=>set('price',Number(e.target.value))} className={inp}/></div>
                   <div><label className={lbl}>Mileage (KM)</label><input required type="number" value={form.mileage} onChange={e=>set('mileage',Number(e.target.value))} className={inp}/></div>
-                  <div>
+                   <div>
                     <label className={lbl}>Fuel</label>
                     <select value={form.fuel} onChange={e=>set('fuel',e.target.value)} className={inp}>
-                      {['Hybrid','Petrol','Diesel','Electric'].map(f=><option key={f} value={f} className="bg-black">{f}</option>)}
+                      {['Fuel','Hybrid','Petrol','Diesel','Electric'].map(f=><option key={f} value={f} className="bg-black">{f}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className={lbl}>Transmission</label>
                     <select value={form.transmission} onChange={e=>set('transmission',e.target.value)} className={inp}>
-                      {['Automatic','Manual'].map(t=><option key={t} value={t} className="bg-black">{t}</option>)}
+                      {['Transmission','Automatic','Manual'].map(t=><option key={t} value={t} className="bg-black">{t}</option>)}
                     </select>
                   </div>
                 </div>
