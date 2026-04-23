@@ -36,7 +36,7 @@ export default function AdminLogin() {
              </div>
           </div>
           <div className="space-y-1">
-            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">Concierge <span className="text-gray-500">Access</span></h1>
+            <h1 className="text-4xl font-black uppercase tracking-tighter text-white">Concierge <span className="text-gray-500">Access</span></h1>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Admin Control Terminal</p>
           </div>
         </div>

@@ -88,7 +88,7 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
             An Ardeno Production
           </span>
           <span 
-            className={`shine-text font-medium tracking-[0.18em] text-lg italic transition-all duration-700 ${isAutoShining ? 'auto-shine' : ''}`}
+            className={`shine-text font-medium tracking-[0.18em] text-lg transition-all duration-700 ${isAutoShining ? 'auto-shine' : ''}`}
             style={{ fontFamily: "serif" }}
           >
             Based in LK

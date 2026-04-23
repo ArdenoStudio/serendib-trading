@@ -68,7 +68,7 @@ export default function CarDetail() {
   if (!car) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center font-sans bg-black text-white">
-        <h1 className="text-4xl font-black mb-6 italic uppercase tracking-tighter">Vehicle Not Found</h1>
+        <h1 className="text-4xl font-black mb-6 uppercase tracking-tighter">Vehicle Not Found</h1>
         <Link to="/inventory" className="text-[#D4AF37] font-black uppercase tracking-widest text-xs border-b-2 border-[#D4AF37] pb-1 hover:text-white hover:border-white transition-all">
           Back to Inventory
         </Link>
@@ -191,8 +191,8 @@ export default function CarDetail() {
             {/* In-depth Narrative */}
             <div className="hidden lg:block space-y-16 pt-16 border-t border-white/5">
               <div className="space-y-6">
-                <h3 className="text-3xl font-black italic uppercase tracking-tighter">The <span className="text-[#D4AF37]">Experience</span></h3>
-                <p className="text-gray-400 text-xl leading-relaxed font-light italic">
+                <h3 className="text-3xl font-black uppercase tracking-tighter">The <span className="text-[#D4AF37]">Experience</span></h3>
+                <p className="text-gray-400 text-xl leading-relaxed font-light">
                   "{car.description || "An exceptional vehicle that combines performance, luxury, and unmatched reliability. This masterpiece is meticulously maintained and ready for its next journey."}"
                 </p>
               </div>
@@ -226,7 +226,7 @@ export default function CarDetail() {
                 <div className="flex items-center gap-3">
                   <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">{car.make} ⋅ {car.year} Edition</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase italic">
+                <h1 className="text-3xl sm:text-4xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase">
                   {car.model}
                 </h1>
                 <div className="flex items-end gap-3 pt-4 border-t border-white/5 mt-6 pt-6">
@@ -250,7 +250,7 @@ export default function CarDetail() {
                        <spec.icon className="w-4 h-4 text-[#D4AF37]/60 group-hover:text-[#D4AF37] transition-colors" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{spec.label}</span>
                     </div>
-                    <p className="text-[17px] font-black text-white italic tracking-tight">{spec.value}</p>
+                    <p className="text-[17px] font-black text-white tracking-tight">{spec.value}</p>
                   </div>
                 ))}
               </div>
@@ -260,7 +260,7 @@ export default function CarDetail() {
                 <button 
                   disabled={car.is_sold}
                   onClick={() => window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank')}
-                  className={`w-full py-5 text-black font-black uppercase tracking-widest text-[13px] italic rounded-2xl flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
+                  className={`w-full py-5 text-black font-black uppercase tracking-widest text-[13px] rounded-2xl flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
                     car.is_sold ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#D4AF37] shadow-[0_20px_40px_rgba(212,175,55,0.2)] hover:scale-[1.02]'
                   }`}
                 >
@@ -297,7 +297,7 @@ export default function CarDetail() {
                    <Calendar className="w-24 h-24" />
                 </div>
                 <div className="space-y-2 relative z-10">
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Private Viewing</h3>
+                  <h3 className="text-2xl font-black uppercase tracking-tighter">Private Viewing</h3>
                   <p className="text-[13px] text-gray-500 font-medium">Coordinate a personalized showroom experience.</p>
                 </div>
                 
@@ -335,7 +335,7 @@ export default function CarDetail() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="space-y-4 text-center md:text-left">
                 <p className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Comparative Portfolio</p>
-                <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">Similar <span className="text-gray-500">Acquisitions</span></h2>
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Similar <span className="text-gray-500">Acquisitions</span></h2>
               </div>
               <Link to="/inventory" className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#D4AF37] transition-colors border-b border-transparent hover:border-[#D4AF37] pb-1">View Collection &rarr;</Link>
             </div>

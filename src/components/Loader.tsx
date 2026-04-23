@@ -36,7 +36,7 @@ export default function Loader() {
             initial={{ opacity: 0, letterSpacing: '0.2em' }}
             animate={{ opacity: 1, letterSpacing: '0.5em' }}
             transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
-            className="text-white font-black text-xs uppercase italic tracking-[0.5em]"
+            className="text-white font-black text-xs uppercase tracking-[0.5em]"
           >
             Serendib
           </motion.h2>

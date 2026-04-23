@@ -160,7 +160,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
           {/* Header + tabs */}
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-2xl font-black italic uppercase tracking-tighter">
+              <h3 className="text-2xl font-black uppercase tracking-tighter">
                 {initial ? 'Edit' : 'New'} <span className="text-[#D4AF37]">Vehicle</span>
               </h3>
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">
@@ -313,7 +313,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                 <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
                   <button type="button" onClick={onClose} className="px-6 py-3 text-gray-500 font-black uppercase tracking-widest text-[11px] hover:text-white transition-colors">Cancel</button>
                   <button type="submit" disabled={saving || uploading}
-                    className="px-10 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] italic rounded-xl hover:scale-105 transition-all shadow-xl disabled:opacity-60">
+                    className="px-10 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] rounded-xl hover:scale-105 transition-all shadow-xl disabled:opacity-60">
                     {saving ? 'Saving...' : initial ? 'Update Vehicle' : 'Add to Inventory'}
                   </button>
                 </div>

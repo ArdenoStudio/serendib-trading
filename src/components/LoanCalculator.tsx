@@ -57,7 +57,7 @@ export default function LoanCalculator() {
                     key={price}
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-xl font-black italic text-white"
+                    className="text-xl font-black text-white"
                 >
                     {fmt(price)}
                 </motion.span>
@@ -84,10 +84,10 @@ export default function LoanCalculator() {
               <div className="flex justify-between items-end">
                 <div className="space-y-1">
                     <label className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">Initial Equity</label>
-                    <p className="text-[10px] font-bold text-gray-600 uppercase italic">Min 10% Required</p>
+                    <p className="text-[10px] font-bold text-gray-600 uppercase">Min 10% Required</p>
                 </div>
                 <div className="text-right">
-                    <span className="text-xl font-black italic text-[#D4AF37]">{downPayment}%</span>
+                    <span className="text-xl font-black text-[#D4AF37]">{downPayment}%</span>
                     <p className="text-[10px] font-bold text-gray-600 uppercase">{fmt(price * (downPayment / 100))}</p>
                 </div>
               </div>
@@ -138,19 +138,19 @@ export default function LoanCalculator() {
           <div className="space-y-12 relative z-10 text-center lg:text-left">
             <div className="space-y-2">
                 <span className="text-xs font-black tracking-[0.5em] uppercase text-[#D4AF37]">Estimated Investment</span>
-                <p className="text-gray-500 text-[13px] font-medium uppercase tracking-widest italic">Per Calendary Month</p>
+                <p className="text-gray-500 text-[13px] font-medium uppercase tracking-widest">Per Calendary Month</p>
             </div>
 
             <div className="space-y-2">
                 <AnimatePresence mode="wait">
                     <div className="flex flex-col gap-1 items-center lg:items-start overflow-hidden">
-                        <span className="text-[10px] font-black italic text-[#D4AF37] mb-1">LKR PER MONTH</span>
+                        <span className="text-[10px] font-black text-[#D4AF37] mb-1">LKR PER MONTH</span>
                         <motion.div
                             key={monthly}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
-                            className="text-5xl md:text-7xl xl:text-[5.5rem] font-black italic tracking-tighter text-white leading-none whitespace-nowrap"
+                            className="text-5xl md:text-7xl xl:text-[5.5rem] font-black tracking-tighter text-white leading-none whitespace-nowrap"
                         >
                             {Math.round(monthly).toLocaleString()}
                         </motion.div>
@@ -181,7 +181,7 @@ export default function LoanCalculator() {
           <div className="pt-20 space-y-6 relative z-10">
             <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500">
                 <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
-                <p className="text-xs font-medium leading-relaxed italic text-white/50">
+                <p className="text-xs font-medium leading-relaxed text-white/50">
                    Final terms subject to individual appraisal and bank approval.
                  </p>
             </div>

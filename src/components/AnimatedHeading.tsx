@@ -26,7 +26,7 @@ export default function AnimatedHeading({ children, className = '', eyebrow, ali
         </div>
       )}
       <h2
-        className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter text-white leading-[0.9]"
+        className="text-4xl md:text-7xl font-black uppercase tracking-[-0.08em] text-white leading-[0.9]"
       >
         {children}
       </h2>

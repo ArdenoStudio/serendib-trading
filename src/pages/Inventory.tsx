@@ -212,11 +212,10 @@ export default function Inventory() {
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Showroom Collection</span>
             </div>
 
-            <h1 className="text-4xl md:text-7xl font-black italic tracking-tighter uppercase leading-[0.9] pr-12 overflow-visible">
+            <h1 className="text-6xl md:text-[10rem] font-black tracking-[-0.08em] leading-[0.8] uppercase">
               Master <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/10">Inventory</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Inventory</span>
             </h1>
-
             <div className="max-w-xl mx-auto space-y-8">
               <p className="text-gray-400 font-medium text-sm md:text-xl leading-relaxed">
                 A meticulously curated selection of the world's most desired automotive masterpieces, verified by our experts.
@@ -615,7 +614,7 @@ export default function Inventory() {
           <main className="flex-1">
              <div className="flex items-center justify-between mb-12">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-black italic uppercase tracking-tighter">Verified <span className="text-gray-500">Assets</span></h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Verified <span className="text-gray-500">Assets</span></h2>
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
                         {filteredCars.length} Handpicked Results
                     </p>
@@ -671,7 +670,7 @@ export default function Inventory() {
                                 <Search className="w-12 h-12 text-[#D4AF37] opacity-40" />
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-4xl font-black italic uppercase tracking-tighter">Bespoke sourcing <br /> <span className="text-[#D4AF37]">Required</span></h3>
+                                <h3 className="text-4xl font-black uppercase tracking-tighter">Bespoke sourcing <br /> <span className="text-[#D4AF37]">Required</span></h3>
                                 <p className="text-gray-400 max-w-sm mx-auto font-medium leading-relaxed">
                                     Our current collection does not meet these exact specifications. Allow our specialists to hunt your ideal masterpiece.
                                 </p>
@@ -712,7 +711,7 @@ export default function Inventory() {
                     className="absolute bottom-0 inset-x-0 h-[85vh] bg-[#0d0b09] rounded-t-[40px] border-t border-[#D4AF37]/20 p-8 flex flex-col overflow-hidden"
                   >
                         <div className="flex items-center justify-between mb-10">
-                            <h3 className="text-2xl font-black italic uppercase tracking-tighter text-[#D4AF37]">Advanced <span className="text-white">Curation</span></h3>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter text-[#D4AF37]">Advanced <span className="text-white">Curation</span></h3>
                             <button onClick={() => setIsMobileFilterOpen(false)} className="p-3 bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
                         </div>
                         
@@ -734,7 +733,7 @@ export default function Inventory() {
                                 <div className="space-y-4">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Price Threshold</label>
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-2xl font-black italic">LKR {(filters.maxPrice / 1000000).toFixed(0)}M</span>
+                                        <span className="text-2xl font-black">LKR {(filters.maxPrice / 1000000).toFixed(0)}M</span>
                                     </div>
                                     <input 
                                         type="range" 

@@ -46,9 +46,9 @@ export default function Calculator() {
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">Financial Engineering</span>
             </div>
 
-            <h1 className="text-6xl md:text-7xl font-black italic tracking-tighter uppercase leading-[0.8]">
+            <h1 className="text-6xl md:text-9xl font-black tracking-[-0.08em] uppercase leading-[0.8]">
               Capital <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/10">Bespoke</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Bespoke</span>
             </h1>
 
             <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-medium leading-relaxed">
@@ -103,7 +103,7 @@ export default function Calculator() {
                             <item.icon className="w-7 h-7 text-[#D4AF37] opacity-60 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <div className="space-y-4">
-                            <h4 className="text-xl font-black italic uppercase tracking-tighter">{item.title}</h4>
+                            <h4 className="text-xl font-black uppercase tracking-tighter">{item.title}</h4>
                             <p className="text-sm font-medium text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">{item.desc}</p>
                         </div>
                         <div className="pt-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-[#D4AF37] opacity-0 group-hover:opacity-100 transition-all">
@@ -121,7 +121,7 @@ export default function Calculator() {
                 </div>
                 
                 <div className="space-y-6">
-                    <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter">Request a Bespoke Offer</h2>
+                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Request a Bespoke Offer</h2>
                     <p className="max-w-xl mx-auto text-gray-500 font-medium">
                         For institutional acquisitions or high-value individual trade-ins, our head of finance will personally architect your facility structure.
                     </p>

@@ -152,7 +152,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
                 {car.make}
               </h3>
             </div>
-            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white leading-none mb-6 transition-colors duration-500 group-hover:text-[#F3D67E]">
+            <h2 className="text-3xl font-black uppercase tracking-tighter text-white leading-none mb-6 transition-colors duration-500 group-hover:text-[#F3D67E]">
               {car.model}
             </h2>
             

@@ -129,7 +129,7 @@ export default function ComparisonTray() {
                        <TrendingUp className="w-3.5 h-3.5 text-[#D4AF37]" />
                        <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Market Value Comparison</span>
                     </div>
-                     <h2 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter text-white">
+                     <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter text-white">
                         Side-by-side <br className="md:hidden" /> <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/20">Analysis</span>
                      </h2>
                  </div>
@@ -139,7 +139,7 @@ export default function ComparisonTray() {
                     {vehicles.length === 2 && (
                        <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 select-none pointer-events-none items-center justify-center">
                           <div className="size-20 bg-black/80 backdrop-blur-3xl border border-[#D4AF37]/40 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(212,175,55,0.2)]">
-                             <span className="text-[#D4AF37] font-black italic text-2xl tracking-tighter">VS</span>
+                             <span className="text-[#D4AF37] font-black text-2xl tracking-tighter">VS</span>
                           </div>
                        </div>
                     )}
@@ -174,7 +174,7 @@ export default function ComparisonTray() {
                            {/* Metadata */}
                            <div className="space-y-8 px-2">
                               <div className="space-y-1">
-                                 <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter leading-none flex gap-3 flex-wrap">
+                                 <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-none flex gap-3 flex-wrap">
                                     <span className="text-[#D4AF37]">{v.year}</span>
                                     <span className="text-white/90">{v.make}</span>
                                     <span className="text-white">{v.model}</span>
@@ -191,7 +191,7 @@ export default function ComparisonTray() {
                                 ].map((spec, i) => (
                                   <div key={i} className="space-y-1.5 border-l-2 border-white/5 pl-4 hover:border-[#D4AF37]/30 transition-colors">
                                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">{spec.label}</p>
-                                    <p className={`text-sm md:text-base font-black italic tracking-tight ${spec.accent ? 'text-[#D4AF37]' : 'text-white'}`}>
+                                    <p className={`text-sm md:text-base font-black tracking-tight ${spec.accent ? 'text-[#D4AF37]' : 'text-white'}`}>
                                        {spec.value}
                                     </p>
                                   </div>
@@ -216,7 +216,7 @@ export default function ComparisonTray() {
                              <Plus className="w-10 h-10 text-gray-600 group-hover:text-[#D4AF37] relative z-10" />
                           </div>
                           <div className="space-y-2">
-                             <p className="text-xl font-black italic uppercase tracking-tighter text-gray-400 group-hover:text-white transition-colors">Compare Counterpart</p>
+                             <p className="text-xl font-black uppercase tracking-tighter text-gray-400 group-hover:text-white transition-colors">Compare Counterpart</p>
                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-700 max-w-[200px]">Select another asset from inventory to begin side-by-side analysis</p>
                           </div>
                           

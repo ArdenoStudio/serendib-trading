@@ -139,20 +139,46 @@ export default function Home() {
               </motion.div>
             </div>
 
-            {/* Massive Cinematic Headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6 md:mb-8 flex flex-col uppercase relative"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.12,
+                    delayChildren: 0.3
+                  }
+                }
+              }}
+              className="mb-6 md:mb-10 flex flex-col uppercase relative"
               style={{ textShadow: '0 20px 40px rgba(0,0,0,0.8)' }}
             >
-              <span className="text-5xl sm:text-[90px] md:text-[110px] lg:text-[140px] leading-[0.8] tracking-[-0.06em] text-white font-serif italic pr-4 drop-shadow-2xl">
-                Drive
-              </span>
-              <span className="text-3xl sm:text-[70px] md:text-[90px] lg:text-[110px] leading-[0.85] tracking-[-0.04em] text-transparent bg-clip-text bg-gradient-to-r from-[#C69320] via-[#E5C158] to-[#C69320] ml-1 sm:ml-8 md:ml-16 font-sans font-black mt-2 lg:mt-4 drop-shadow-lg">
-                Your Way.
-              </span>
+              <div className="overflow-hidden">
+                <motion.span 
+                  variants={{
+                    hidden: { y: "100%", opacity: 0 },
+                    visible: { y: 0, opacity: 1 }
+                  }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  className="block text-6xl sm:text-[100px] md:text-[120px] lg:text-[160px] leading-[0.8] tracking-[-0.08em] text-white font-black drop-shadow-2xl"
+                >
+                  Drive
+                </motion.span>
+              </div>
+              <div className="overflow-hidden mt-2 lg:mt-4">
+                <motion.span 
+                  variants={{
+                    hidden: { y: "100%", opacity: 0 },
+                    visible: { y: 0, opacity: 1 }
+                  }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  className="block text-4xl sm:text-[80px] md:text-[100px] lg:text-[120px] leading-[0.85] tracking-[-0.06em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black drop-shadow-lg"
+                >
+                  Your Way.
+                </motion.span>
+              </div>
             </motion.h1>
 
             {/* Premium Description */}
@@ -220,7 +246,7 @@ export default function Home() {
           className="flex items-center gap-20 whitespace-nowrap px-10"
         >
           {Array(2).fill(['MERCEDES-BENZ', 'RANGE ROVER', 'BMW', 'AUDI SPORT', 'TOYOTA GAZOO', 'LAND CRUISER', 'ROLLS-ROYCE', 'PORSCHE']).flat().map((brand, i) => (
-            <span key={i} className="text-4xl md:text-6xl font-black italic tracking-tighter text-white/20 hover:text-[#D4AF37] transition-colors duration-500 cursor-default uppercase">
+            <span key={i} className="text-4xl md:text-6xl font-black tracking-tighter text-white/20 hover:text-[#D4AF37] transition-colors duration-500 cursor-default uppercase">
               {brand}
             </span>
           ))}
@@ -243,7 +269,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
-            <h2 className="text-5xl md:text-8xl font-serif italic text-white tracking-tight leading-none drop-shadow-2xl">
+            <h2 className="text-5xl md:text-8xl font-serif text-white tracking-tight leading-none drop-shadow-2xl">
               Body Type
             </h2>
           </div>
@@ -316,7 +342,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
-            <h2 className="text-5xl md:text-8xl font-serif italic text-white tracking-tight leading-none drop-shadow-2xl">
+            <h2 className="text-5xl md:text-8xl font-serif text-white tracking-tight leading-none drop-shadow-2xl">
               Make
             </h2>
           </div>
@@ -394,7 +420,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Explore our</span>
-            <h2 className="text-5xl md:text-8xl font-serif italic text-white tracking-tight leading-none drop-shadow-2xl">
+            <h2 className="text-5xl md:text-8xl font-serif text-white tracking-tight leading-none drop-shadow-2xl">
               Featured Arrivals
             </h2>
           </div>
@@ -451,7 +477,7 @@ export default function Home() {
                       <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">{car.make}</span>
                    </div>
                    
-                   <h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
+                   <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
                     {car.model}
                   </h3>
                   
@@ -500,7 +526,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center mb-12">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Discover our</span>
-            <h2 className="text-5xl md:text-8xl font-serif italic text-white tracking-tight leading-none drop-shadow-2xl">
+            <h2 className="text-5xl md:text-8xl font-serif text-white tracking-tight leading-none drop-shadow-2xl">
               Available Inventory
             </h2>
           </div>
@@ -588,7 +614,7 @@ export default function Home() {
               <div className="w-12 h-[1px] bg-[#D4AF37]" />
             </motion.div>
             
-            <h2 className="text-4xl md:text-7xl font-serif italic text-white tracking-tight leading-none drop-shadow-2xl">
+            <h2 className="text-4xl md:text-7xl font-serif text-white tracking-tight leading-none drop-shadow-2xl">
               Crafting the Ultimate <br /> <span className="text-white">Automotive Experience</span>
             </h2>
           </div>
@@ -631,7 +657,7 @@ export default function Home() {
                   <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-xs">Our Legacy</p>
                 </div>
                 <p className="text-gray-300 text-xl font-light leading-relaxed">
-                  For over a decade, <span className="text-white font-medium italic">Serendib Trading</span> has been the beacon of excellence in Sri Lanka's automotive landscape. We don't just sell cars; we curate masterpieces that define your journey. 
+                  For over a decade, <span className="text-white font-medium">Serendib Trading</span> has been the beacon of excellence in Sri Lanka's automotive landscape. We don't just sell cars; we curate masterpieces that define your journey. 
                 </p>
                 <p className="text-gray-400 text-lg font-light leading-relaxed">
                   Our direct-import model from the UK and Japan ensures that every vehicle meets rigorous international standards, bringing global luxury to your doorstep with uncompromising transparency and performance.
@@ -669,7 +695,7 @@ export default function Home() {
             <div className="w-12 h-[1px] bg-[#D4AF37]" />
           </motion.div>
 
-          <h2 className="text-4xl md:text-7xl font-serif italic text-white tracking-tight leading-none mb-8">
+          <h2 className="text-4xl md:text-7xl font-serif text-white tracking-tight leading-none mb-8">
             Upgrade Your Drive
           </h2>
           
@@ -712,7 +738,7 @@ export default function Home() {
               <div className="w-12 h-[1px] bg-[#D4AF37]" />
             </motion.div>
             
-            <h2 className="text-4xl md:text-7xl font-serif italic text-white tracking-tight leading-none mb-8 drop-shadow-2xl">
+            <h2 className="text-4xl md:text-7xl font-serif text-white tracking-tight leading-none mb-8 drop-shadow-2xl">
               Why Choose <span className="text-[#D4AF37]">Serendib</span>
             </h2>
             
@@ -775,7 +801,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[2000ms] pointer-events-none" />
 
             <div className="flex-1 text-center lg:text-left">
-              <h2 className="text-4xl md:text-6xl font-serif italic text-white tracking-tight leading-tight mb-4 drop-shadow-2xl">
+              <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-tight mb-4 drop-shadow-2xl">
                 Ready to find <br className="hidden md:block"/> your <span className="text-[#D4AF37]">dream car?</span>
               </h2>
               <p className="text-gray-400 text-lg md:text-xl font-light leading-relaxed max-w-xl">

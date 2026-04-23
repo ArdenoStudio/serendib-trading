@@ -37,7 +37,7 @@ export default function StatsCounter({ end, label, suffix = '' }: StatsCounterPr
         initial={{ y: 20, opacity: 0 }}
         animate={isInView ? { y: 0, opacity: 1 } : {}}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-6xl md:text-8xl font-black italic tracking-tighter text-[#D4AF37] mb-4 group-hover:scale-105 transition-transform duration-700"
+        className="text-6xl md:text-8xl font-black tracking-tighter text-[#D4AF37] mb-4 group-hover:scale-105 transition-transform duration-700"
       >
         {count}{suffix}
       </motion.div>

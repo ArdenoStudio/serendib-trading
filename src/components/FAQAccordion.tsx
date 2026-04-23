@@ -41,7 +41,7 @@ export default function FAQAccordion() {
           >
             <div className="flex items-center gap-4">
                 <HelpCircle className={`w-5 h-5 transition-colors duration-500 ${openIndex === index ? 'text-[#D4AF37]' : 'text-gray-600'}`} />
-                <span className={`text-lg font-black italic uppercase tracking-tighter transition-colors duration-500 ${openIndex === index ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                <span className={`text-lg font-black uppercase tracking-tighter transition-colors duration-500 ${openIndex === index ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 {faq.question}
                 </span>
             </div>

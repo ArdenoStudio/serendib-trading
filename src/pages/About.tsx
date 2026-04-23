@@ -55,8 +55,8 @@ export default function About() {
               <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Excellence Since 2010</span>
             </div>
             
-            <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.85] italic uppercase">
-              The <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/10">Serendib</span> <br /> 
+            <h1 className="text-6xl md:text-[10rem] font-black tracking-[-0.08em] leading-[0.8] uppercase">
+              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Serendib</span> <br /> 
               Legacy
             </h1>
 
@@ -85,7 +85,7 @@ export default function About() {
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="text-2xl md:text-4xl font-light leading-relaxed italic text-white/90"
+                className="text-2xl md:text-4xl font-light leading-relaxed text-white/90"
             >
               "True luxury isn't just in the vehicle itself, but in the peace of mind that comes with its acquisition. Transparency is our only standard."
             </motion.p>
@@ -114,7 +114,7 @@ export default function About() {
             <div className="lg:w-1/2 space-y-10">
                 <div className="space-y-4">
                     <p className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-xs">Global Acquisitions</p>
-                    <h2 className="text-4xl md:text-7xl font-black tracking-tighter italic uppercase leading-[0.9]">
+                    <h2 className="text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9]">
                         The World <br /> <span className="text-gray-500">Is Our Showroom</span>
                     </h2>
                 </div>
@@ -160,7 +160,7 @@ export default function About() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="space-y-4">
               <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-xs">Excellence Manifested</p>
-              <h2 className="text-4xl md:text-7xl font-black tracking-tighter italic uppercase leading-[0.85]">The Serendib <br /> Standard</h2>
+              <h2 className="text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.85]">The Serendib <br /> Standard</h2>
             </div>
             <div className="space-y-6 max-w-md">
                 <p className="text-gray-400 font-medium leading-relaxed">
@@ -193,7 +193,7 @@ export default function About() {
                   <step.icon className="w-8 h-8 text-[#D4AF37]" />
                 </div>
                 <div className="space-y-4 relative z-10">
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">{step.title}</h3>
+                  <h3 className="text-2xl font-black uppercase tracking-tighter">{step.title}</h3>
                   <p className="text-sm text-gray-500 font-medium leading-relaxed group-hover:text-gray-400 transition-colors">{step.desc}</p>
                 </div>
                 <div className="pt-6">
@@ -211,7 +211,7 @@ export default function About() {
       <section className="py-40 px-6 lg:px-10 max-w-[1400px] mx-auto">
         <div className="flex flex-col items-center mb-24 text-center space-y-4">
             <p className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Visual Storytelling</p>
-            <h2 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter">The Serendib <span className="text-gray-500">Gallery</span></h2>
+            <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter">The Serendib <span className="text-gray-500">Gallery</span></h2>
             <div className="w-24 h-[1px] bg-[#D4AF37] mt-8" />
         </div>
         
@@ -225,7 +225,7 @@ export default function About() {
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
               <div className="absolute bottom-10 left-10 space-y-2 translate-y-4 group-hover:translate-y-0 transition-transform">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Location: Colombo, SL</span>
-                <h4 className="text-3xl font-black italic uppercase italic uppercase">Flagship Showroom</h4>
+                <h4 className="text-3xl font-black uppercase tracking-widest">Flagship Showroom</h4>
               </div>
           </div>
           <div className="md:col-span-4 overflow-hidden rounded-[40px] border border-white/10 group cursor-pointer relative bg-white/5">
@@ -255,7 +255,7 @@ export default function About() {
           <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">
             <CheckCircle2 className="w-4 h-4" /> Clarity in Every Aspect
           </div>
-          <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.9]">Common <br /> <span className="text-gray-500">Inquiries</span></h2>
+          <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9]">Common <br /> <span className="text-gray-500">Inquiries</span></h2>
         </div>
         <FAQAccordion />
       </section>

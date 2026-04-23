@@ -43,10 +43,10 @@ export default function Contact() {
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-7xl font-black italic tracking-tighter uppercase leading-[0.85]"
+              className="text-6xl md:text-9xl font-black tracking-[-0.08em] uppercase leading-[0.8]"
             >
               Elevated <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#D4AF37] via-[#D4AF37] to-[#D4AF37]/40">Engagement</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Engagement</span>
             </motion.h1>
             
             <motion.p 
@@ -71,7 +71,7 @@ export default function Contact() {
             <div className="lg:col-span-4 p-10 md:p-14 bg-white/[0.02] border-r border-white/10 space-y-14">
               <div className="space-y-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Intelligence</p>
-                <h3 className="text-3xl font-black italic uppercase tracking-tighter">Immediate <br/> Access</h3>
+                <h3 className="text-3xl font-black uppercase tracking-tighter">Immediate <br/> Access</h3>
               </div>
 
               <div className="space-y-10">
@@ -90,8 +90,8 @@ export default function Contact() {
                     </div>
                     <div className="space-y-1 py-1">
                       <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 group-hover:text-[#D4AF37]/70 transition-colors">{item.label}</p>
-                      <p className="text-base font-black italic tracking-tight text-white group-hover:text-[#D4AF37] transition-colors leading-none">{item.val}</p>
-                      {item.sub && <p className="text-base font-black italic tracking-tight text-white group-hover:text-[#D4AF37] transition-colors leading-none">{item.sub}</p>}
+                      <p className="text-base font-black tracking-tight text-white group-hover:text-[#D4AF37] transition-colors leading-none">{item.val}</p>
+                      {item.sub && <p className="text-base font-black tracking-tight text-white group-hover:text-[#D4AF37] transition-colors leading-none">{item.sub}</p>}
                     </div>
                   </motion.div>
                 ))}
@@ -111,7 +111,7 @@ export default function Contact() {
             {/* Main Section (Form) */}
             <div className="lg:col-span-8 p-10 md:p-20 space-y-16 bg-gradient-to-br from-white/[0.01] to-transparent">
               <div className="space-y-4">
-                <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter leading-none">Bespoke <span className="text-gray-500">Inquiry</span></h2>
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">Bespoke <span className="text-gray-500">Inquiry</span></h2>
                 <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Response window: 2 business hours.</p>
               </div>
 
@@ -123,7 +123,7 @@ export default function Contact() {
                       required 
                       value={formData.name} 
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                      className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black italic tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
+                      className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
                       id="name"
                       placeholder="Full Name"
                     />
@@ -140,7 +140,7 @@ export default function Contact() {
                       required 
                       value={formData.phone} 
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} 
-                      className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black italic tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
+                      className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
                       id="phone"
                       placeholder="Contact No"
                     />
@@ -159,7 +159,7 @@ export default function Contact() {
                     required 
                     value={formData.message} 
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })} 
-                    className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black italic tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent resize-none"
+                    className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent resize-none"
                     id="message"
                     placeholder="Message"
                   />
@@ -187,7 +187,7 @@ export default function Contact() {
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-[#D4AF37]">Location Hub</p>
-                 <h3 className="text-3xl font-black italic uppercase tracking-tighter italic">Regional <span className="text-gray-600">Headquarters</span></h3>
+                 <h3 className="text-3xl font-black uppercase tracking-tighter">Regional <span className="text-gray-600">Headquarters</span></h3>
               </div>
               <div className="h-px bg-white/5 flex-1 mx-16 hidden md:block" />
             </div>
