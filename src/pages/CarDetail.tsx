@@ -350,23 +350,7 @@ export default function CarDetail() {
         )}
       </main>
 
-      {/* MOBILE STICKY ACQUISITION BAR */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-6 z-50 pointer-events-none">
-        <div className="max-w-md mx-auto flex gap-4 pointer-events-auto">
-          <button 
-            onClick={() => window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank')}
-            className="flex-1 py-5 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] italic rounded-2xl flex items-center justify-center gap-3 shadow-[0_20px_50px_rgba(212,175,55,0.4)]"
-          >
-            <MessageCircle className="w-5 h-5 shrink-0" /> Reserve Now
-          </button>
-          <a 
-            href="tel:+94756363427"
-            className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-2xl flex items-center justify-center shadow-2xl"
-          >
-            <Phone className="w-5 h-5" />
-          </a>
-        </div>
-      </div>
+
 
       <Footer />
       <div className="hidden lg:block">

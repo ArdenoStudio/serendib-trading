@@ -78,7 +78,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
         <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
         {/* Image Container */}
-        <div className="relative aspect-[16/10] overflow-hidden">
+        <div className="relative aspect-[16/11] overflow-hidden">
           <motion.img
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -144,7 +144,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
         </div>
 
         {/* Info */}
-        <div className="p-8 pb-10 flex-1 flex flex-col justify-between relative">
+        <div className="p-6 pb-8 flex-1 flex flex-col justify-between relative">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-6 h-[1px] bg-[#D4AF37]/50" />
