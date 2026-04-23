@@ -58,27 +58,45 @@ export default function Inventory() {
     return { makes, bodyTypes, fuels, transmissions };
   }, [cars]);
 
-  useEffect(() => {
-    const fetchLiveVehicles = async () => {
-      try {
-        const { data, error } = await supabase.from('cars').select('*');
-        if (!error && data && data.length > 0) {
-          // Robust mapping from potential Supabase snake_case/variations to frontend camelCase
-          const mappedData = data.map((v: any) => ({
-            ...v,
-            bodyType: v.bodyType || v.body_type || v.body_style || v.style || v.bodytype || "",
-            fuel: v.fuel || v.fuel_type || v.fuelType || "",
-            transmission: v.transmission || v.transmission_type || v.transmissionType || ""
-          }));
-          setCars(mappedData);
-        }
-      } catch (err) {
-        console.error('Failed to fetch from Supabase:', err);
-      } finally {
-        setLoading(false);
+  // Returns true if vehicle should be hidden from public site
+  const isSoldExpired = (v: Car): boolean => {
+    if (!v.is_sold) return false;
+    if (!v.sold_at) return false; // no timestamp → keep visible
+    const soldMs = new Date(v.sold_at).getTime();
+    return Date.now() - soldMs > 14 * 24 * 60 * 60 * 1000; // > 14 days
+  };
+
+  const fetchLiveVehicles = async () => {
+    try {
+      const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
+      if (!error && data && data.length > 0) {
+        const mappedData = data.map((v: any) => ({
+          ...v,
+          bodyType: v.bodyType || v.body_type || '',
+          fuel: v.fuel || v.fuel_type || '',
+          transmission: v.transmission || v.transmission_type || '',
+          key_features: v.key_features || v.keyFeatures || [],
+        }));
+        // Remove vehicles sold more than 14 days ago
+        setCars(mappedData.filter((v: Car) => !isSoldExpired(v)));
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch from Supabase:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLiveVehicles();
+
+    // Realtime: re-fetch whenever anything changes in 'cars'
+    const channel = supabase
+      .channel('inventory-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchLiveVehicles)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const filteredCars = useMemo(() => {

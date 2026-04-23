@@ -13,9 +13,10 @@ export interface Car {
   gallery?: string[];
   condition: string;
   description?: string;
+  keyFeatures?: string[];
   key_features?: string[];
   is_sold?: boolean;
-  sold_at?: string;
+  sold_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }

@@ -198,7 +198,7 @@ export default function CarDetail() {
                  <div className="space-y-6">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Premium Features</h4>
                     <div className="space-y-4">
-                      {(car.keyFeatures || ['Harman Kardon Audio', 'Adaptive Matrix LEDs', 'Panoramic Sunroof', 'Blind Spot Monitoring']).map((f, i) => (
+                      {((car as any).key_features || car.keyFeatures || ['Harman Kardon Audio', 'Adaptive Matrix LEDs', 'Panoramic Sunroof', 'Blind Spot Monitoring']).map((f: string, i: number) => (
                         <div key={i} className="flex items-center gap-3">
                           <CheckCircle2 className="w-5 h-5 text-[#D4AF37]" />
                           <span className="text-sm font-bold text-gray-300">{f}</span>
