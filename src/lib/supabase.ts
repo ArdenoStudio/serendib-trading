@@ -105,6 +105,23 @@ export const signOut = async () => {
   if (error) throw error;
 };
 
+// ── Advanced Analytics ────────────────────────────────────────
+export const logPageView = async () => {
+  try {
+    await supabase.rpc('track_site_visit');
+  } catch (err) {
+    console.error('Failed to log page view:', err);
+  }
+};
+
+export const logCarView = async (carId: string) => {
+  try {
+    await supabase.rpc('increment_car_view', { car_id: carId });
+  } catch (err) {
+    console.error('Failed to log car view:', err);
+  }
+};
+
 // ── Smart Paste Parser with Heuristic Inference Engine ────────────────────────────────────────
 export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string, any>): Record<string, any> => {
   const result: Record<string, any> = {};

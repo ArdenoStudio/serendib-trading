@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import CarCard from '../components/CarCard';
-import { supabase } from '../lib/supabase';
+import { supabase, logCarView } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
@@ -46,9 +46,12 @@ export default function CarDetail() {
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
   const [activeImage, setActiveImage] = useState(car?.image || '');
 
-  // Track active image updates
+  // Track active image updates and Log View
   useEffect(() => {
-    if (car?.image) setActiveImage(car.image);
+    if (car?.image) {
+      setActiveImage(car.image);
+      logCarView(car.id);
+    }
   }, [car]);
 
   // Similar Vehicles Logic - Pull from live or fallback

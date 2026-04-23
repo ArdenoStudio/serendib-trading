@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<'inventory'|'analytics'|'leads'>('inventory');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [traffic, setTraffic] = useState<{date: string, visitor_count: number, page_views: number}[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVehicle, setModalVehicle] = useState<VehicleFormData | null | undefined>(undefined);
   // undefined = closed, null = new, VehicleFormData = edit
@@ -45,9 +46,15 @@ export default function AdminDashboard() {
     if (!error) setLeads(data ?? []);
   };
 
+  const fetchTraffic = async () => {
+    const { data, error } = await supabase.from('site_traffic').select('*').order('date', { ascending: false }).limit(7);
+    if (!error) setTraffic(data ?? []);
+  };
+
   useEffect(() => {
     fetchVehicles();
     fetchLeads();
+    fetchTraffic();
 
     // Realtime subscription — any change to 'cars' re-fetches list
     const channel = supabase.channel('dashboard-cars')
@@ -76,7 +83,10 @@ export default function AdminDashboard() {
     }, {});
     const sortedBT = Object.entries(bodyTypes).sort((a: any, b: any) => b[1] - a[1]);
 
-    return { total, available, sold, totalValue, avgPrice, topMake, sortedBT };
+    // Most Viewed
+    const topViewed = [...vehicles].sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 4);
+
+    return { total, available, sold, totalValue, avgPrice, topMake, sortedBT, topViewed };
   }, [vehicles]);
 
   if (loading && vehicles.length === 0) return <Loader />;
@@ -315,55 +325,89 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="p-8 bg-white/[0.02] border border-white/10 rounded-[32px]">
-                <h4 className="text-sm font-black italic uppercase tracking-widest text-[#D4AF37] mb-8">Asset Allocation</h4>
-                <div className="space-y-6">
-                  {[
-                    { label:'Available Stock', count:stats.available, pct:stats.total>0?(stats.available/stats.total)*100:0, color:'bg-white' },
-                    { label:'Sold Records', count:stats.sold, pct:stats.total>0?(stats.sold/stats.total)*100:0, color:'bg-[#D4AF37]' },
-                  ].map(({ label, count, pct, color }) => (
-                    <div key={label} className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
-                        <span className="text-gray-400">{label}</span>
-                        <span>{count} ({pct.toFixed(0)}%)</span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Asset Performance (Most Viewed) */}
+              <div className="lg:col-span-8 p-8 bg-white/[0.02] border border-white/10 rounded-[32px]">
+                <div className="flex items-center justify-between mb-8">
+                  <h4 className="text-sm font-black italic uppercase tracking-widest text-[#D4AF37]">Top Interests (Clicks)</h4>
+                  <BarChart2 className="w-4 h-4 text-gray-600"/>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {stats.topViewed.map(v => (
+                    <div key={v.id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-all group">
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 shrink-0 border border-white/5">
+                        <img src={v.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt=""/>
                       </div>
-                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                        <motion.div initial={{width:0}} animate={{width:`${pct}%`}} transition={{duration:1,ease:[0.16,1,0.3,1]}} className={`h-full ${color} rounded-full`}/ >
+                      <div className="flex-1 min-w-0">
+                        <h5 className="text-[11px] font-black uppercase tracking-widest truncate">{v.make} {v.model}</h5>
+                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest italic">LKR {(v.price/1000000).toFixed(1)}M</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-black italic text-[#D4AF37] leading-none">{v.views || 0}</p>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-gray-600 mt-1">Clicks</p>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Body Type Distribution */}
-              <div className="p-8 bg-white/[0.02] border border-white/10 rounded-[32px]">
-                <h4 className="text-sm font-black italic uppercase tracking-widest text-[#D4AF37] mb-8">Fleet Composition</h4>
-                <div className="space-y-5">
-                  {stats.sortedBT.map(([bt, count]: any) => {
-                    const pct = (count / stats.total) * 100;
-                    return (
-                      <div key={bt} className="group">
-                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
-                          <span className="text-gray-400">{bt}</span>
-                          <span>{count} Units</span>
+                
+                {/* Traffic Trends Chart */}
+                <div className="mt-12 pt-12 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-8">
+                    <h4 className="text-sm font-black italic uppercase tracking-widest text-[#D4AF37]">Traffic Evolution</h4>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Last 7 Days</span>
+                  </div>
+                  <div className="flex items-end gap-3 h-32">
+                    {traffic.length === 0 ? (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-gray-600 italic">Tracking started... waiting for data</div>
+                    ) : traffic.slice().reverse().map((t, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                        <div className="w-full bg-white/5 rounded-t-lg relative flex items-end h-full">
+                          <motion.div 
+                            initial={{ height: 0 }}
+                            animate={{ height: `${(t.page_views / Math.max(...traffic.map(x=>x.page_views), 1)) * 100}%` }}
+                            className="w-full bg-[#D4AF37]/20 group-hover:bg-[#D4AF37]/40 transition-colors rounded-t-lg"
+                          />
                         </div>
-                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                          <motion.div initial={{width:0}} animate={{width:`${pct}%`}} className="h-full bg-[#D4AF37]"/>
-                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-tighter text-gray-600">{new Date(t.date).toLocaleDateString(undefined, {weekday:'short'})}</span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="p-8 bg-[#D4AF37] text-black rounded-[32px] relative overflow-hidden group">
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"/>
-                <Activity className="w-10 h-10 mb-6 relative z-10"/>
-                <h4 className="text-xl font-black italic uppercase tracking-tighter mb-3 leading-tight relative z-10">Operational<br/>Intelligence</h4>
-                <p className="text-xs font-bold opacity-60 mb-6 max-w-xs uppercase tracking-wide relative z-10">Real-time sync active. All changes reflect instantly on the showroom site.</p>
-                <button onClick={()=>setTab('leads')} className="px-6 py-2.5 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all relative z-10">
-                  View Leads
-                </button>
+
+              {/* Composition & Operational Card */}
+              <div className="lg:col-span-4 space-y-8">
+                <div className="p-8 bg-white/[0.02] border border-white/10 rounded-[32px]">
+                  <h4 className="text-sm font-black italic uppercase tracking-widest text-[#D4AF37] mb-8">Fleet Composition</h4>
+                  <div className="space-y-5">
+                    {stats.sortedBT.map(([bt, count]: any) => {
+                      const pct = (count / stats.total) * 100;
+                      return (
+                        <div key={bt} className="group">
+                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                            <span className="text-gray-400">{bt}</span>
+                            <span>{count} Units</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <motion.div initial={{width:0}} animate={{width:`${pct}%`}} className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F3D67E]"/>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="p-8 bg-[#D4AF37] text-black rounded-[32px] relative overflow-hidden group">
+                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"/>
+                  <TrendingUp className="w-10 h-10 mb-6 relative z-10"/>
+                  <h4 className="text-xl font-black italic uppercase tracking-tighter mb-3 leading-tight relative z-10">Intelligent Tracking</h4>
+                  <p className="text-xs font-bold opacity-70 mb-6 uppercase tracking-wide relative z-10 leading-relaxed">
+                    Live analytics enabled. Monitoring {traffic[0]?.visitor_count || 0} active visitors today across the platform.
+                  </p>
+                  <button onClick={()=>setTab('leads')} className="px-6 py-2.5 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all relative z-10">
+                    Acquisition Hub
+                  </button>
+                </div>
               </div>
             </div>
           </div>

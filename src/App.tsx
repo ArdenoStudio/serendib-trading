@@ -14,10 +14,15 @@ import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
 import { Analytics } from "@vercel/analytics/react";
 
+import { logPageView } from './lib/supabase';
+
 export default function App() {
   const location = useLocation();
 
   useEffect(() => {
+    // Analytics: Log page view
+    logPageView();
+
     // Lenis Smooth Scroll
     const lenis = new Lenis({
       duration: 1.2,
