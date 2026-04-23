@@ -67,7 +67,16 @@ export default function AdminDashboard() {
     const topMake = makes.length > 0
       ? [...makes].sort((a,b) => makes.filter(x=>x===b).length - makes.filter(x=>x===a).length)[0]
       : 'N/A';
-    return { total, available, sold, totalValue, avgPrice, topMake };
+    
+    // Distribution by Body Type
+    const bodyTypes = vehicles.reduce((acc: any, v) => {
+      const bt = v.bodyType || 'Unknown';
+      acc[bt] = (acc[bt] || 0) + 1;
+      return acc;
+    }, {});
+    const sortedBT = Object.entries(bodyTypes).sort((a: any, b: any) => b[1] - a[1]);
+
+    return { total, available, sold, totalValue, avgPrice, topMake, sortedBT };
   }, [vehicles]);
 
   if (loading && vehicles.length === 0) return <Loader />;
@@ -320,10 +329,31 @@ export default function AdminDashboard() {
                         <span>{count} ({pct.toFixed(0)}%)</span>
                       </div>
                       <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                        <motion.div initial={{width:0}} animate={{width:`${pct}%`}} transition={{duration:1,ease:[0.16,1,0.3,1]}} className={`h-full ${color} rounded-full`}/>
+                        <motion.div initial={{width:0}} animate={{width:`${pct}%`}} transition={{duration:1,ease:[0.16,1,0.3,1]}} className={`h-full ${color} rounded-full`}/ >
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Body Type Distribution */}
+              <div className="p-8 bg-white/[0.02] border border-white/10 rounded-[32px]">
+                <h4 className="text-sm font-black italic uppercase tracking-widest text-[#D4AF37] mb-8">Fleet Composition</h4>
+                <div className="space-y-5">
+                  {stats.sortedBT.map(([bt, count]: any) => {
+                    const pct = (count / stats.total) * 100;
+                    return (
+                      <div key={bt} className="group">
+                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                          <span className="text-gray-400">{bt}</span>
+                          <span>{count} Units</span>
+                        </div>
+                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div initial={{width:0}} animate={{width:`${pct}%`}} className="h-full bg-[#D4AF37]"/>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div className="p-8 bg-[#D4AF37] text-black rounded-[32px] relative overflow-hidden group">
