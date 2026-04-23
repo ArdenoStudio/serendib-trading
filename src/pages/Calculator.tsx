@@ -46,7 +46,7 @@ export default function Calculator() {
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">Financial Engineering</span>
             </div>
 
-            <h1 className="text-6xl md:text-9xl font-black tracking-[-0.08em] uppercase leading-[0.8]">
+            <h1 className="text-5xl md:text-9xl font-black tracking-[-0.08em] uppercase leading-[0.8]">
               Capital <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Bespoke</span>
             </h1>

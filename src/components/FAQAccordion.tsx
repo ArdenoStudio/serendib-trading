@@ -37,7 +37,7 @@ export default function FAQAccordion() {
         >
           <button 
             onClick={() => setOpenIndex(openIndex === index ? null : index)} 
-            className="w-full px-10 py-8 flex items-center justify-between text-left focus:outline-none group"
+            className="w-full px-6 md:px-10 py-6 md:py-8 flex items-center justify-between text-left focus:outline-none group"
           >
             <div className="flex items-center gap-4">
                 <HelpCircle className={`w-5 h-5 transition-colors duration-500 ${openIndex === index ? 'text-[#D4AF37]' : 'text-gray-600'}`} />
@@ -61,7 +61,7 @@ export default function FAQAccordion() {
                 exit={{ height: 0, opacity: 0 }} 
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="px-10 pb-10">
+                <div className="px-6 md:px-10 pb-8 md:pb-10">
                     <div className="pt-6 border-t border-white/5 text-[15px] leading-relaxed font-medium text-gray-400 max-w-3xl">
                         {faq.answer}
                     </div>

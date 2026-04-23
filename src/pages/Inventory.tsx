@@ -212,7 +212,7 @@ export default function Inventory() {
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Showroom Collection</span>
             </div>
 
-            <h1 className="text-6xl md:text-[10rem] font-black tracking-[-0.08em] leading-[0.8] uppercase">
+            <h1 className="text-5xl md:text-[10rem] font-black tracking-[-0.08em] leading-[0.8] uppercase">
               Master <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Inventory</span>
             </h1>

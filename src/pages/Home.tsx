@@ -155,14 +155,7 @@ export default function Home() {
               className="mb-6 md:mb-10 flex flex-col uppercase relative"
               style={{ textShadow: '0 20px 40px rgba(0,0,0,0.8)' }}
             >
-              <div className="overflow-hidden">
-                <motion.span 
-                  variants={{
-                    hidden: { y: "100%", opacity: 0 },
-                    visible: { y: 0, opacity: 1 }
-                  }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-6xl sm:text-[100px] md:text-[120px] lg:text-[160px] leading-[0.8] tracking-[-0.08em] text-white font-black drop-shadow-2xl"
+                  className="block text-5xl sm:text-[100px] md:text-[120px] lg:text-[160px] leading-[0.8] tracking-[-0.08em] text-white font-black drop-shadow-2xl"
                 >
                   Drive
                 </motion.span>
@@ -174,7 +167,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-4xl sm:text-[80px] md:text-[100px] lg:text-[120px] leading-[0.85] tracking-[-0.06em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black drop-shadow-lg"
+                  className="block text-4xl sm:text-[60px] md:text-[100px] lg:text-[120px] leading-[0.85] tracking-[-0.08em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black drop-shadow-lg"
                 >
                   Your Way.
                 </motion.span>
@@ -677,7 +670,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== TRADE-IN SECTION (DARK) ===== */}
       {/* ===== TRADE-IN SECTION (DARK) ===== */}
       <section className="py-32 relative overflow-hidden text-center bg-[#020617]">
         {/* Cinematic Backdrop Glow */}

@@ -55,7 +55,7 @@ export default function About() {
               <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Excellence Since 2010</span>
             </div>
             
-            <h1 className="text-6xl md:text-[10rem] font-black tracking-[-0.08em] leading-[0.8] uppercase">
+            <h1 className="text-4xl md:text-[10rem] font-black tracking-[-0.08em] leading-[0.8] uppercase">
               The <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Serendib</span> <br /> 
               Legacy
             </h1>

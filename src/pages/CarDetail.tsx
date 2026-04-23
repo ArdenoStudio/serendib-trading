@@ -226,7 +226,7 @@ export default function CarDetail() {
                 <div className="flex items-center gap-3">
                   <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">{car.make} ⋅ {car.year} Edition</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase">
+                <h1 className="text-4xl md:text-7xl font-black leading-[0.9] tracking-[-0.08em] uppercase">
                   {car.model}
                 </h1>
                 <div className="flex items-end gap-3 pt-4 border-t border-white/5 mt-6 pt-6">
@@ -353,9 +353,7 @@ export default function CarDetail() {
 
 
       <Footer />
-      <div className="hidden lg:block">
-        <WhatsAppFloat />
-      </div>
+      <WhatsAppFloat />
     </div>
   );
 }
