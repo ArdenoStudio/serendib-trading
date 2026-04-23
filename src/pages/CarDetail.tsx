@@ -143,7 +143,7 @@ export default function CarDetail() {
           <div className="lg:col-span-7 space-y-8">
             <motion.div 
               layoutId={`car-image-${car.id}`}
-              className="aspect-[16/10] bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-white/5 relative group shadow-2xl"
+              className="aspect-[16/11] bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-white/5 relative group shadow-2xl"
             >
               <AnimatePresence mode="wait">
                 <motion.img 

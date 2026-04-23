@@ -4,7 +4,7 @@ import {
   Plus, Edit2, Trash2, CheckCircle2, LayoutDashboard, Car, LogOut,
   Search, Image as ImageIcon, PieChart, TrendingUp, DollarSign,
   Activity, Users, Phone, Calendar as CalendarIcon, ChevronLeft,
-  AlertTriangle,
+  AlertTriangle, BarChart2,
 } from 'lucide-react';
 import { supabase, signOut } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
