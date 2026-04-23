@@ -99,6 +99,18 @@ export default function Inventory() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Sync filters with URL parameters when they change
+  useEffect(() => {
+    setFilters({
+      condition: searchParams.get('condition') || 'all',
+      make: searchParams.get('make') || '',
+      bodyType: searchParams.get('bodyType') || '',
+      fuel: searchParams.get('fuel') || '',
+      transmission: searchParams.get('transmission') || '',
+      maxPrice: Number(searchParams.get('maxPrice')) || 150000000
+    });
+  }, [searchParams]);
+
   const filteredCars = useMemo(() => {
     let result = [...cars];
     
@@ -117,28 +129,29 @@ export default function Inventory() {
       result = result.filter(v => v.condition.toLowerCase() === filters.condition.toLowerCase());
     }
     if (filters.make) {
-      result = result.filter(v => v.make === filters.make);
+      result = result.filter(v => v.make.toLowerCase() === filters.make.toLowerCase());
     }
     if (filters.bodyType) {
-      result = result.filter(v => (v as any).bodyType === filters.bodyType);
+      const bt = (v: any) => (v.bodyType || v.body_type || '').toLowerCase();
+      result = result.filter(v => bt(v) === filters.bodyType.toLowerCase());
     }
     if (filters.fuel) {
-      result = result.filter(v => v.fuel === filters.fuel);
+      result = result.filter(v => (v.fuel || '').toLowerCase() === filters.fuel.toLowerCase());
     }
     if (filters.transmission) {
-      result = result.filter(v => v.transmission === filters.transmission);
+      result = result.filter(v => (v.transmission || '').toLowerCase() === filters.transmission.toLowerCase());
     }
-    result = result.filter(v => v.price <= filters.maxPrice);
+    result = result.filter(v => (v.price || 0) <= filters.maxPrice);
 
     // Sorting
     if (sortBy === 'Price: Low to High') {
-      result.sort((a, b) => a.price - b.price);
+      result.sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sortBy === 'Price: High to Low') {
-      result.sort((a, b) => b.price - a.price);
+      result.sort((a, b) => (b.price || 0) - (a.price || 0));
     } else if (sortBy === 'Newest First') {
-      result.sort((a, b) => b.year - a.year);
+      result.sort((a, b) => (b.year || 0) - (a.year || 0));
     } else if (sortBy === 'Mileage: Low to High') {
-      result.sort((a, b) => a.mileage - b.mileage);
+      result.sort((a, b) => (a.mileage || 0) - (b.mileage || 0));
     }
 
     return result;

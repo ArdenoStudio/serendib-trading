@@ -20,14 +20,27 @@ export default function Home() {
   const [cars, setCars] = useState<Car[]>(carsData);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchLiveVehicles = async () => {
-      const { data, error } = await supabase.from('cars').select('*');
+  const fetchLiveVehicles = async () => {
+    try {
+      const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
       if (!error && data) {
         setCars(data);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch from Supabase:', err);
+    }
+  };
+
+  useEffect(() => {
     fetchLiveVehicles();
+
+    // Realtime: re-fetch whenever anything changes
+    const channel = supabase
+      .channel('home-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchLiveVehicles)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   
@@ -399,7 +412,7 @@ export default function Home() {
             }}
             whileHover={{ transition: { duration: 1000000 } }} // "Pause" trick
           >
-            {[...carsData, ...carsData].map((car, i) => (
+            {((cars.length > 0 ? [...cars, ...cars] : carsData)).map((car, i) => (
               <motion.div 
                 key={`${car.id}-${i}`}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -530,6 +543,14 @@ export default function Home() {
                 <CarCard car={car} />
               </motion.div>
             ))}
+            {filteredCars.length === 0 && (
+              <div className="col-span-full py-20 flex flex-col items-center gap-6 opacity-40">
+                <p className="text-[10px] font-black uppercase tracking-[0.5em]">No {activeTab} inventory available</p>
+                <LiquidButton asChild>
+                   <Link to="/contact">Request Bespoke Sourcing</Link>
+                </LiquidButton>
+              </div>
+            )}
           </div>
 
           <div className="mt-24 flex justify-center">
