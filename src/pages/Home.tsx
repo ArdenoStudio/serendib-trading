@@ -155,6 +155,13 @@ export default function Home() {
               className="mb-6 md:mb-10 flex flex-col uppercase relative"
               style={{ textShadow: '0 20px 40px rgba(0,0,0,0.8)' }}
             >
+              <div className="overflow-hidden">
+                <motion.span 
+                  variants={{
+                    hidden: { y: "100%", opacity: 0 },
+                    visible: { y: 0, opacity: 1 }
+                  }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                   className="block text-5xl sm:text-[100px] md:text-[120px] lg:text-[160px] leading-[0.8] tracking-[-0.08em] text-white font-black drop-shadow-2xl"
                 >
                   Drive
