@@ -133,7 +133,7 @@ export default function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
                   <span className="relative inline-flex rounded-full size-2 bg-[#D4AF37]"></span>
                 </span>
-                <p className="uppercase tracking-[0.2em] font-bold text-[#D4AF37] text-[10px] md:text-xs">
+                <p className="uppercase tracking-[0.4em] font-black text-[#D4AF37] text-[10px]">
                   Welcome to Serendib Trading
                 </p>
               </motion.div>
@@ -161,7 +161,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-4xl sm:text-[72px] md:text-[90px] lg:text-[110px] leading-[0.85] tracking-[-0.08em] text-white font-black"
+                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.9] tracking-[-0.08em] text-white font-black"
                 >
                   Drive
                 </motion.span>
@@ -173,7 +173,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-3xl sm:text-[54px] md:text-[76px] lg:text-[90px] leading-[0.85] tracking-[-0.08em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black"
+                  className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.9] tracking-[-0.08em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black"
                 >
                   Your Way.
                 </motion.span>
@@ -185,7 +185,7 @@ export default function Home() {
                initial={{ opacity: 0, y: 15 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ duration: 0.8, delay: 0.5 }}
-              className="mb-10 max-w-[500px] text-[15px] md:text-lg font-medium leading-relaxed text-white/80 drop-shadow-md text-pretty relative z-10"
+              className="mb-10 max-w-[500px] text-base md:text-lg font-medium leading-relaxed text-white/80 drop-shadow-md text-pretty relative z-10"
             >
               The pinnacle of automotive excellence. Discover outclass performance, unparalleled luxury, and a curated selection of the world's most desired vehicles.
             </motion.p>
@@ -261,7 +261,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
-            <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-none">
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
               Body Type
             </h2>
           </div>
@@ -333,8 +333,8 @@ export default function Home() {
           </motion.div>
           
           <div className="flex flex-col items-center">
-            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
-            <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-none">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
               Make
             </h2>
           </div>
@@ -412,7 +412,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Explore our</span>
-            <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-none">
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
               Featured Arrivals
             </h2>
           </div>
@@ -518,7 +518,7 @@ export default function Home() {
           
           <div className="flex flex-col items-center mb-12">
             <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Discover our</span>
-            <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-none">
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
               Available Inventory
             </h2>
           </div>
@@ -538,7 +538,7 @@ export default function Home() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 aria-label={`View ${tab} inventory`}
-                className={`relative z-10 flex-1 px-8 py-4 text-[11px] font-black tracking-[0.3em] uppercase transition-colors duration-500 ${
+                className={`relative z-10 flex-1 px-8 py-4 text-[10px] font-black tracking-[0.4em] uppercase transition-colors duration-500 ${
                   activeTab === tab ? 'text-black' : 'text-white/60 hover:text-white'
                 }`}
               >
@@ -606,7 +606,7 @@ export default function Home() {
               <div className="w-12 h-[1px] bg-[#D4AF37]" />
             </motion.div>
             
-            <h2 className="text-4xl md:text-7xl font-serif text-white tracking-tight leading-none drop-shadow-2xl">
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none drop-shadow-2xl">
               Crafting the Ultimate <br /> <span className="text-white">Automotive Experience</span>
             </h2>
           </div>
@@ -686,7 +686,7 @@ export default function Home() {
             <div className="w-12 h-[1px] bg-[#D4AF37]" />
           </motion.div>
 
-          <h2 className="text-4xl md:text-7xl font-serif text-white tracking-tight leading-none mb-8">
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-8">
             Upgrade Your Drive
           </h2>
           
@@ -729,7 +729,7 @@ export default function Home() {
               <div className="w-12 h-[1px] bg-[#D4AF37]" />
             </motion.div>
             
-            <h2 className="text-4xl md:text-7xl font-serif text-white tracking-tight leading-none mb-8 drop-shadow-2xl">
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-8 drop-shadow-2xl">
               Why Choose <span className="text-[#D4AF37]">Serendib</span>
             </h2>
             
@@ -792,7 +792,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[2000ms] pointer-events-none" />
 
             <div className="flex-1 text-center lg:text-left">
-              <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-tight mb-4 drop-shadow-2xl">
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight mb-4 drop-shadow-2xl">
                 Ready to find <br className="hidden md:block"/> your <span className="text-[#D4AF37]">dream car?</span>
               </h2>
               <p className="text-gray-400 text-lg md:text-xl font-light leading-relaxed max-w-xl">

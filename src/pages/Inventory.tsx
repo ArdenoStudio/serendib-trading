@@ -215,12 +215,12 @@ export default function Inventory() {
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Showroom Collection</span>
             </div>
 
-            <h1 className="text-4xl md:text-7xl font-black tracking-[-0.08em] leading-[0.85] uppercase">
+            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] leading-[0.9] uppercase">
               Master <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Inventory</span>
             </h1>
             <div className="max-w-xl mx-auto space-y-8">
-              <p className="text-gray-400 font-medium text-sm md:text-xl leading-relaxed">
+              <p className="text-gray-400 font-medium text-base md:text-lg leading-relaxed">
                 A meticulously curated selection of the world's most desired automotive masterpieces, verified by our experts.
               </p>
               
@@ -233,7 +233,7 @@ export default function Inventory() {
                 ].map((s, idx) => (
                   <div key={idx} className="flex flex-col items-center gap-1">
                     <span className="text-2xl font-black text-white">{s.val}</span>
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37]/60">{s.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]/60">{s.label}</span>
                   </div>
                 ))}
               </div>

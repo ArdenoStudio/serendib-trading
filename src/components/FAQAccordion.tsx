@@ -62,7 +62,7 @@ export default function FAQAccordion() {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="px-6 md:px-10 pb-8 md:pb-10">
-                    <div className="pt-6 border-t border-white/5 text-[15px] leading-relaxed font-medium text-gray-400 max-w-3xl">
+                    <div className="pt-6 border-t border-white/5 text-base leading-relaxed font-medium text-gray-400 max-w-3xl">
                         {faq.answer}
                     </div>
                 </div>

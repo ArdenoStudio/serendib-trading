@@ -45,7 +45,7 @@ export default function StatsCounter({ end, label, suffix = '' }: StatsCounterPr
         initial={{ y: 10, opacity: 0 }}
         animate={isInView ? { y: 0, opacity: 1 } : {}}
         transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        className="text-[10px] md:text-[12px] tracking-[0.4em] uppercase font-black text-gray-500 group-hover:text-white transition-colors duration-700 text-center"
+        className="text-[10px] tracking-[0.4em] uppercase font-black text-gray-500 group-hover:text-white transition-colors duration-700 text-center"
       >
         {label}
       </motion.div>

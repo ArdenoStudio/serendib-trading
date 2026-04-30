@@ -191,7 +191,7 @@ export default function CarDetail() {
             {/* In-depth Narrative */}
             <div className="hidden lg:block space-y-16 pt-16 border-t border-white/5">
               <div className="space-y-6">
-                <h3 className="text-3xl font-black uppercase tracking-tighter">The <span className="text-[#D4AF37]">Experience</span></h3>
+                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">The <span className="text-[#D4AF37]">Experience</span></h3>
                 <p className="text-gray-400 text-xl leading-relaxed font-light">
                   "{car.description || "An exceptional vehicle that combines performance, luxury, and unmatched reliability. This masterpiece is meticulously maintained and ready for its next journey."}"
                 </p>
@@ -226,7 +226,7 @@ export default function CarDetail() {
                 <div className="flex items-center gap-3">
                   <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">{car.make} ⋅ {car.year} Edition</span>
                 </div>
-                <h1 className="text-4xl md:text-7xl font-black leading-[0.9] tracking-[-0.08em] uppercase">
+                <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-[-0.08em] uppercase">
                   {car.model}
                 </h1>
                 <div className="flex items-end gap-3 pt-4 border-t border-white/5 mt-6 pt-6">
@@ -297,7 +297,7 @@ export default function CarDetail() {
                    <Calendar className="w-24 h-24" />
                 </div>
                 <div className="space-y-2 relative z-10">
-                  <h3 className="text-2xl font-black uppercase tracking-tighter">Private Viewing</h3>
+                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">Private Viewing</h3>
                   <p className="text-[13px] text-gray-500 font-medium">Coordinate a personalized showroom experience.</p>
                 </div>
                 
@@ -335,7 +335,7 @@ export default function CarDetail() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="space-y-4 text-center md:text-left">
                 <p className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Comparative Portfolio</p>
-                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Similar <span className="text-gray-500">Acquisitions</span></h2>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Similar <span className="text-gray-500">Acquisitions</span></h2>
               </div>
               <Link to="/inventory" className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#D4AF37] transition-colors border-b border-transparent hover:border-[#D4AF37] pb-1">View Collection &rarr;</Link>
             </div>

@@ -37,13 +37,13 @@ export default function Contact() {
                className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 backdrop-blur-xl"
             >
                 <div className="size-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
-                <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[9px]">The Concierge Experience</span>
+                <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Concierge Experience</span>
             </motion.div>
             
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-7xl font-black tracking-[-0.08em] uppercase leading-[0.85]"
+              className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] uppercase leading-[0.9]"
             >
               Elevated <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Engagement</span>
@@ -53,7 +53,7 @@ export default function Contact() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-gray-500 font-bold uppercase tracking-[0.1em] text-sm md:text-base leading-relaxed max-w-2xl mx-auto"
+              className="text-gray-500 font-bold uppercase tracking-[0.1em] text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
             >
               For acquisitions, appraisals, or private viewings, our specialists <span className="text-white">provide a bespoke level of service</span> since 2010.
             </motion.p>
@@ -111,8 +111,8 @@ export default function Contact() {
             {/* Main Section (Form) */}
             <div className="lg:col-span-8 p-10 md:p-20 space-y-16 bg-gradient-to-br from-white/[0.01] to-transparent">
               <div className="space-y-4">
-                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">Bespoke <span className="text-gray-500">Inquiry</span></h2>
-                <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Response window: 2 business hours.</p>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">Bespoke <span className="text-gray-500">Inquiry</span></h2>
+                <p className="text-gray-500 font-black uppercase tracking-[0.4em] text-[10px]">Response window: 2 business hours.</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-16">

@@ -55,12 +55,12 @@ export default function About() {
               <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Excellence Since 2010</span>
             </div>
             
-            <h1 className="text-4xl md:text-7xl font-black tracking-[-0.08em] leading-[0.85] uppercase">
+            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] leading-[0.9] uppercase">
               The <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Serendib</span> <br /> 
               Legacy
             </h1>
 
-            <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-medium leading-relaxed">
+            <p className="max-w-2xl mx-auto text-gray-400 text-base md:text-lg font-medium leading-relaxed">
                 Defining the pinnacle of automotive trading in Sri Lanka for over a decade through absolute transparency.
             </p>
           </motion.div>
@@ -91,7 +91,7 @@ export default function About() {
             </motion.p>
             <div className="mt-12 flex flex-col items-center">
                 <div className="w-12 h-[1px] bg-[#D4AF37] mb-6" />
-                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">The Serendib Philosophy</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">The Serendib Philosophy</span>
             </div>
         </div>
       </section>
@@ -160,7 +160,7 @@ export default function About() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="space-y-4">
               <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-xs">Excellence Manifested</p>
-              <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase leading-[0.85]">The Serendib <br /> Standard</h2>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.85]">The Serendib <br /> Standard</h2>
             </div>
             <div className="space-y-6 max-w-md">
                 <p className="text-gray-400 font-medium leading-relaxed">
