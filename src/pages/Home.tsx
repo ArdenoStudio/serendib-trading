@@ -222,9 +222,67 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Subtle Scroll Indicator */}
+        {/* ===== HERO FOOTER / STATS ===== */}
+        <div className="mt-auto relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-10 pb-12 lg:pb-16 flex flex-col md:flex-row items-end justify-between gap-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="flex flex-wrap gap-10 md:gap-20"
+          >
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Selection</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">40+</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Verified Units</span>
+              </div>
+            </div>
+            <div className="w-px h-12 bg-white/10 hidden md:block" />
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Global Partners</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">12</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Premier Brands</span>
+              </div>
+            </div>
+            <div className="w-px h-12 bg-white/10 hidden md:block" />
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Established</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">2010</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Pure Heritage</span>
+              </div>
+            </div>
+          </motion.div>
 
-
+          {/* Enhanced Scroll Indicator */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 1.2 }}
+            className="flex items-center gap-6 group cursor-pointer"
+            onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+          >
+            <div className="text-right hidden sm:block">
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-1">Scroll to</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white group-hover:text-[#D4AF37] transition-colors">Discover More</p>
+            </div>
+            <div className="relative w-8 h-14 rounded-full border-2 border-white/10 flex justify-center p-2 group-hover:border-[#D4AF37]/50 transition-colors">
+              <motion.div 
+                animate={{ 
+                  y: [0, 20, 0],
+                  opacity: [1, 0.5, 1]
+                }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 2, 
+                  ease: "easeInOut" 
+                }}
+                className="w-1.5 h-3 bg-[#D4AF37] rounded-full"
+              />
+            </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* INFINITE BRAND MARQUEE */}
