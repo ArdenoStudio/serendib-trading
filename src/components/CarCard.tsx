@@ -76,14 +76,14 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
       <motion.div
         whileHover={{ y: -10 }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        className="overflow-hidden rounded-3xl bg-white/[0.03] backdrop-blur-lg border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-[border-color,background-color,box-shadow,opacity,transform] duration-500 relative h-full flex flex-col focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+        className="overflow-hidden rounded-3xl bg-white/[0.03] border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-all duration-500 relative h-full flex flex-col focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] will-change-transform"
       >
         {/* Background Glow on Hover */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
         {/* Compare limit toast */}
         {compareToast && (
-          <div className="absolute top-4 left-4 right-4 z-30 px-4 py-2.5 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl text-[11px] font-bold text-white/80 text-center shadow-lg">
+          <div className="absolute top-4 left-4 right-4 z-30 px-4 py-2.5 bg-black/95 border border-white/10 rounded-xl text-[11px] font-bold text-white/80 text-center shadow-lg">
             Max 2 vehicles for comparison
           </div>
         )}
@@ -105,7 +105,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             alt={`${car.make} ${car.model}`}
             width={384}
             height={240}
-            className={`w-full h-full object-cover transition-[transform,opacity,filter] duration-700 ${car.is_sold ? 'opacity-40 grayscale' : 'group-hover:grayscale-0'}`}
+            className={`w-full h-full object-cover transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"
@@ -122,24 +122,24 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
 
           {/* Quick Actions */}
           <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
-            <button 
+            <button
               onClick={toggleWishlist}
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 active:scale-[0.96] ${
-                isWishlisted 
-                ? 'bg-red-500 border-red-400 text-white shadow-lg' 
-                : 'bg-black/40 border-white/10 text-white hover:bg-white/10'
+              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
+                isWishlisted
+                ? 'bg-red-500 border-red-400 text-white shadow-lg'
+                : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
               }`}
             >
               <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
             </button>
-            <button 
+            <button
               onClick={toggleCompare}
               aria-label={isComparing ? "Remove from comparison" : "Add to comparison"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 active:scale-[0.96] ${
-                isComparing 
-                ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-lg' 
-                : 'bg-black/40 border-white/10 text-white hover:bg-white/10'
+              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
+                isComparing
+                ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-lg'
+                : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
               }`}
             >
               <BarChart2 className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           {/* SOLD Badge */}
           {car.is_sold && (
             <div className="absolute inset-0 flex items-center justify-center z-20">
-              <span className="px-6 py-2 bg-red-600/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-full shadow-[0_0_30px_rgba(220,38,38,0.3)] border border-red-500/50">
+              <span className="px-6 py-2 bg-red-600/95 text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-full shadow-[0_0_30px_rgba(220,38,38,0.3)] border border-red-500/50">
                 Sold
               </span>
             </div>
@@ -157,11 +157,11 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
 
           {/* Year/Condition Caps — Bottom Left */}
           <div className="absolute bottom-6 left-6 z-20 flex gap-2">
-            <div className="bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg">
+            <div className="bg-black/70 border border-white/10 text-[#D4AF37] text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg">
               {car.year}
             </div>
             {car.condition && !car.is_sold && (
-              <div className={`bg-white/10 backdrop-blur-xl border border-white/10 text-white/80 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg`}>
+              <div className={`bg-black/50 border border-white/10 text-white/80 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg`}>
                 {car.condition}
               </div>
             )}

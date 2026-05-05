@@ -216,7 +216,7 @@ export default function Inventory() {
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="text-center space-y-8"
           >
-            <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 backdrop-blur-md">
+            <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10">
               <Database className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Showroom Collection</span>
             </div>
@@ -247,21 +247,17 @@ export default function Inventory() {
           </motion.div>
         </div>
         
-        {/* Animated Scroll Hint */}
-        <motion.div 
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 opacity-20"
-        >
+        {/* Animated Scroll Hint - CSS animation for better performance */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 opacity-20 animate-bounce-slow">
             <div className="w-[1px] h-12 bg-gradient-to-b from-white to-transparent" />
-        </motion.div>
+        </div>
       </section>
 
       {/* --- MAIN CURATION LAYOUT --- */}
       <div className="max-w-[1500px] mx-auto px-6 lg:px-10 pb-40">
         
         {/* Sticky Filters Bar */}
-        <div className="sticky top-20 z-40 mb-16 py-6 border-b border-white/5 bg-[#0d0b09]/80 backdrop-blur-xl">
+        <div className="sticky top-20 z-40 mb-16 py-6 border-b border-white/5 bg-[#0d0b09]/95">
            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
               {/* Search Field */}
               <div className="relative group w-full lg:max-w-md">
@@ -305,16 +301,11 @@ export default function Inventory() {
                             onClick={() => setIsSortOpen(!isSortOpen)}
                             className="flex items-center gap-2 text-[11px] font-black text-white hover:text-[#D4AF37] transition-all uppercase tracking-widest outline-none group active:scale-[0.98]"
                         >
-                            {sortBy === 'Newest First' ? 'Latest Arrival' : 
-                             sortBy === 'Price: Low to High' ? 'Value: Low → High' : 
-                             sortBy === 'Price: High to Low' ? 'Value: High → Low' : 
+                            {sortBy === 'Newest First' ? 'Latest Arrival' :
+                             sortBy === 'Price: Low to High' ? 'Value: Low → High' :
+                             sortBy === 'Price: High to Low' ? 'Value: High → Low' :
                              'Mileage: Low → High'}
-                            <motion.div
-                                animate={{ rotate: isSortOpen ? 180 : 0 }}
-                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                            >
-                                <ChevronDown className="w-3.5 h-3.5 text-[#D4AF37]" strokeWidth={3} />
-                            </motion.div>
+                            <ChevronDown className={`w-3.5 h-3.5 text-[#D4AF37] transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`} strokeWidth={3} />
                         </button>
 
                         <AnimatePresence>
@@ -400,9 +391,9 @@ export default function Inventory() {
                             Manufacturer
                         </label>
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setIsMakeOpen(!isMakeOpen)}
-                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none active:scale-[0.98] ${
+                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none active:scale-[0.98] ${
                                     isMakeOpen 
                                     ? 'border-[#C69320] shadow-[0_0_20px_rgba(198,147,32,0.15)] ring-1 ring-[#C69320]/20' 
                                     : 'border-white/10 hover:border-white/20'
@@ -411,12 +402,7 @@ export default function Inventory() {
                                 <span className={`truncate ${filters.make ? "text-white" : "text-gray-500"}`}>
                                     {filters.make || "All Makers"}
                                 </span>
-                                <motion.div
-                                    animate={{ rotate: isMakeOpen ? 180 : 0 }}
-                                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                                >
-                                    <ChevronDown className="w-4 h-4 text-[#D4AF37]/70" strokeWidth={2.5} />
-                                </motion.div>
+                                <ChevronDown className={`w-4 h-4 text-[#D4AF37]/70 transition-transform duration-300 ${isMakeOpen ? 'rotate-180' : ''}`} strokeWidth={2.5} />
                             </button>
 
                             <AnimatePresence>
@@ -490,9 +476,9 @@ export default function Inventory() {
                             Body Architecture
                         </label>
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setIsBodyTypeOpen(!isBodyTypeOpen)}
-                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none active:scale-[0.98] ${
+                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none active:scale-[0.98] ${
                                     isBodyTypeOpen 
                                     ? 'border-[#C69320] shadow-[0_0_20px_rgba(198,147,32,0.15)] ring-1 ring-[#C69320]/20' 
                                     : 'border-white/10 hover:border-white/20'
@@ -501,12 +487,7 @@ export default function Inventory() {
                                 <span className={`truncate ${filters.bodyType ? "text-white" : "text-gray-500"}`}>
                                     {filters.bodyType || "All Styles"}
                                 </span>
-                                <motion.div
-                                    animate={{ rotate: isBodyTypeOpen ? 180 : 0 }}
-                                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                                >
-                                    <ChevronDown className="w-4 h-4 text-[#D4AF37]/70" strokeWidth={2.5} />
-                                </motion.div>
+                                <ChevronDown className={`w-4 h-4 text-[#D4AF37]/70 transition-transform duration-300 ${isBodyTypeOpen ? 'rotate-180' : ''}`} strokeWidth={2.5} />
                             </button>
 
                             <AnimatePresence>

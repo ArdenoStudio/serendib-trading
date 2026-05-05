@@ -34,6 +34,16 @@
   animation-play-state: paused;
 }
 
+/* Slow bounce animation for scroll hint - GPU optimized */
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+  will-change: transform;
+}
+
 @layer base {
   html {
     scrollbar-width: thin;
@@ -125,28 +135,41 @@ a, button, [role="button"], input, select, textarea, label, summary {
 /* Mobile: reduce expensive decorative blur blobs */
 @media (max-width: 767px) {
   /* Cap all backdrop-blur to 4px — prevents GPU overload on mobile */
-  .glass {
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-  }
-  .glass-panel {
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
+  .glass, .glass-panel, [class*="backdrop-blur"] {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
   }
 
   /* Hide pure-decoration blur glow blobs on mobile */
-  .blur-\[160px\], .blur-\[150px\], .blur-\[120px\] {
+  .blur-\[160px\], .blur-\[150px\], .blur-\[120px\], .blur-\[100px\] {
     display: none !important;
   }
 
   /* Disable noise grain on mobile — not visible at small size anyway */
   .bg-noise {
-    display: none;
+    display: none !important;
   }
 
   /* Simplify gradient overlays on mobile */
   .mix-blend-screen {
-    mix-blend-mode: normal;
+    mix-blend-mode: normal !important;
+  }
+
+  /* Reduce motion on mobile for better battery life */
+  @media (prefers-reduced-motion: no-preference) {
+    *, *::before, *::after {
+      animation-duration: 0.8s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.2s !important;
+    }
+    .animate-marquee {
+      animation-duration: 60s !important; /* Slower is less CPU intensive */
+    }
+  }
+
+  /* Optimize will-change usage on mobile */
+  .will-change-transform {
+    will-change: auto;
   }
 }
 

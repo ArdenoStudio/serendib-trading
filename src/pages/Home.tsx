@@ -323,7 +323,7 @@ export default function Home() {
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
               aria-label={`Browse ${type.name} vehicles`}
-              className="group relative flex flex-col items-center justify-center p-8 bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl transition-all duration-500 hover:bg-white/[0.05] hover:border-[#D4AF37]/40 h-full min-h-[220px] overflow-hidden"
+              className="group relative flex flex-col items-center justify-center p-8 bg-white/[0.02] border border-white/5 rounded-3xl transition-colors duration-500 hover:bg-white/[0.05] hover:border-[#D4AF37]/40 h-full min-h-[220px] overflow-hidden will-change-transform"
             >
               {/* Background Glow on Hover */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -336,7 +336,7 @@ export default function Home() {
                     width={160}
                     height={80}
                     loading="lazy"
-                    className="max-h-20 w-auto object-contain opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 invert"
+                    className="max-h-20 w-auto object-contain opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 invert will-change-transform"
                   />
                 </div>
                 
@@ -397,14 +397,14 @@ export default function Home() {
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(`/inventory?make=${brand.name}`)}
-              className="group relative flex flex-col items-center justify-center p-8 bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl transition-all duration-500 hover:bg-white/[0.05] hover:border-[#D4AF37]/40 h-[180px] overflow-hidden"
+              className="group relative flex flex-col items-center justify-center p-8 bg-white/[0.02] border border-white/5 rounded-3xl transition-colors duration-500 hover:bg-white/[0.05] hover:border-[#D4AF37]/40 h-[180px] overflow-hidden will-change-transform"
             >
               {/* Background Glow on Hover */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <div className="relative z-10 flex flex-col items-center w-full">
-                <div className="flex items-center justify-center w-full mb-6 text-white/40 group-hover:text-[#D4AF37] transition-all duration-500 group-hover:drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-                  <brand.icon className="w-12 h-12 object-contain transition-transform duration-700 group-hover:scale-110" />
+                <div className="flex items-center justify-center w-full mb-6 text-white/40 group-hover:text-[#D4AF37] transition-colors duration-500">
+                  <brand.icon className="w-12 h-12 object-contain transition-transform duration-700 group-hover:scale-110 will-change-transform" />
                 </div>
                 <span className="text-[10px] font-black tracking-[0.3em] uppercase text-white/50 group-hover:text-white transition-colors">
                   {brand.name}
@@ -423,7 +423,7 @@ export default function Home() {
           <button 
             aria-label="View all vehicle makes"
             onClick={() => navigate('/inventory')}
-            className="group px-10 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-white hover:border-[#D4AF37]/50 hover:bg-white/10 transition-all duration-500 flex items-center gap-4"
+            className="group px-10 py-4 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-white hover:border-[#D4AF37]/50 hover:bg-white/10 transition-all duration-500 flex items-center gap-4 will-change-transform"
           >
             <span>View All Makes</span>
             <span className="text-[#D4AF37] group-hover:translate-x-2 transition-transform duration-300">&rarr;</span>
