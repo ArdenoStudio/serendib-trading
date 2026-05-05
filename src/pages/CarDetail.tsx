@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settings, ShieldCheck, MapPin, Share2, Award, CheckCircle2 } from 'lucide-react';
-import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import CarCard from '../components/CarCard';
@@ -10,6 +9,7 @@ import { supabase, logCarView } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
+import SEO from '../components/SEO';
 
 export default function CarDetail() {
   const { id } = useParams();
@@ -35,16 +35,9 @@ export default function CarDetail() {
     fetchCar();
   }, [id]);
 
-  useEffect(() => {
-    if (car) {
-      document.title = `${car.year} ${car.make} ${car.model} | Serendib Trading`;
-      const meta = document.querySelector('meta[name="description"]');
-      if (meta) meta.setAttribute('content', `Explore the ${car.year} ${car.make} ${car.model} at Serendib Trading. LKR ${car.price.toLocaleString()}. ${car.condition} condition, ${car.mileage.toLocaleString()} KM.`);
-    }
-  }, [car]);
-
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
   const [activeImage, setActiveImage] = useState(car?.image || '');
+  const [copyToast, setCopyToast] = useState(false);
 
   // Track active image updates and Log View
   useEffect(() => {
@@ -67,7 +60,7 @@ export default function CarDetail() {
 
   if (!car) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-sans bg-black text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center font-sans bg-[#0d0b09] text-white">
         <h1 className="text-4xl font-black mb-6 uppercase tracking-tighter">Vehicle Not Found</h1>
         <Link to="/inventory" className="text-[#D4AF37] font-black uppercase tracking-widest text-xs border-b-2 border-[#D4AF37] pb-1 hover:text-white hover:border-white transition-all">
           Back to Inventory
@@ -109,14 +102,19 @@ export default function CarDetail() {
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      setCopyToast(true);
+      setTimeout(() => setCopyToast(false), 2500);
     }
   };
 
   return (
-    <div className="min-h-screen font-sans bg-black text-white overflow-x-hidden">
-      <Navbar />
-
+    <div className="min-h-screen font-sans bg-[#0d0b09] text-white overflow-x-hidden">
+      <SEO 
+        title={`${car.year} ${car.make} ${car.model}`}
+        description={`Explore the ${car.year} ${car.make} ${car.model} at Serendib Trading. LKR ${car.price.toLocaleString()}. ${car.condition} condition, ${car.mileage.toLocaleString()} KM.`}
+        ogImage={car.image}
+        canonical={`/car/${car.id}`}
+      />
       <main className="pt-40 pb-32 px-6 lg:px-10 max-w-[1400px] mx-auto">
         {/* Navigation & Actions */}
         <div className="flex items-center justify-between mb-16">
@@ -127,10 +125,16 @@ export default function CarDetail() {
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Collection
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 relative">
+            {copyToast && (
+              <span className="absolute right-14 px-3 py-1.5 bg-black/90 backdrop-blur-xl border border-white/10 rounded-lg text-[11px] font-bold text-white/80 whitespace-nowrap">
+                Link copied
+              </span>
+            )}
             <button 
               onClick={handleShare}
-              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+              aria-label="Share this vehicle"
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors active:scale-[0.96]"
             >
               <Share2 className="w-4 h-4 text-gray-400" />
             </button>
@@ -143,19 +147,19 @@ export default function CarDetail() {
           <div className="lg:col-span-7 space-y-8">
             <motion.div 
               layoutId={`car-image-${car.id}`}
-              className="aspect-[16/11] bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-white/5 relative group shadow-2xl"
+              className="aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl"
             >
               <AnimatePresence mode="wait">
-                <motion.img 
-                  key={activeImage}
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.6 }}
-                  src={activeImage} 
-                  alt={car.model} 
-                  className="w-full h-full object-cover"
-                />
+                  <motion.img 
+                    key={activeImage}
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.6 }}
+                    src={activeImage} 
+                    alt={car.model} 
+                    className="w-full h-full object-cover will-change-transform"
+                  />
               </AnimatePresence>
               
               <div className="absolute top-8 left-8 flex flex-col gap-3">
@@ -170,6 +174,8 @@ export default function CarDetail() {
                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">Serendib <br/> Certified</span>
                  </div>
               </div>
+              {/* Image Depth Outline */}
+              <div className="absolute inset-0 border border-white/10 pointer-events-none rounded-[40px]" />
             </motion.div>
 
             {/* Thumbnails Gallery */}
@@ -226,11 +232,11 @@ export default function CarDetail() {
                 <div className="flex items-center gap-3">
                   <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">{car.make} ⋅ {car.year} Edition</span>
                 </div>
-                <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-[-0.08em] uppercase">
+                <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-[-0.08em] uppercase text-wrap-balance">
                   {car.model}
                 </h1>
                 <div className="flex items-end gap-3 pt-4 border-t border-white/5 mt-6 pt-6">
-                  <div className="space-y-1">
+                  <div className="space-y-1 tabular-nums">
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Certified Investment</span>
                     <p className="text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tighter leading-none">LKR {car.price.toLocaleString()}</p>
                   </div>
@@ -245,7 +251,7 @@ export default function CarDetail() {
                   { label: 'Drive System', value: car.transmission, icon: Settings },
                   { label: 'Current Hub', value: 'Dehiwala Showroom', icon: MapPin },
                 ].map((spec, i) => (
-                  <div key={i} className="group p-6 bg-white/[0.03] border border-white/5 rounded-[32px] hover:bg-white/[0.05] transition-all duration-500">
+                  <div key={i} className="group p-6 bg-white/[0.03] border border-white/5 rounded-[32px] hover:bg-white/[0.05] transition-all duration-500 tabular-nums">
                     <div className="flex items-center gap-3 mb-3">
                        <spec.icon className="w-4 h-4 text-[#D4AF37]/60 group-hover:text-[#D4AF37] transition-colors" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{spec.label}</span>
@@ -260,7 +266,7 @@ export default function CarDetail() {
                 <button 
                   disabled={car.is_sold}
                   onClick={() => window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank')}
-                  className={`w-full py-5 text-black font-black uppercase tracking-widest text-[13px] rounded-2xl flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
+                  className={`w-full py-5 text-black font-black uppercase tracking-widest text-[13px] rounded-2xl flex items-center justify-center gap-3 transition-all relative overflow-hidden group active:scale-[0.96] ${
                     car.is_sold ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#D4AF37] shadow-[0_20px_40px_rgba(212,175,55,0.2)] hover:scale-[1.02]'
                   }`}
                 >
@@ -273,7 +279,7 @@ export default function CarDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   <a 
                     href={car.is_sold ? '#' : "tel:+94756363427"}
-                    className={`py-4 border border-white/10 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl flex items-center justify-center gap-2 transition-all ${
+                    className={`py-4 border border-white/10 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.96] ${
                        car.is_sold ? 'opacity-30 cursor-not-allowed' : 'bg-white/5 hover:border-white/20'
                     }`}
                   >
@@ -282,11 +288,11 @@ export default function CarDetail() {
                   <button 
                     onClick={() => window.print()}
                     disabled={car.is_sold}
-                    className={`py-4 border border-white/10 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl flex items-center justify-center gap-2 transition-all ${
+                    className={`py-4 border border-white/10 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.96] ${
                        car.is_sold ? 'opacity-30 cursor-not-allowed' : 'bg-white/5 hover:border-white/20'
                     }`}
                   >
-                    Tech Sheet
+                    <Phone className="w-4 h-4 text-[#D4AF37]" /> Tech Sheet
                   </button>
                 </div>
               </div>
@@ -314,13 +320,13 @@ export default function CarDetail() {
                     <div className="relative">
                       <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D4AF37]" />
                       <select value={testDriveForm.time} onChange={e => setTestDriveForm({ ...testDriveForm, time: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all appearance-none cursor-pointer">
-                        <option className="bg-black" value="9:30am">9:30 AM</option>
-                        <option className="bg-black" value="1:00pm">1:00 PM</option>
-                        <option className="bg-black" value="4:30pm">4:30 PM</option>
+                        <option className="bg-[#0d0b09]" value="9:30am">9:30 AM</option>
+                        <option className="bg-[#0d0b09]" value="1:00pm">1:00 PM</option>
+                        <option className="bg-[#0d0b09]" value="4:30pm">4:30 PM</option>
                       </select>
                     </div>
                   </div>
-                  <button type="submit" className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl">
+                  <button type="submit" className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98]">
                     Request Appointment
                   </button>
                 </form>
@@ -335,7 +341,7 @@ export default function CarDetail() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="space-y-4 text-center md:text-left">
                 <p className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">Comparative Portfolio</p>
-                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Similar <span className="text-gray-500">Acquisitions</span></h2>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-wrap-balance">Similar <span className="text-gray-500">Acquisitions</span></h2>
               </div>
               <Link to="/inventory" className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#D4AF37] transition-colors border-b border-transparent hover:border-[#D4AF37] pb-1">View Collection &rarr;</Link>
             </div>

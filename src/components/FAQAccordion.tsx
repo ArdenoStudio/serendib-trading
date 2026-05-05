@@ -29,7 +29,7 @@ export default function FAQAccordion() {
       {faqs.map((faq, index) => (
         <div
           key={index}
-          className={`overflow-hidden rounded-3xl transition-all duration-500 border ${
+          className={`overflow-hidden rounded-3xl transition-[border-color,background-color,box-shadow] duration-500 border ${
             openIndex === index 
             ? 'bg-white/[0.04] border-[#D4AF37]/40 shadow-[0_20px_50px_-15px_rgba(212,175,55,0.1)]' 
             : 'bg-white/[0.02] border-white/5 hover:border-white/10'
@@ -37,11 +37,11 @@ export default function FAQAccordion() {
         >
           <button 
             onClick={() => setOpenIndex(openIndex === index ? null : index)} 
-            className="w-full px-6 md:px-10 py-6 md:py-8 flex items-center justify-between text-left focus:outline-none group"
+            className="w-full px-6 md:px-10 py-6 md:py-8 flex items-center justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0b09] group active:scale-[0.99] transition-transform"
           >
             <div className="flex items-center gap-4">
                 <HelpCircle className={`w-5 h-5 transition-colors duration-500 ${openIndex === index ? 'text-[#D4AF37]' : 'text-gray-600'}`} />
-                <span className={`text-lg font-black uppercase tracking-tighter transition-colors duration-500 ${openIndex === index ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                <span className={`text-base font-semibold tracking-tight transition-colors duration-500 ${openIndex === index ? 'text-white' : 'text-white/60 group-hover:text-white/80'}`}>
                 {faq.question}
                 </span>
             </div>

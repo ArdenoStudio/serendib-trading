@@ -2,9 +2,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: #000000;
+  --color-bg-primary: #0d0b09;
   --color-bg-secondary: #0A0A0A;
-  --color-bg-nav-footer: #000000;
+  --color-bg-nav-footer: #0d0b09;
   --color-gold-accent: #D4AF37;
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A1A1AA;
@@ -15,17 +15,29 @@
   --font-luxury: "Cormorant Garamond", serif;
 
   /* Shadcn strict compatibility layer */
-  --color-background: #000000;
+  --color-background: #0d0b09;
   --color-foreground: #FFFFFF;
   --color-border: rgba(255, 255, 255, 0.1);
   --color-secondary: rgba(255, 255, 255, 0.05);
   --color-muted-foreground: #A1A1AA;
 }
 
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 @layer base {
   html {
     scrollbar-width: thin;
-    scrollbar-color: #D4AF37 #000000;
+    scrollbar-color: #D4AF37 #0d0b09;
     scroll-behavior: smooth;
     /* Prevent overscroll bounce on mobile for a more app-like feel */
     overscroll-behavior-y: none;
@@ -36,7 +48,7 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: #0d0b09;
   }
   ::-webkit-scrollbar-thumb {
     background: #D4AF37;
@@ -49,8 +61,12 @@
 
   body {
     @apply font-sans antialiased;
-    background-color: #000000;
+    background-color: #0d0b09;
     font-feature-settings: 'cv11', 'ss01';
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   ::selection {
@@ -74,10 +90,75 @@
   }
 
   /* Focus styles */
-  input:focus, select:focus, textarea:focus {
-    border-color: rgba(212, 175, 55, 0.5) !important;
-    outline: none;
+  input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible {
+    outline: 2px solid #D4AF37;
+    outline-offset: 2px;
   }
+  
+  input:focus, select:focus, textarea:focus {
+    border-color: #D4AF37 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== PERFORMANCE & MOBILE OPTIMIZATIONS ===== */
+
+/* Eliminate 300ms tap delay and flash on all interactive elements */
+a, button, [role="button"], input, select, textarea, label, summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* GPU layer hint for elements that will animate */
+.will-change-transform {
+  will-change: transform;
+}
+
+/* Mobile: reduce expensive decorative blur blobs */
+@media (max-width: 767px) {
+  /* Cap all backdrop-blur to 4px — prevents GPU overload on mobile */
+  .glass {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  .glass-panel {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Hide pure-decoration blur glow blobs on mobile */
+  .blur-\[160px\], .blur-\[150px\], .blur-\[120px\] {
+    display: none !important;
+  }
+
+  /* Disable noise grain on mobile — not visible at small size anyway */
+  .bg-noise {
+    display: none;
+  }
+
+  /* Simplify gradient overlays on mobile */
+  .mix-blend-screen {
+    mix-blend-mode: normal;
+  }
+}
+
+/* Hardware accelerate frequently-composited elements */
+nav {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Prevent paint during scroll for fixed/sticky elements */
+.sticky, [data-sticky] {
+  contain: layout style;
 }
 
 @layer utilities {

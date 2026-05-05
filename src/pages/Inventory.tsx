@@ -15,15 +15,14 @@ import {
   Database,
   Grid2X2
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
 import WhatsAppFloat from '../components/WhatsAppFloat';
+import SEO from '../components/SEO';
 import { supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
-
 export default function Inventory() {
   const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -180,7 +179,12 @@ export default function Inventory() {
 
   return (
     <div className="min-h-screen bg-[#0d0b09] text-white overflow-x-hidden selection:bg-[#D4AF37] selection:text-black">
-      <Navbar />
+      <SEO 
+        title="Vehicle Inventory"
+        description="Explore our curated collection of luxury and performance vehicles. From SUVs to Sedans, find your perfect drive in our master inventory."
+        canonical="/inventory"
+      />
+      <main>
 
       {/* --- PREMIUM HERO SECTION --- */}
       <section className="relative h-[65vh] flex items-center justify-center overflow-hidden">
@@ -195,19 +199,21 @@ export default function Inventory() {
             <img 
               src="/images/inventory_hero.png" 
               className="w-full h-full object-cover" 
-              alt="Inventory Hero" 
+              alt="Serendib Trading luxury vehicle inventory showroom" 
             />
           </motion.div>
           <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b09]/80 via-transparent to-[#0d0b09]" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d0b09] via-transparent to-[#0d0b09] opacity-60" />
+          {/* Hero Depth Outline */}
+          <div className="absolute inset-0 border border-white/5 pointer-events-none" />
         </div>
 
         {/* Content */}
         <div className="relative z-10 max-w-[1400px] w-full mx-auto px-6 lg:px-10 flex flex-col items-center">
           <motion.div
-            initial={{ opacity: 0, y: 40, filter: 'blur(20px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="text-center space-y-8"
           >
             <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 backdrop-blur-md">
@@ -215,7 +221,7 @@ export default function Inventory() {
               <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Showroom Collection</span>
             </div>
 
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] leading-[0.9] uppercase">
+            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] leading-[0.9] uppercase text-wrap-balance">
               Master <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Inventory</span>
             </h1>
@@ -225,7 +231,7 @@ export default function Inventory() {
               </p>
               
               {/* Stats Row */}
-              <div className="flex flex-wrap items-center justify-center gap-12 pt-4">
+              <div className="flex flex-wrap items-center justify-center gap-12 pt-4 tabular-nums">
                 {[
                   { label: "Vehicles", val: "40+" },
                   { label: "Global Marks", val: "12" },
@@ -261,7 +267,8 @@ export default function Inventory() {
               <div className="relative group w-full lg:max-w-md">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#D4AF37] transition-colors" />
                 <input 
-                  type="text" 
+                  type="text"
+                  aria-label="Search vehicles"
                   placeholder="Search manufacturer, model or year..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -279,7 +286,7 @@ export default function Inventory() {
                             <button
                                 key={tab}
                                 onClick={() => handleFilterChange('condition', tab)}
-                                className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-lg ${
+                                className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-lg active:scale-[0.96] ${
                                     filters.condition === tab ? 'bg-[#D4AF37] text-black' : 'text-gray-500 hover:text-white'
                                 }`}
                             >
@@ -296,7 +303,7 @@ export default function Inventory() {
                     <div className="relative">
                         <button 
                             onClick={() => setIsSortOpen(!isSortOpen)}
-                            className="flex items-center gap-2 text-[11px] font-black text-white hover:text-[#D4AF37] transition-all uppercase tracking-widest outline-none group"
+                            className="flex items-center gap-2 text-[11px] font-black text-white hover:text-[#D4AF37] transition-all uppercase tracking-widest outline-none group active:scale-[0.98]"
                         >
                             {sortBy === 'Newest First' ? 'Latest Arrival' : 
                              sortBy === 'Price: Low to High' ? 'Value: Low → High' : 
@@ -315,11 +322,11 @@ export default function Inventory() {
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsSortOpen(false)} />
                                     <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                                        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                                        transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
-                                        className="absolute right-0 mt-4 w-56 bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+                                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                                        transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
+                                        className="absolute right-0 mt-4 w-56 bg-[#0d0b09] border border-white/10 rounded-2xl p-2 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.8)]"
                                         style={{ transformOrigin: 'top right' }}
                                     >
                                         <motion.div
@@ -395,7 +402,7 @@ export default function Inventory() {
                         <div className="relative">
                             <button 
                                 onClick={() => setIsMakeOpen(!isMakeOpen)}
-                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none ${
+                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none active:scale-[0.98] ${
                                     isMakeOpen 
                                     ? 'border-[#C69320] shadow-[0_0_20px_rgba(198,147,32,0.15)] ring-1 ring-[#C69320]/20' 
                                     : 'border-white/10 hover:border-white/20'
@@ -417,11 +424,11 @@ export default function Inventory() {
                                     <>
                                         <div className="fixed inset-0 z-40" onClick={() => setIsMakeOpen(false)} />
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                                            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                                            transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
-                                            className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl max-h-72 overflow-y-auto custom-scrollbar no-scrollbar"
+                                            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                                            transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
+                                            className="absolute left-0 mt-3 w-full bg-[#0d0b09] border border-white/10 rounded-2xl p-2 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-h-72 overflow-y-auto no-scrollbar"
                                             style={{ transformOrigin: 'top center' }}
                                             data-lenis-prevent="true"
                                             onWheel={(e) => e.stopPropagation()}
@@ -485,7 +492,7 @@ export default function Inventory() {
                         <div className="relative">
                             <button 
                                 onClick={() => setIsBodyTypeOpen(!isBodyTypeOpen)}
-                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none ${
+                                className={`w-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl py-4 px-6 text-sm font-bold flex items-center justify-between group outline-none active:scale-[0.98] ${
                                     isBodyTypeOpen 
                                     ? 'border-[#C69320] shadow-[0_0_20px_rgba(198,147,32,0.15)] ring-1 ring-[#C69320]/20' 
                                     : 'border-white/10 hover:border-white/20'
@@ -507,11 +514,11 @@ export default function Inventory() {
                                     <>
                                         <div className="fixed inset-0 z-40" onClick={() => setIsBodyTypeOpen(false)} />
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                                            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                                            transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
-                                            className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl max-h-72 overflow-y-auto custom-scrollbar no-scrollbar"
+                                            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                                            transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
+                                            className="absolute left-0 mt-3 w-full bg-[#0d0b09] border border-white/10 rounded-2xl p-2 z-50 shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-h-72 overflow-y-auto no-scrollbar"
                                             style={{ transformOrigin: 'top center' }}
                                             data-lenis-prevent="true"
                                             onWheel={(e) => e.stopPropagation()}
@@ -616,7 +623,7 @@ export default function Inventory() {
                     <div className="space-y-6 pt-6">
                         <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black tracking-widest uppercase text-gray-500">Max Investment</label>
-                            <span className="text-sm font-black text-[#D4AF37]">LKR {(filters.maxPrice / 1000000).toFixed(0)}M</span>
+                            <span className="text-sm font-black text-[#D4AF37] tabular-nums">LKR {(filters.maxPrice / 1000000).toFixed(0)}M</span>
                         </div>
                         <input 
                             type="range" 
@@ -648,7 +655,7 @@ export default function Inventory() {
                 
                 <button 
                     onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] transition-all bg-white/5 px-4 py-2 rounded-xl group"
+                    className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] transition-all bg-white/5 px-4 py-2 rounded-xl group active:scale-[0.96]"
                 >
                     {viewMode === 'grid' ? (
                         <>
@@ -666,9 +673,9 @@ export default function Inventory() {
 
              <motion.div 
                 layout
-                className={`grid gap-10 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'}`}
+                className={`grid gap-10 will-change-transform ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'}`}
              >
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence mode="popLayout" initial={false}>
                     {filteredCars.length > 0 ? (
                         filteredCars.map((car, idx) => (
                             <motion.div
@@ -894,6 +901,8 @@ export default function Inventory() {
               </div>
           )}
       </AnimatePresence>
+
+      </main>
 
       <Footer />
       <WhatsAppFloat />

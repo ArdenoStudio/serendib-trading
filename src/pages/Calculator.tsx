@@ -1,10 +1,9 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
+import React, { useEffect, useState } from 'react';
 import Footer from '../components/Footer';
 import LoanCalculator from '../components/LoanCalculator';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { 
     Coins, 
     TrendingUp, 
@@ -12,23 +11,38 @@ import {
     ArrowRight,
     CircleDot
 } from 'lucide-react';
+import SEO from '../components/SEO';
 
 export default function Calculator() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.4], [1, 1.1]);
 
+  const shouldReduceMotion = useReducedMotion();
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
+  }, []);
+
+  const noParallax = isTouch || shouldReduceMotion;
+
   return (
     <div className="min-h-screen font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
-      <Navbar />
+      <SEO 
+        title="Finance Calculator"
+        description="Architect your acquisition strategy with precision using our lease and finance calculator. Tailored financial solutions for luxury vehicles."
+        canonical="/calculator"
+      />
       
       {/* Cinematic Hero / Background */}
       <section className="relative h-[65vh] md:h-[75vh] flex items-center justify-center overflow-hidden">
-        <motion.div style={{ opacity, scale }} className="absolute inset-0 z-0">
+        <motion.div style={noParallax ? { opacity } : { opacity, scale }} className="absolute inset-0 z-0">
           <img 
             src="/images/dashboard.png" 
             className="w-full h-full object-cover brightness-[0.3]" 
-            alt="Luxury Interior Cockpit" 
+            alt="Luxury Interior Cockpit"
+            decoding="async"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b09]/80 via-transparent to-[#0d0b09]" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d0b09] via-transparent to-[#0d0b09] opacity-80" />
@@ -36,9 +50,9 @@ export default function Calculator() {
 
         <div className="relative z-10 max-w-[1400px] w-full mx-auto px-6 lg:px-10 flex flex-col items-center">
           <motion.div 
-            initial={{ opacity: 0, y: 40, filter: 'blur(20px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="text-center space-y-10"
           >
             <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 backdrop-blur-md">

@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { motion, useScroll, useTransform, cubicBezier } from 'framer-motion';
+import { motion, useScroll, useTransform, cubicBezier, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Users, Trophy, Globe, Gauge, CreditCard, FileCheck } from 'lucide-react';
-import Navbar from '../components/Navbar';
 
 import BrandLogoStrip from '../components/BrandLogoStrip';
 import CarCard from '../components/CarCard';
@@ -14,6 +13,7 @@ import carsData from '../data/cars.json';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import { BrandIcons } from '../components/ui/brand-icons';
 import { LocationTag } from '../components/ui/location-tag';
+import SEO from '../components/SEO';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'New' | 'Registered'>('Registered');
@@ -50,28 +50,37 @@ export default function Home() {
     offset: ["start start", "end start"]
   });
 
+  const shouldReduceMotion = useReducedMotion();
+  const [isTouch, setIsTouch] = React.useState(false);
+  React.useEffect(() => {
+    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
+  }, []);
+
   const customEase = cubicBezier(0.16, 1, 0.3, 1);
 
   const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.15], { ease: customEase });
-  const bgBlur = useTransform(scrollYProgress, [0, 1], ["blur(0px)", "blur(12px)"], { ease: customEase });
-  const textY = useTransform(scrollYProgress, [0, 1], [0, 150], { ease: customEase });
   const textOpacity = useTransform(scrollYProgress, [0, 1], [1, 0], { ease: customEase });
+  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0, 0.8]);
 
   const filteredCars = (cars.length > 0 ? cars : carsData as Car[])
     .filter(car => car.condition === activeTab && !car.is_sold)
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen overflow-x-hidden font-sans" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      <Navbar />
+    <div className="min-h-screen overflow-x-hidden font-sans" style={{ backgroundColor: '#0d0b09', color: '#FFFFFF' }}>
+      <SEO 
+        title="Home"
+        description="Sri Lanka's premier destination for luxury and performance vehicles. Explore our curated collection of SUVs, Sedans, and Luxury vehicles imported directly from UK & Japan."
+      />
+      <main>
 
       {/* ===== HERO ===== */}
       <section
         ref={heroRef}
-        className="relative flex flex-col pt-10"
+        className="relative flex items-center justify-start"
         style={{
-          minHeight: '100dvh',
-          marginTop: '72px',
+          minHeight: 'min(88svh, 900px)',
+          marginTop: 0,
         }}
       >
         {/* Background Image Wrapper (Traps scale overflow) */}
@@ -83,21 +92,22 @@ export default function Home() {
               backgroundImage: 'url("/images/hero_bg-v2.webp")',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              scale: bgScale,
-              filter: bgBlur,
-              willChange: "transform, filter",
-              imageRendering: 'auto'
+              ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
             }}
           >
-            {/* Cinematic gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-black z-[1]" />
+            {/* Cinematic gradient overlay with dynamic opacity instead of blur */}
+            <motion.div 
+              className="absolute inset-0 bg-black/40 z-[1]" 
+              style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.3 }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black z-[2]" />
             
             {/* Luxury Noise Grain Overlay */}
             <div className="absolute inset-0 bg-noise z-[2]" />
 
-            {/* Luxury Subtle Grid Overlay */}
+            {/* Luxury Subtle Grid Overlay — desktop only */}
             <div 
-               className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-[3]" 
+               className="hidden md:block absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-[3]" 
                style={{ 
                  backgroundImage: `linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)`,
                  backgroundSize: '40px 40px' 
@@ -105,11 +115,20 @@ export default function Home() {
             />
           </motion.div>
 
+          {/* Logo watermark — upper right, desktop only */}
+          <div className="hidden lg:block absolute top-12 right-10 z-[3] pointer-events-none">
+            <img
+              src="/serendib-logo-new.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-20 w-auto opacity-[0.07] select-none"
+            />
+          </div>
         </div>
 
-        <div className="relative z-10 flex flex-col justify-start w-full max-w-[1400px] mx-auto px-6 lg:px-10 pt-10 lg:pt-14 shrink-0">
-          {/* Ambient Deep Gold Glow (Behind Text) */}
-          <div className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-[#D4AF37] rounded-full mix-blend-screen opacity-[0.07] blur-[150px] pointer-events-none -translate-y-1/2 z-0" />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-10 pt-28 pb-14 md:pt-36 md:pb-20">
+          {/* Ambient Deep Gold Glow (Behind Text) — desktop only */}
+          <div className="hidden md:block absolute top-1/2 left-0 w-[600px] h-[600px] bg-[#D4AF37] rounded-full mix-blend-screen opacity-[0.07] blur-[150px] pointer-events-none -translate-y-1/2 z-0" />
 
           {/* Left-Aligned Text Content */}
           <motion.div
@@ -133,7 +152,7 @@ export default function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
                   <span className="relative inline-flex rounded-full size-2 bg-[#D4AF37]"></span>
                 </span>
-                <p className="uppercase tracking-[0.4em] font-black text-[#D4AF37] text-[10px]">
+                <p className="uppercase tracking-[0.2em] font-black text-[#D4AF37] text-[10px]">
                   Welcome to Serendib Trading
                 </p>
               </motion.div>
@@ -161,7 +180,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.9] tracking-[-0.08em] text-white font-black"
+                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.85] tracking-[-0.04em] text-white font-black font-serif italic text-wrap-balance"
                 >
                   Drive
                 </motion.span>
@@ -173,7 +192,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.9] tracking-[-0.08em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black"
+                  className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.85] tracking-[-0.04em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black font-sans text-wrap-balance"
                 >
                   Your Way.
                 </motion.span>
@@ -187,7 +206,7 @@ export default function Home() {
                transition={{ duration: 0.8, delay: 0.5 }}
               className="mb-10 max-w-[500px] text-base md:text-lg font-medium leading-relaxed text-white/80 drop-shadow-md text-pretty relative z-10"
             >
-              The pinnacle of automotive excellence. Discover outclass performance, unparalleled luxury, and a curated selection of the world's most desired vehicles.
+              The pinnacle of automotive excellence. Discover outstanding performance, unparalleled luxury, and a curated selection of the world's most desired vehicles.
             </motion.p>
 
             {/* Dual CTA Buttons */}
@@ -222,85 +241,20 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* ===== HERO FOOTER / STATS ===== */}
-        <div className="mt-auto relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-10 pb-12 lg:pb-16 flex flex-col md:flex-row items-end justify-between gap-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-wrap gap-10 md:gap-20"
-          >
-            <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Selection</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white">40+</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Verified Units</span>
-              </div>
-            </div>
-            <div className="w-px h-12 bg-white/10 hidden md:block" />
-            <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Global Partners</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white">12</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Premier Brands</span>
-              </div>
-            </div>
-            <div className="w-px h-12 bg-white/10 hidden md:block" />
-            <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Established</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white">2010</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Pure Heritage</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Enhanced Scroll Indicator */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.2 }}
-            className="flex items-center gap-6 group cursor-pointer"
-            onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-          >
-            <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-1">Scroll to</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white group-hover:text-[#D4AF37] transition-colors">Discover More</p>
-            </div>
-            <div className="relative w-8 h-14 rounded-full border-2 border-white/10 flex justify-center p-2 group-hover:border-[#D4AF37]/50 transition-colors">
-              <motion.div 
-                animate={{ 
-                  y: [0, 20, 0],
-                  opacity: [1, 0.5, 1]
-                }}
-                transition={{ 
-                  repeat: Infinity, 
-                  duration: 2, 
-                  ease: "easeInOut" 
-                }}
-                className="w-1.5 h-3 bg-[#D4AF37] rounded-full"
-              />
-            </div>
-          </motion.div>
-        </div>
       </section>
 
       {/* INFINITE BRAND MARQUEE */}
       <div className="w-full mt-4 border-t border-b border-white/5 py-10 overflow-hidden relative">
-        <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-black to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-black to-transparent z-10" />
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-[#0d0b09] to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-[#0d0b09] to-transparent z-10" />
         
-        <motion.div 
-          animate={{ x: [0, -1035] }}
-          transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
-          className="flex items-center gap-20 whitespace-nowrap px-10"
-        >
+        <div className="animate-marquee flex items-center gap-20 whitespace-nowrap px-10">
           {Array(2).fill(['MERCEDES-BENZ', 'RANGE ROVER', 'BMW', 'AUDI SPORT', 'TOYOTA GAZOO', 'LAND CRUISER', 'ROLLS-ROYCE', 'PORSCHE']).flat().map((brand, i) => (
-            <span key={i} className="text-4xl md:text-6xl font-black tracking-tighter text-white/20 hover:text-[#D4AF37] transition-colors duration-500 cursor-default uppercase">
+            <span key={i} className="text-4xl md:text-6xl font-black tracking-tighter text-white/20 hover:text-[#D4AF37] transition-colors duration-500 cursor-default uppercase select-none">
               {brand}
             </span>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       {/* BROWSE BY BODY TYPE */}
@@ -312,14 +266,14 @@ export default function Home() {
             viewport={{ once: true }}
             className="flex items-center gap-4 mb-4"
           >
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
-            <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">Categories</span>
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
+            <div className="w-12 h-[1px] bg-white/15" />
+            <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">Categories</span>
+            <div className="w-12 h-[1px] bg-white/15" />
           </motion.div>
           
           <div className="flex flex-col items-center">
-            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
+            <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-white/50 mb-4">Browse By</span>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none text-wrap-balance">
               Body Type
             </h2>
           </div>
@@ -383,16 +337,15 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="flex items-center gap-4 mb-4"
+            className="flex items-center gap-3 mb-4"
           >
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
-            <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">Partners</span>
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
+            <div className="size-1.5 rounded-full bg-[#D4AF37]" />
+            <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">Premier Partners</span>
           </motion.div>
           
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Browse By</span>
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
+            <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-white/50 mb-4">Browse By</span>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none text-wrap-balance">
               Make
             </h2>
           </div>
@@ -463,13 +416,13 @@ export default function Home() {
             viewport={{ once: true }}
             className="flex items-center gap-4 mb-4"
           >
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
-            <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">The Latest</span>
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
+            <div className="w-12 h-[1px] bg-white/15" />
+            <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">The Latest</span>
+            <div className="w-12 h-[1px] bg-white/15" />
           </motion.div>
           
           <div className="flex flex-col items-center">
-            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Explore our</span>
+            <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-white/50 mb-4">Explore our</span>
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
               Featured Arrivals
             </h2>
@@ -496,13 +449,13 @@ export default function Home() {
                 viewport={{ once: true }}
                 whileHover={{ y: -10 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-[40px] overflow-hidden hover:bg-white/[0.04] hover:border-[#D4AF37]/40 transition-all duration-700 cursor-pointer relative"
+                className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color,opacity,transform] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                 onClick={() => navigate(`/car/${car.id}`)}
               >
                 {/* Image Container with Hover Zoom */}
                 <div className="w-full h-64 md:h-72 overflow-hidden relative">
                   {/* Premium Year Tag */}
-                  <div className="absolute top-6 left-6 z-20 bg-black/40 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-[0.3em]">
+                  <div className="absolute top-6 left-6 z-20 bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-4 py-2 rounded-full uppercase tracking-[0.2em]">
                     Model {car.year}
                   </div>
                   
@@ -516,24 +469,24 @@ export default function Home() {
                   />
                   
                   {/* Cinematic Overlays */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-90" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
                   <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
                 </div>
                 
                 {/* Card Content */}
                 <div className="p-8 md:p-10 relative">
                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-6 h-[1px] bg-[#D4AF37]/50" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">{car.make}</span>
+                      <div className="w-5 h-[1px] bg-white/20" />
+                      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{car.make}</span>
                    </div>
                    
-                   <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
+                   <h3 className="text-xl md:text-2xl font-extrabold uppercase tracking-tight text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
                     {car.model}
                   </h3>
                   
                   <div className="flex items-center justify-between pt-8 border-t border-white/10">
                     <div className="flex flex-col">
-                      <span className="text-[9px] uppercase tracking-[0.3em] text-white/30 mb-1">Price Guide</span>
+                      <span className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-1">Price Guide</span>
                       <span className="text-2xl font-black text-white tracking-tighter">
                         LKR {(car.price/1000000).toFixed(1)}M
                       </span>
@@ -569,14 +522,14 @@ export default function Home() {
             viewport={{ once: true }}
             className="flex items-center gap-4 mb-4"
           >
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
-            <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">The Collection</span>
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
+            <div className="w-12 h-[1px] bg-white/15" />
+            <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">The Collection</span>
+            <div className="w-12 h-[1px] bg-white/15" />
           </motion.div>
           
           <div className="flex flex-col items-center mb-12">
-            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-4">Discover our</span>
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
+            <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-white/50 mb-4">Discover our</span>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none text-wrap-balance">
               Available Inventory
             </h2>
           </div>
@@ -607,27 +560,35 @@ export default function Home() {
         </div>
 
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 pb-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredCars.map((car, index) => (
-              <motion.div
-                key={car.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <CarCard car={car} />
-              </motion.div>
-            ))}
-            {filteredCars.length === 0 && (
-              <div className="col-span-full py-20 flex flex-col items-center gap-6 opacity-40">
-                <p className="text-[10px] font-black uppercase tracking-[0.5em]">No {activeTab} inventory available</p>
-                <LiquidButton asChild>
-                   <Link to="/contact">Request Bespoke Sourcing</Link>
-                </LiquidButton>
-              </div>
-            )}
-          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {filteredCars.map((car, index) => (
+                <motion.div
+                  key={car.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <CarCard car={car} />
+                </motion.div>
+              ))}
+              {filteredCars.length === 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="col-span-full py-20 flex flex-col items-center gap-6 opacity-40"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.5em]">No {activeTab} inventory available</p>
+                  <LiquidButton asChild>
+                     <Link to="/contact">Request Bespoke Sourcing</Link>
+                  </LiquidButton>
+                </motion.div>
+              )}
+            </div>
+          </AnimatePresence>
 
           <div className="mt-24 flex justify-center">
             <Link
@@ -646,89 +607,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* STORY / HERITAGE SECTION */}
-      <section className="py-32 mt-20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-[#D4AF37]/5 via-transparent to-transparent pointer-events-none" />
-        
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex flex-col items-center">
-          {/* Centered Heading */}
-          <div className="flex flex-col items-center text-center mb-16 max-w-4xl">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-4 mb-4"
-            >
-              <div className="w-12 h-[1px] bg-[#D4AF37]" />
-              <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">The Heritage</span>
-              <div className="w-12 h-[1px] bg-[#D4AF37]" />
-            </motion.div>
-            
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none drop-shadow-2xl">
-              Crafting the Ultimate <br /> <span className="text-white">Automotive Experience</span>
-            </h2>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center gap-20">
-            <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="flex-1 relative"
-            >
-              {/* Refined Bracket Accents */}
-              <div className="absolute -top-6 -left-6 w-32 h-32 border-t border-l border-[#D4AF37]/30" />
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 border-b border-r border-[#D4AF37]/30" />
-              
-              <img 
-                src="/images/heritage.png" 
-                alt="Serendib Trading Heritage" 
-                width={800}
-                height={600}
-                loading="lazy"
-                className="w-full h-[600px] object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-1000 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-white/5"
-              />
-              
-              {/* EST. 2010 Badge */}
-              <div className="absolute -bottom-4 left-10 bg-[#D4AF37] p-10 shadow-2xl">
-                <p className="text-black font-black text-5xl uppercase tracking-tighter leading-none">EST.<br />2010</p>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="flex-1 space-y-10"
-            >
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-[1px] bg-[#D4AF37]" />
-                  <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-xs">Our Legacy</p>
-                </div>
-                <p className="text-gray-300 text-xl font-light leading-relaxed">
-                  For over a decade, <span className="text-white font-medium">Serendib Trading</span> has been the beacon of excellence in Sri Lanka's automotive landscape. We don't just sell cars; we curate masterpieces that define your journey. 
-                </p>
-                <p className="text-gray-400 text-lg font-light leading-relaxed">
-                  Our direct-import model from the UK and Japan ensures that every vehicle meets rigorous international standards, bringing global luxury to your doorstep with uncompromising transparency and performance.
-                </p>
-              </div>
-
-              <div className="pt-6">
-                <Link to="/about" className="group relative inline-flex items-center px-10 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.3em] text-white/50 hover:text-white transition-all duration-500 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                  <span className="relative z-10 flex items-center gap-4">
-                    Learn History <span className="text-[#D4AF37] group-hover:translate-x-2 transition-transform duration-300">&rarr;</span>
-                  </span>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== TRADE-IN SECTION (DARK) ===== */}
-      <section className="py-32 relative overflow-hidden text-center bg-[#020617]">
+      <section className="py-32 relative overflow-hidden text-center bg-[#0d0b09]">
         {/* Cinematic Backdrop Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.05)_0%,_transparent_70%)]" />
         
@@ -739,9 +619,9 @@ export default function Home() {
             viewport={{ once: true }}
             className="flex items-center gap-4 mb-4"
           >
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
-            <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">Exchange & Trade-In</span>
-            <div className="w-12 h-[1px] bg-[#D4AF37]" />
+            <div className="w-8 h-[1px] bg-white/20" />
+            <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">Exchange & Trade-In</span>
+            <div className="w-8 h-[1px] bg-white/20" />
           </motion.div>
 
           <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-8">
@@ -782,9 +662,9 @@ export default function Home() {
               viewport={{ once: true }}
               className="flex items-center gap-4 mb-4"
             >
-              <div className="w-12 h-[1px] bg-[#D4AF37]" />
-              <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#D4AF37]">Our Values</span>
-              <div className="w-12 h-[1px] bg-[#D4AF37]" />
+              <div className="w-12 h-[1px] bg-white/20" />
+              <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">Our Values</span>
+              <div className="w-12 h-[1px] bg-white/20" />
             </motion.div>
             
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-8 drop-shadow-2xl">
@@ -812,7 +692,7 @@ export default function Home() {
                   viewport={{ once: true }}
                   transition={{ type: "spring", stiffness: 400, damping: 25, delay: idx * 0.1 }}
                   whileHover={{ y: -10 }}
-                  className="group relative flex flex-col items-center text-center p-10 bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-[40px] hover:border-[#D4AF37]/40 shadow-2xl transition-all duration-700"
+                  className="group relative flex flex-col items-center text-center p-10 bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl hover:border-[#D4AF37]/40 shadow-2xl transition-[border-color,background-color,opacity,transform] duration-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 >
                   {/* Decorative Icon Glow */}
                   <div className="w-20 h-20 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center mb-8 relative transition-all duration-500 group-hover:bg-[#D4AF37]/10 group-hover:border-[#D4AF37]/30 group-hover:shadow-[0_0_40px_rgba(212,175,55,0.2)]">
@@ -840,7 +720,7 @@ export default function Home() {
 
 
       {/* ===== CONTACT CTA (CINEMATIC) ===== */}
-      <section className="py-24 relative overflow-hidden bg-[#020617] border-t border-white/5">
+      <section className="py-24 relative overflow-hidden bg-[#0d0b09] border-t border-white/5">
         {/* Atmospheric Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.08)_0%,_transparent_70%)] pointer-events-none" />
         
@@ -860,7 +740,7 @@ export default function Home() {
 
             <div className="flex flex-col md:flex-row items-center gap-10 lg:gap-16 shrink-0 relative z-10 w-full lg:w-auto">
               <div className="flex flex-col items-center md:items-end text-center md:text-right">
-                <span className="text-[10px] uppercase tracking-[0.4em] font-black text-[#D4AF37] mb-3 opacity-70">Expert Consultation</span>
+                <span className="text-[11px] uppercase tracking-[0.35em] font-bold text-[#D4AF37] mb-3 opacity-70">Expert Consultation</span>
                 <a 
                   href="tel:0756363427" 
                   className="text-3xl md:text-5xl font-black text-white hover:text-[#F3D67E] transition-all duration-500 tracking-tighter drop-shadow-lg"
@@ -889,7 +769,9 @@ export default function Home() {
       </section>
 
 
-      <Suspense fallback={<div className="h-60 bg-black" />}>
+      </main>
+
+      <Suspense fallback={<div className="h-60 bg-[#0d0b09]" />}>
         <Footer />
       </Suspense>
       <WhatsAppFloat />

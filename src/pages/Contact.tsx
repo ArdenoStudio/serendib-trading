@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, Send, MessageSquare, Compass, ShieldCheck, ArrowRight } from 'lucide-react';
-import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import WhatsAppFloat from '../components/WhatsAppFloat';
+import SEO from '../components/SEO';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
@@ -16,9 +16,12 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen font-sans bg-[#080706] text-white selection:bg-[#D4AF37] selection:text-black">
-      <Navbar />
-
+    <div className="min-h-screen font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
+      <SEO 
+        title="Contact Us"
+        description="Get in touch with our automotive specialists for acquisitions, appraisals, or private viewings. Experience bespoke service since 2010."
+        canonical="/contact"
+      />
       {/* --- CINEMATIC AMBIANCE --- */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#0d0b09] via-transparent to-[#0d0b09]" />
@@ -70,30 +73,33 @@ export default function Contact() {
             {/* Sidebar (Details) */}
             <div className="lg:col-span-4 p-10 md:p-14 bg-white/[0.02] border-r border-white/10 space-y-14">
               <div className="space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Intelligence</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#D4AF37]">Intelligence</p>
                 <h3 className="text-3xl font-black uppercase tracking-tighter">Immediate <br/> Access</h3>
               </div>
 
               <div className="space-y-10">
                 {[
-                  { icon: Phone, label: "Direct Support", val: "075 636 3427", sub: "077 779 7421" },
-                  { icon: Mail, label: "Inquiries", val: "bilalikras1@gmail.com" },
-                  { icon: MapPin, label: "Visit Showroom", val: "Dehiwala HQ, Colombo" },
+                  { icon: Phone, label: "Direct Support", val: "075 636 3427", sub: "077 779 7421", href: "tel:+94756363427" },
+                  { icon: Mail, label: "Inquiries", val: "bilalikras1@gmail.com", href: "mailto:bilalikras1@gmail.com" },
+                  { icon: MapPin, label: "Visit Showroom", val: "Dehiwala HQ, Colombo", href: "https://maps.google.com/?q=Dehiwala-Mount+Lavinia" },
                 ].map((item, i) => (
-                  <motion.div 
+                  <motion.a 
                     key={i}
+                    href={item.href}
+                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                     whileHover={{ x: 5 }}
-                    className="flex gap-6 group cursor-pointer"
+                    className="flex gap-6 group"
                   >
                     <div className="size-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-[#D4AF37]/10 group-hover:border-[#D4AF37]/50 transition-all shadow-2xl">
                       <item.icon className="size-6 text-[#D4AF37]/70 group-hover:text-[#D4AF37] transition-colors" />
                     </div>
                     <div className="space-y-1 py-1">
-                      <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 group-hover:text-[#D4AF37]/70 transition-colors">{item.label}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 group-hover:text-[#D4AF37]/70 transition-colors">{item.label}</p>
                       <p className="text-base font-black tracking-tight text-white group-hover:text-[#D4AF37] transition-colors leading-none">{item.val}</p>
                       {item.sub && <p className="text-base font-black tracking-tight text-white group-hover:text-[#D4AF37] transition-colors leading-none">{item.sub}</p>}
                     </div>
-                  </motion.div>
+                  </motion.a>
                 ))}
               </div>
 
@@ -174,7 +180,7 @@ export default function Contact() {
                 <div className="pt-6">
                   <LiquidButton asChild size="xxl" className="w-full md:w-auto">
                     <button type="submit" className="w-full md:w-auto px-16 flex items-center justify-center gap-6 text-[11px] font-black tracking-[0.4em] uppercase">
-                      Lauch Priority Thread <ArrowRight className="size-5" />
+                      Launch Priority Thread <ArrowRight className="size-5" />
                     </button>
                   </LiquidButton>
                 </div>

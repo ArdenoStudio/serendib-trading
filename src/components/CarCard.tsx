@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
+import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
 
 interface CarCardProps {
   car: {
@@ -26,6 +27,8 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
   const formattedPrice = `LKR ${car.price.toLocaleString()}`;
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
+  const [compareToast, setCompareToast] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
@@ -58,7 +61,8 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
       newCompare = compareList.filter((id: string) => id !== car.id);
     } else {
       if (compareList.length >= 2) {
-        alert('You can only compare up to 2 vehicles at a time.');
+        setCompareToast(true);
+        setTimeout(() => setCompareToast(false), 2500);
         return;
       }
       newCompare = [...compareList, car.id];
@@ -72,10 +76,25 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
       <motion.div
         whileHover={{ y: -10 }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        className="overflow-hidden rounded-[32px] bg-white/[0.02] backdrop-blur-2xl border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-all duration-700 relative h-full flex flex-col"
+        className="overflow-hidden rounded-3xl bg-white/[0.03] backdrop-blur-lg border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-[border-color,background-color,box-shadow,opacity,transform] duration-500 relative h-full flex flex-col focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
       >
         {/* Background Glow on Hover */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+        {/* Compare limit toast */}
+        {compareToast && (
+          <div className="absolute top-4 left-4 right-4 z-30 px-4 py-2.5 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl text-[11px] font-bold text-white/80 text-center shadow-lg">
+            Max 2 vehicles for comparison
+          </div>
+        )}
+
+        {/* Lightbox */}
+        <ImageLightbox
+          src={car.image}
+          alt={`${car.year} ${car.make} ${car.model}`}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
 
         {/* Image Container */}
         <div className="relative aspect-[16/11] overflow-hidden">
@@ -86,21 +105,27 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             alt={`${car.make} ${car.model}`}
             width={384}
             height={240}
-            className={`w-full h-full object-cover transition-all duration-700 ${car.is_sold ? 'opacity-40 grayscale' : 'group-hover:grayscale-0'}`}
+            className={`w-full h-full object-cover transition-[transform,opacity,filter] duration-700 ${car.is_sold ? 'opacity-40 grayscale' : 'group-hover:grayscale-0'}`}
             referrerPolicy="no-referrer"
             loading="lazy"
+            decoding="async"
           />
           
+          {/* Lightbox Trigger */}
+          <LightboxTrigger onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLightboxOpen(true); }} />
+
           {/* Cinematic Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A1128] via-transparent to-transparent opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
           <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          {/* Image Outline for Depth */}
+          <div className="absolute inset-0 border border-white/10 pointer-events-none" />
 
           {/* Quick Actions */}
           <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
             <button 
               onClick={toggleWishlist}
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 active:scale-[0.96] ${
                 isWishlisted 
                 ? 'bg-red-500 border-red-400 text-white shadow-lg' 
                 : 'bg-black/40 border-white/10 text-white hover:bg-white/10'
@@ -111,7 +136,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             <button 
               onClick={toggleCompare}
               aria-label={isComparing ? "Remove from comparison" : "Add to comparison"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 active:scale-[0.96] ${
                 isComparing 
                 ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-lg' 
                 : 'bg-black/40 border-white/10 text-white hover:bg-white/10'
@@ -132,11 +157,11 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
 
           {/* Year/Condition Caps — Bottom Left */}
           <div className="absolute bottom-6 left-6 z-20 flex gap-2">
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.3em] shadow-lg">
+            <div className="bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg">
               {car.year}
             </div>
             {car.condition && !car.is_sold && (
-              <div className={`bg-white/10 backdrop-blur-xl border border-white/10 text-white text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.3em] shadow-lg`}>
+              <div className={`bg-white/10 backdrop-blur-xl border border-white/10 text-white/80 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg`}>
                 {car.condition}
               </div>
             )}
@@ -147,17 +172,17 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
         <div className="p-6 pb-8 flex-1 flex flex-col justify-between relative">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-6 h-[1px] bg-[#D4AF37]/50" />
-              <h3 className="text-[10px] font-black tracking-[0.4em] uppercase text-[#D4AF37]">
+              <div className="w-5 h-[1px] bg-white/20" />
+              <h3 className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#D4AF37]">
                 {car.make}
               </h3>
             </div>
-            <h2 className="text-3xl font-black uppercase tracking-tighter text-white leading-none mb-6 transition-colors duration-500 group-hover:text-[#F3D67E]">
+            <h2 className="text-2xl font-extrabold uppercase tracking-[-0.04em] text-white leading-none mb-6 transition-colors duration-500 group-hover:text-[#F3D67E] text-wrap-balance">
               {car.model}
             </h2>
             
             {/* Minimal Specs */}
-            <div className="flex items-center gap-6 text-[9px] font-black uppercase tracking-[0.3em] text-white/30 mb-8 pb-8 border-b border-white/5">
+            <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-[0.15em] text-white/40 mb-8 pb-8 border-b border-white/5 tabular-nums">
               <div className="flex items-center gap-2">
                 <Gauge className="w-3 h-3 text-[#D4AF37]" />
                 <span>{car.mileage.toLocaleString()} KM</span>
@@ -171,8 +196,8 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase tracking-[0.3em] text-white/20 mb-1">Price Guide</span>
-              <p className="text-2xl font-black text-white tracking-tighter">
+              <span className="text-[11px] uppercase tracking-[0.2em] text-white/30 mb-1">Price Guide</span>
+              <p className="text-2xl font-black text-white tracking-[-0.05em] tabular-nums">
                 {car.price ? `LKR ${(car.price/1000000).toFixed(1)}M` : 'POA'}
               </p>
             </div>

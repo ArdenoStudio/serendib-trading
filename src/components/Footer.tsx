@@ -13,22 +13,48 @@ export default function Footer() {
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
 
+        {/* ── Brand Hero Strip ── */}
+        <div className="flex flex-col items-center text-center mb-20 pb-16 border-b border-white/5 relative">
+          {/* Ambient glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] bg-[#D4AF37]/5 rounded-full blur-[80px] pointer-events-none" />
+          <img
+            src="/serendib-logo-new.svg"
+            alt="Serendib Trading"
+            className="h-24 md:h-32 w-auto object-contain mb-6 relative z-10"
+          />
+          <p className="text-white/40 text-sm font-light max-w-sm leading-relaxed">
+            Sri Lanka's premier destination for luxury and performance vehicles.
+          </p>
+        </div>
+
         {/* 4-Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
 
           {/* Column 1: Brand */}
           <div className="flex flex-col">
-            <h2 className="text-white font-extrabold text-2xl tracking-widest mb-6 uppercase">
-              SERENDIB <span className="text-[#D4AF37]">TRADING</span>
-            </h2>
+            <div className="flex items-center gap-3 mb-5">
+              <img
+                src="/serendib-logo-new.svg"
+                alt="Serendib Trading"
+                className="h-12 w-auto object-contain shrink-0"
+              />
+              <div>
+                <p className="text-white font-extrabold text-lg tracking-widest uppercase leading-tight">
+                  SERENDIB
+                </p>
+                <p className="text-[#D4AF37] font-extrabold text-lg tracking-widest uppercase leading-tight">
+                  TRADING
+                </p>
+              </div>
+            </div>
             <p className="text-sm leading-relaxed max-w-xs font-light">
-              Sri Lanka's premier destination for luxury and performance vehicles. Direct imports from the UK and Japan with unmatched quality.
+              Direct imports from the UK and Japan. Every vehicle curated for quality, performance, and prestige.
             </p>
           </div>
 
           {/* Column 2: Quick Links */}
           <div className="flex flex-col">
-            <h3 className="text-white text-sm font-bold uppercase tracking-widest mb-6">Quick Links</h3>
+            <h3 className="text-white/80 text-xs font-semibold uppercase tracking-[0.25em] mb-6">Quick Links</h3>
             <ul className="space-y-4">
               {[
                 { name: 'Home', path: '/' },
@@ -56,25 +82,25 @@ export default function Footer() {
 
           {/* Column 3: Showroom */}
           <div className="flex flex-col">
-            <h3 className="text-white text-sm font-bold uppercase tracking-widest mb-6">Showroom</h3>
+            <h3 className="text-white/80 text-xs font-semibold uppercase tracking-[0.25em] mb-6">Showroom</h3>
             <ul className="space-y-4 text-sm font-light">
               <li className="flex flex-col">
                 <span className="text-white font-medium mb-1">Address</span>
                 <span>47/A S. De S. Jayasinghe Mawatha,</span>
                 <span>Dehiwala-Mount Lavinia</span>
               </li>
-              <li className="flex flex-col mt-2">
+              <li className="flex flex-col mt-2 tabular-nums">
                 <span className="text-white font-medium mb-1">Contact</span>
-                <a href="tel:+94756363427" className="hover:text-[#D4AF37] transition-colors">+94 75 636 3427</a>
-                <a href="mailto:bilalikras1@gmail.com" className="hover:text-[#D4AF37] transition-colors">bilalikras1@gmail.com</a>
+                <a href="tel:+94756363427" className="hover:text-[#D4AF37] transition-colors active:scale-[0.98] inline-block w-fit">+94 75 636 3427</a>
+                <a href="mailto:bilalikras1@gmail.com" className="hover:text-[#D4AF37] transition-colors active:scale-[0.98] inline-block w-fit">bilalikras1@gmail.com</a>
               </li>
             </ul>
           </div>
 
           {/* Column 4: Opening Hours */}
           <div className="flex flex-col">
-            <h3 className="text-white text-sm font-bold uppercase tracking-widest mb-6">Opening Hours</h3>
-            <ul className="space-y-4 text-sm font-light">
+            <h3 className="text-white/80 text-xs font-semibold uppercase tracking-[0.25em] mb-6">Opening Hours</h3>
+            <ul className="space-y-4 text-sm font-light tabular-nums">
               <li className="flex justify-between border-b border-white/5 pb-2">
                 <span>Mon - Fri</span>
                 <span className="text-white">9:00 AM - 6:00 PM</span>
@@ -93,11 +119,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom Copyright Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 text-xs font-light">
+        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 text-xs font-light tabular-nums">
           <p>© {new Date().getFullYear()} Serendib Trading. All rights reserved.</p>
           <div className="mt-4 md:mt-0 flex gap-6">
-            <p className="opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Privacy Policy</p>
-            <p className="opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Terms of Service</p>
+            <Link to="/privacy" className="opacity-50 hover:opacity-100 transition-opacity hover:text-[#D4AF37]">Privacy Policy</Link>
+            <Link to="/terms" className="opacity-50 hover:opacity-100 transition-opacity hover:text-[#D4AF37]">Terms of Service</Link>
           </div>
         </div>
 
