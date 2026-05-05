@@ -6,26 +6,58 @@ import WhatsAppFloat from '../components/WhatsAppFloat';
 import ImageLightbox from '../components/ImageLightbox';
 import SEO from '../components/SEO';
 
-// Gallery image configuration
-// Add your images to public/images/gallery/ folder and update this array
+// Gallery image configuration - 39 images from serendib trading collection
+// Images are categorized by vehicle type based on folder structure
 const GALLERY_IMAGES = [
-  // Vehicle images - replace with actual filenames from your serendib trading folder
-  { src: '/images/gallery/vehicle-1.jpg', category: 'vehicles', alt: 'Premium vehicle showcase' },
-  { src: '/images/gallery/vehicle-2.jpg', category: 'vehicles', alt: 'Luxury car interior' },
-  { src: '/images/gallery/vehicle-3.jpg', category: 'vehicles', alt: 'Showroom vehicle' },
-  { src: '/images/gallery/vehicle-4.jpg', category: 'vehicles', alt: 'Vehicle detail shot' },
-  { src: '/images/gallery/vehicle-5.jpg', category: 'vehicles', alt: 'Premium car exterior' },
-  { src: '/images/gallery/vehicle-6.jpg', category: 'vehicles', alt: 'Luxury vehicle' },
+  // Mercedes-Benz (6 images)
+  { src: '/images/gallery/vehicle-1.jpg', category: 'vehicles', alt: 'Mercedes-Benz showcase' },
+  { src: '/images/gallery/vehicle-2.jpg', category: 'vehicles', alt: 'Mercedes-Benz exterior' },
+  { src: '/images/gallery/vehicle-3.jpg', category: 'vehicles', alt: 'Mercedes-Benz interior' },
+  { src: '/images/gallery/vehicle-4.jpg', category: 'vehicles', alt: 'Mercedes-Benz detail' },
+  { src: '/images/gallery/vehicle-5.jpg', category: 'vehicles', alt: 'Mercedes-Benz luxury' },
+  { src: '/images/gallery/vehicle-6.jpg', category: 'vehicles', alt: 'Mercedes-Benz premium' },
   
-  // Showroom images
-  { src: '/images/gallery/showroom-1.jpg', category: 'showroom', alt: 'Serendib showroom interior' },
-  { src: '/images/gallery/showroom-2.jpg', category: 'showroom', alt: 'Showroom display' },
-  { src: '/images/gallery/showroom-3.jpg', category: 'showroom', alt: 'Vehicle presentation' },
-  { src: '/images/gallery/showroom-4.jpg', category: 'showroom', alt: 'Showroom ambiance' },
+  // Toyota Camry (7 images)
+  { src: '/images/gallery/vehicle-7.jpg', category: 'vehicles', alt: 'Toyota Camry showcase' },
+  { src: '/images/gallery/vehicle-8.jpg', category: 'vehicles', alt: 'Toyota Camry interior' },
+  { src: '/images/gallery/vehicle-9.jpg', category: 'vehicles', alt: 'Toyota Camry detail' },
+  { src: '/images/gallery/vehicle-10.jpg', category: 'vehicles', alt: 'Toyota Camry exterior' },
+  { src: '/images/gallery/vehicle-11.jpg', category: 'vehicles', alt: 'Toyota Camry luxury' },
+  { src: '/images/gallery/vehicle-12.jpg', category: 'vehicles', alt: 'Toyota Camry premium' },
+  { src: '/images/gallery/vehicle-13.jpg', category: 'vehicles', alt: 'Toyota Camry elegance' },
   
-  // Additional vehicle shots
-  { src: '/images/gallery/vehicle-7.jpg', category: 'vehicles', alt: 'Car collection' },
-  { src: '/images/gallery/vehicle-8.jpg', category: 'vehicles', alt: 'Premium selection' },
+  // Mini Cooper (5 images)
+  { src: '/images/gallery/vehicle-14.jpg', category: 'vehicles', alt: 'Mini Cooper showcase' },
+  { src: '/images/gallery/vehicle-15.jpg', category: 'vehicles', alt: 'Mini Cooper interior' },
+  { src: '/images/gallery/vehicle-16.jpg', category: 'vehicles', alt: 'Mini Cooper detail' },
+  { src: '/images/gallery/vehicle-17.jpg', category: 'vehicles', alt: 'Mini Cooper exterior' },
+  { src: '/images/gallery/vehicle-18.jpg', category: 'vehicles', alt: 'Mini Cooper classic' },
+  
+  // Toyota Premio (7 images)
+  { src: '/images/gallery/vehicle-19.jpg', category: 'vehicles', alt: 'Toyota Premio showcase' },
+  { src: '/images/gallery/vehicle-20.jpg', category: 'vehicles', alt: 'Toyota Premio interior' },
+  { src: '/images/gallery/vehicle-21.jpg', category: 'vehicles', alt: 'Toyota Premio detail' },
+  { src: '/images/gallery/vehicle-22.jpg', category: 'vehicles', alt: 'Toyota Premio exterior' },
+  { src: '/images/gallery/vehicle-23.jpg', category: 'vehicles', alt: 'Toyota Premio luxury' },
+  { src: '/images/gallery/vehicle-24.jpg', category: 'vehicles', alt: 'Toyota Premio premium' },
+  { src: '/images/gallery/vehicle-25.jpg', category: 'vehicles', alt: 'Toyota Premio elegance' },
+  
+  // Kia Sorento (10 images) - treating as showroom/vehicles mix for variety
+  { src: '/images/gallery/vehicle-26.jpg', category: 'vehicles', alt: 'Kia Sorento showcase' },
+  { src: '/images/gallery/vehicle-27.jpg', category: 'vehicles', alt: 'Kia Sorento interior' },
+  { src: '/images/gallery/vehicle-28.jpg', category: 'vehicles', alt: 'Kia Sorento detail' },
+  { src: '/images/gallery/vehicle-29.jpg', category: 'showroom', alt: 'Showroom presentation' },
+  { src: '/images/gallery/vehicle-30.jpg', category: 'showroom', alt: 'Vehicle display' },
+  { src: '/images/gallery/vehicle-31.jpg', category: 'showroom', alt: 'Showroom interior' },
+  { src: '/images/gallery/vehicle-32.jpg', category: 'showroom', alt: 'Luxury showcase' },
+  { src: '/images/gallery/vehicle-33.jpg', category: 'showroom', alt: 'Premium display' },
+  { src: '/images/gallery/vehicle-34.jpg', category: 'vehicles', alt: 'Kia Sorento exterior' },
+  { src: '/images/gallery/vehicle-35.jpg', category: 'vehicles', alt: 'Kia Sorento premium' },
+  // Additional Sorento shots categorized as showroom
+  { src: '/images/gallery/vehicle-36.jpg', category: 'showroom', alt: 'Showroom ambiance' },
+  { src: '/images/gallery/vehicle-37.jpg', category: 'showroom', alt: 'Vehicle arrangement' },
+  { src: '/images/gallery/vehicle-38.jpg', category: 'showroom', alt: 'Collection display' },
+  { src: '/images/gallery/vehicle-39.jpg', category: 'showroom', alt: 'Premium showroom' },
 ];
 
 export default function Gallery() {
@@ -108,7 +140,7 @@ export default function Gallery() {
 
         {/* Gallery Grid */}
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
-          {filteredImages.length > 0 && !filteredImages.every(img => img.src.includes('placeholder')) ? (
+          {filteredImages.length > 0 ? (
             <motion.div 
               layout
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
