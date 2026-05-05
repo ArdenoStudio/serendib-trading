@@ -10,6 +10,7 @@ import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
 import SEO from '../components/SEO';
+import ImageLightbox from '../components/ImageLightbox';
 
 export default function CarDetail() {
   const { id } = useParams();
@@ -38,6 +39,7 @@ export default function CarDetail() {
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
   const [activeImage, setActiveImage] = useState(car?.image || '');
   const [copyToast, setCopyToast] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   // Track active image updates and Log View
   useEffect(() => {
@@ -147,7 +149,8 @@ export default function CarDetail() {
           <div className="lg:col-span-7 space-y-8">
             <motion.div 
               layoutId={`car-image-${car.id}`}
-              className="aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl"
+              onClick={() => setLightboxImage(activeImage)}
+              className="aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl cursor-zoom-in"
             >
               <AnimatePresence mode="wait">
                   <motion.img 
@@ -161,6 +164,12 @@ export default function CarDetail() {
                     className="w-full h-full object-cover will-change-transform"
                   />
               </AnimatePresence>
+              {/* Zoom indicator on hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <div className="px-4 py-2 bg-black/60 backdrop-blur-sm rounded-full border border-white/20 text-white text-[11px] font-bold uppercase tracking-widest">
+                  Click to zoom
+                </div>
+              </div>
               
               <div className="absolute top-8 left-8 flex flex-col gap-3">
                 <span className="px-5 py-2 bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl">
@@ -184,12 +193,17 @@ export default function CarDetail() {
                 <button 
                   key={i}
                   onClick={() => setActiveImage(img)}
-                  className={`aspect-[4/3] rounded-[24px] overflow-hidden border transition-all duration-500 relative group ${
+                  onDoubleClick={() => setLightboxImage(img)}
+                  className={`aspect-[4/3] rounded-[24px] overflow-hidden border transition-all duration-500 relative group cursor-zoom-in ${
                     activeImage === img ? 'border-[#D4AF37] p-1' : 'border-white/5 opacity-50 hover:opacity-100'
                   }`}
                 >
                   <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover rounded-[20px] group-hover:scale-110 transition-transform duration-700" />
                   {activeImage === img && <div className="absolute inset-0 bg-[#D4AF37]/10" />}
+                  {/* Zoom hint on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/40">
+                    <span className="text-white text-[10px] font-bold uppercase tracking-wider">Double-click to zoom</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -360,6 +374,14 @@ export default function CarDetail() {
 
       <Footer />
       <WhatsAppFloat />
+      
+      {/* Image Lightbox */}
+      <ImageLightbox
+        src={lightboxImage || ''}
+        alt={`${car.year} ${car.make} ${car.model}`}
+        isOpen={!!lightboxImage}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 }
