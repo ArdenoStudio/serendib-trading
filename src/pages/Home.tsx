@@ -85,13 +85,43 @@ export default function Home() {
       >
         {/* Background Image Wrapper (Traps scale overflow) */}
         <div className="absolute inset-0 overflow-hidden z-0">
-          {/* Background Image with Dark Overlay */}
+          {/* Desktop Background Image (landscape) - hidden on mobile */}
           <motion.div
-            className="absolute inset-0 origin-center"
+            className="absolute inset-0 origin-center hidden md:block"
             style={{
               backgroundImage: 'url("/images/hero_bg-v2.webp")',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
+              ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
+            }}
+          >
+            {/* Cinematic gradient overlay with dynamic opacity instead of blur */}
+            <motion.div
+              className="absolute inset-0 bg-black/40 z-[1]"
+              style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.3 }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black z-[2]" />
+
+            {/* Luxury Noise Grain Overlay */}
+            <div className="absolute inset-0 bg-noise z-[2]" />
+
+            {/* Luxury Subtle Grid Overlay */}
+            <div
+               className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-[3]"
+               style={{
+                 backgroundImage: `linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)`,
+                 backgroundSize: '40px 40px'
+               }}
+            />
+          </motion.div>
+
+          {/* Mobile Background Image (portrait) - shown only on mobile */}
+          <motion.div
+            className="absolute inset-0 origin-center md:hidden"
+            style={{
+              backgroundImage: 'url("/images/hero-mobile.jpg")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
               ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
             }}
           >
