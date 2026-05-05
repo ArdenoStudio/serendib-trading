@@ -125,24 +125,18 @@ export default function Home() {
               ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
             }}
           >
-            {/* Cinematic gradient overlay with dynamic opacity instead of blur */}
-            <motion.div 
-              className="absolute inset-0 bg-black/40 z-[1]" 
-              style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.3 }}
+            {/* Stronger cinematic overlay for mobile text readability */}
+            <motion.div
+              className="absolute inset-0 bg-black/60 z-[1]"
+              style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.5 }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black z-[2]" />
-            
+            {/* Darker gradient overlay for mobile - ensures text pops */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/50 to-black/90 z-[2]" />
+            {/* Additional mobile vignette for text contrast */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-[2]" />
+
             {/* Luxury Noise Grain Overlay */}
             <div className="absolute inset-0 bg-noise z-[2]" />
-
-            {/* Luxury Subtle Grid Overlay — desktop only */}
-            <div 
-               className="hidden md:block absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-[3]" 
-               style={{ 
-                 backgroundImage: `linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)`,
-                 backgroundSize: '40px 40px' 
-               }} 
-            />
           </motion.div>
 
           {/* Logo watermark — upper right, desktop only */}
@@ -210,7 +204,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.85] tracking-[-0.04em] text-white font-black font-serif italic text-wrap-balance"
+                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.85] tracking-[-0.04em] text-white font-black font-serif italic text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
                 >
                   Drive
                 </motion.span>
@@ -222,7 +216,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.85] tracking-[-0.04em] text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] ml-1 sm:ml-8 md:ml-16 font-black font-sans text-wrap-balance"
+                  className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.85] tracking-[-0.04em] text-white ml-1 sm:ml-8 md:ml-16 font-black font-sans text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] md:text-transparent md:bg-clip-text md:bg-gradient-to-r md:from-[#D4AF37] md:via-[#F7E7CE] md:to-[#D4AF37]"
                 >
                   Your Way.
                 </motion.span>
@@ -234,7 +228,7 @@ export default function Home() {
                initial={{ opacity: 0, y: 15 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ duration: 0.8, delay: 0.5 }}
-              className="mb-10 max-w-[500px] text-base md:text-lg font-medium leading-relaxed text-white/80 drop-shadow-md text-pretty relative z-10"
+              className="mb-10 max-w-[500px] text-base md:text-lg font-medium leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] text-pretty relative z-10 md:text-white/80 md:drop-shadow-md"
             >
               The pinnacle of automotive excellence. Discover outstanding performance, unparalleled luxury, and a curated selection of the world's most desired vehicles.
             </motion.p>
