@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Inventory from './pages/Inventory';
 import CarDetail from './pages/CarDetail';
 import About from './pages/About';
+import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
 import Calculator from './pages/Calculator';
 import AdminLogin from './pages/admin/Login';
@@ -83,6 +84,7 @@ export default function App() {
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/car/:id" element={<CarDetail />} />
         <Route path="/about" element={<About />} />
+        <Route path="/gallery" element={<Gallery />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/calculator" element={<Calculator />} />
         
