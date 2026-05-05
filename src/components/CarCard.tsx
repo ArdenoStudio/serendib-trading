@@ -96,8 +96,8 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           onClose={() => setLightboxOpen(false)}
         />
 
-        {/* Image Container */}
-        <div className="relative aspect-[16/11] overflow-hidden">
+        {/* Image Container - taller aspect on mobile to show more vehicle */}
+        <div className="relative aspect-[4/3] md:aspect-[16/11] overflow-hidden">
           <motion.img
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -105,7 +105,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             alt={`${car.make} ${car.model}`}
             width={384}
             height={240}
-            className={`w-full h-full object-cover transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
+            className={`w-full h-full object-contain md:object-cover transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"
