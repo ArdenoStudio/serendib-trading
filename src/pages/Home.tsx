@@ -7,7 +7,7 @@ import BrandLogoStrip from '../components/BrandLogoStrip';
 import CarCard from '../components/CarCard';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import Footer from '../components/Footer';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
@@ -21,6 +21,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   const fetchLiveVehicles = async () => {
+    if (!isSupabaseConfigured) return;
     try {
       const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
       if (!error && data) {
@@ -32,6 +33,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
     fetchLiveVehicles();
 
     // Realtime: re-fetch whenever anything changes
@@ -160,7 +162,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.2 }}
             style={{ opacity: textOpacity }}
-            className="flex flex-col max-w-[800px] relative z-10"
+            className="flex w-full max-w-[calc(100vw-3rem)] flex-col relative z-10 md:max-w-[800px]"
           >
             {/* Top Status Bar: Eyebrow */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -170,13 +172,13 @@ export default function Home() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="inline-flex items-center gap-3 px-4 py-2 border border-[#D4AF37]/30 bg-[#D4AF37]/10 rounded-full backdrop-blur-md w-max"
+                className="inline-flex max-w-full items-center gap-3 px-3 py-2 border border-[#D4AF37]/30 bg-[#D4AF37]/10 rounded-full backdrop-blur-md sm:px-4"
               >
                 <span className="relative flex size-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
                   <span className="relative inline-flex rounded-full size-2 bg-[#D4AF37]"></span>
                 </span>
-                <p className="uppercase tracking-[0.2em] font-black text-[#D4AF37] text-[10px]">
+                <p className="text-center uppercase tracking-[0.14em] font-black text-[#D4AF37] text-[10px] sm:tracking-[0.2em]">
                   Welcome to Serendib Trading
                 </p>
               </motion.div>
@@ -228,7 +230,8 @@ export default function Home() {
                initial={{ opacity: 0, y: 15 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ duration: 0.8, delay: 0.5 }}
-              className="mb-10 max-w-[500px] text-base md:text-lg font-medium leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] text-pretty relative z-10 md:text-white/80 md:drop-shadow-md"
+              className="relative z-10 mb-10 w-full max-w-[21.5rem] whitespace-normal break-words text-[15px] font-medium leading-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:max-w-[30rem] md:max-w-[500px] md:text-lg md:leading-relaxed md:text-white/80 md:drop-shadow-md"
+              style={{ overflowWrap: 'break-word', textWrap: 'wrap' }}
             >
               The pinnacle of automotive excellence. Discover outstanding performance, unparalleled luxury, and a curated selection of the world's most desired vehicles.
             </motion.p>
@@ -238,12 +241,12 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-wrap gap-5"
+              className="flex w-full max-w-[21.5rem] flex-col gap-4 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-5"
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/inventory"
-                  className="relative overflow-hidden inline-flex items-center justify-center px-10 py-4 text-[14px] font-black tracking-[0.1em] uppercase group rounded-full shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)]"
+                  className="relative overflow-hidden inline-flex w-full items-center justify-center px-10 py-4 text-[14px] font-black tracking-[0.1em] uppercase group rounded-full shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)] sm:w-auto"
                   style={{ background: 'linear-gradient(135deg, #E5C158 0%, #D4AF37 100%)', color: '#000000' }}
                 >
                   <span className="relative z-10">Explore Collection</span>
@@ -251,8 +254,8 @@ export default function Home() {
                 </Link>
               </motion.div>
 
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <LiquidButton asChild size="xl">
+              <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <LiquidButton asChild size="xl" className="w-full sm:w-auto">
                   <Link
                     to="/contact"
                     className="text-[14px] font-bold tracking-[0.1em] uppercase text-white"

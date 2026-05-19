@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, BarChart2, Plus, Info, ShieldCheck, TrendingUp, Cpu } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { LiquidButton } from './ui/liquid-glass-button';
@@ -29,24 +29,27 @@ export default function ComparisonTray() {
     };
 
     window.addEventListener('storage', handleStorage);
-    const interval = setInterval(handleStorage, 1000);
+    window.addEventListener('comparechange', handleStorage);
+    handleStorage();
     
     return () => {
       window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
+      window.removeEventListener('comparechange', handleStorage);
     };
   }, []);
 
   useEffect(() => {
     if (compareIds.length > 0) {
       const fetchInfo = async () => {
-        const { data } = await supabase.from('cars').select('*').in('id', compareIds);
-        if (data && data.length > 0) {
-          setVehicles(data);
-        } else {
-          const fallbacks = (carsData as Car[]).filter(c => compareIds.includes(c.id));
-          setVehicles(fallbacks);
+        if (isSupabaseConfigured) {
+          const { data } = await supabase.from('cars').select('*').in('id', compareIds);
+          if (data && data.length > 0) {
+            setVehicles(data);
+            return;
+          }
         }
+        const fallbacks = (carsData as Car[]).filter(c => compareIds.includes(c.id));
+        setVehicles(fallbacks);
       };
       fetchInfo();
     } else {
@@ -74,6 +77,7 @@ export default function ComparisonTray() {
         >
           <button
             onClick={() => setIsOpen(true)}
+            aria-label={`Compare ${compareIds.length} selected vehicles`}
             className="flex items-center gap-4 px-8 py-4 bg-black/80 backdrop-blur-2xl border border-[#D4AF37]/30 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] group overflow-hidden relative"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -111,6 +115,7 @@ export default function ComparisonTray() {
               <div className="absolute top-6 right-6 md:top-10 md:right-10 z-20">
                 <button 
                    onClick={() => setIsOpen(false)} 
+                   aria-label="Close comparison tray"
                    className="size-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-500/10 hover:border-red-500/30 group transition-all"
                 >
                   <X className="w-6 h-6 text-gray-500 group-hover:text-red-500 transition-colors" />
@@ -155,6 +160,7 @@ export default function ComparisonTray() {
                         {/* Remove Action */}
                         <button 
                            onClick={() => removeVehicle(v.id)} 
+                           aria-label={`Remove ${v.make} ${v.model} from comparison`}
                            className="absolute top-6 right-6 z-10 size-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center text-red-500/50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                         >
                           <X className="w-4 h-4" />

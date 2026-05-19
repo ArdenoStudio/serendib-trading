@@ -19,21 +19,23 @@ import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
 export default function Inventory() {
   const [searchParams] = useSearchParams();
+  const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [cars, setCars] = useState<Car[]>(carsData);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   
   const [filters, setFilters] = useState({
     condition: searchParams.get('condition') || 'all',
     make: searchParams.get('make') || '',
+    model: searchParams.get('model') || '',
     bodyType: searchParams.get('bodyType') || '',
     fuel: searchParams.get('fuel') || '',
     transmission: searchParams.get('transmission') || '',
@@ -69,6 +71,10 @@ export default function Inventory() {
   };
 
   const fetchLiveVehicles = async () => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
@@ -90,6 +96,10 @@ export default function Inventory() {
   };
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
     fetchLiveVehicles();
 
     // Realtime: re-fetch whenever anything changes in 'cars'
@@ -106,11 +116,14 @@ export default function Inventory() {
     setFilters({
       condition: searchParams.get('condition') || 'all',
       make: searchParams.get('make') || '',
+      model: searchParams.get('model') || '',
       bodyType: searchParams.get('bodyType') || '',
       fuel: searchParams.get('fuel') || '',
       transmission: searchParams.get('transmission') || '',
       maxPrice: Number(searchParams.get('maxPrice')) || 150000000
     });
+    const nextSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
+    setSearchQuery(nextSearchQuery);
   }, [searchParams]);
 
   const filteredCars = useMemo(() => {
@@ -132,6 +145,9 @@ export default function Inventory() {
     }
     if (filters.make) {
       result = result.filter(v => v.make.toLowerCase() === filters.make.toLowerCase());
+    }
+    if (filters.model) {
+      result = result.filter(v => v.model.toLowerCase() === filters.model.toLowerCase());
     }
     if (filters.bodyType) {
       const bt = (v: any) => (v.bodyType || v.body_type || '').toLowerCase();
@@ -167,6 +183,7 @@ export default function Inventory() {
     setFilters({
       condition: 'all',
       make: '',
+      model: '',
       bodyType: '',
       fuel: '',
       transmission: '',
@@ -187,7 +204,7 @@ export default function Inventory() {
       <main>
 
       {/* --- PREMIUM HERO SECTION --- */}
-      <section className="relative h-[65vh] flex items-center justify-center overflow-hidden">
+      <section className="relative flex min-h-[560px] items-center justify-center overflow-hidden md:h-[65vh]">
         {/* Background Layers */}
         <div className="absolute inset-0 z-0">
           <motion.div 
@@ -209,29 +226,34 @@ export default function Inventory() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-[1400px] w-full mx-auto px-6 lg:px-10 flex flex-col items-center">
+        <div className="relative z-10 max-w-[1400px] w-full mx-auto px-6 lg:px-10 flex flex-col items-center overflow-hidden">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center space-y-8"
+            className="w-full text-center space-y-7 md:space-y-8"
           >
-            <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10">
+            <div className="inline-flex max-w-full items-center justify-center gap-3 px-4 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 sm:gap-4 sm:px-6">
               <Database className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Showroom Collection</span>
+              <span className="text-center text-[#D4AF37] font-black uppercase tracking-[0.22em] text-[10px] sm:tracking-[0.4em]">The Showroom Collection</span>
             </div>
 
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] leading-[0.9] uppercase text-wrap-balance">
+            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight md:tracking-[-0.08em] leading-[0.92] uppercase text-wrap-balance">
               Master <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Inventory</span>
             </h1>
-            <div className="max-w-xl mx-auto space-y-8">
-              <p className="text-gray-400 font-medium text-base md:text-lg leading-relaxed">
-                A meticulously curated selection of the world's most desired automotive masterpieces, verified by our experts.
+            <div className="mx-auto max-w-[21.5rem] space-y-8 px-1 sm:max-w-xl">
+              <p
+                className="max-w-full whitespace-normal break-words text-sm font-medium leading-7 text-gray-400 md:text-lg md:leading-relaxed"
+                style={{ overflowWrap: 'break-word', textWrap: 'wrap' }}
+              >
+                <span className="block sm:inline">A meticulously curated selection of </span>
+                <span className="block sm:inline">the world's most desired automotive </span>
+                <span className="block sm:inline">masterpieces, verified by our experts.</span>
               </p>
               
               {/* Stats Row */}
-              <div className="flex flex-wrap items-center justify-center gap-12 pt-4 tabular-nums">
+              <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 pt-4 tabular-nums">
                 {[
                   { label: "Vehicles", val: "40+" },
                   { label: "Global Marks", val: "12" },
@@ -297,8 +319,11 @@ export default function Inventory() {
                   <div className="flex items-center gap-3 relative">
                     <span className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">Sort</span>
                     <div className="relative">
-                        <button 
+                        <button
+                            type="button"
                             onClick={() => setIsSortOpen(!isSortOpen)}
+                            aria-expanded={isSortOpen}
+                            aria-haspopup="menu"
                             className="flex items-center gap-2 text-[11px] font-black text-white hover:text-[#D4AF37] transition-all uppercase tracking-widest outline-none group active:scale-[0.98]"
                         >
                             {sortBy === 'Newest First' ? 'Latest Arrival' :
@@ -626,7 +651,7 @@ export default function Inventory() {
 
           {/* MAIN GRID */}
           <main className="flex-1">
-             <div className="flex items-center justify-between mb-12">
+             <div className="mb-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                     <h2 className="text-2xl font-black uppercase tracking-tighter">Verified <span className="text-gray-500">Assets</span></h2>
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
@@ -635,8 +660,10 @@ export default function Inventory() {
                 </div>
                 
                 <button 
+                    type="button"
                     onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] transition-all bg-white/5 px-4 py-2 rounded-xl group active:scale-[0.96]"
+                    aria-label={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+                    className="group flex w-full items-center justify-center gap-2 rounded-xl bg-white/5 px-4 py-2 text-gray-400 transition-all hover:text-[#D4AF37] active:scale-[0.96] sm:w-auto"
                 >
                     {viewMode === 'grid' ? (
                         <>

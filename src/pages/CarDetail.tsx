@@ -5,7 +5,7 @@ import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settin
 import Footer from '../components/Footer';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import CarCard from '../components/CarCard';
-import { supabase, logCarView } from '../lib/supabase';
+import { isSupabaseConfigured, logCarView, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
@@ -20,18 +20,18 @@ export default function CarDetail() {
 
   useEffect(() => {
     const fetchCar = async () => {
-      // 1. Try Live Supabase first
-      const { data, error } = await supabase.from('cars').select('*').eq('id', id).single();
-      
-      if (!error && data) {
-        setCar(data);
-        setLoading(false);
-      } else {
-        // 2. Fallback to static data
-        const fallback = (carsData as Car[]).find(c => c.id === id);
-        setCar(fallback || null);
-        setLoading(false);
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.from('cars').select('*').eq('id', id).single();
+        if (!error && data) {
+          setCar(data);
+          setLoading(false);
+          return;
+        }
       }
+
+      const fallback = (carsData as Car[]).find(c => c.id === id);
+      setCar(fallback || null);
+      setLoading(false);
     };
     fetchCar();
   }, [id]);
@@ -76,17 +76,18 @@ export default function CarDetail() {
   const handleTestDriveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Log Lee to Supabase
-    await supabase.from('leads').insert([{
-      type: 'Test Drive',
-      vehicle_id: car.id,
-      vehicle_model: `${car.year} ${car.make} ${car.model}`,
-      name: testDriveForm.name,
-      phone: testDriveForm.phone,
-      date: testDriveForm.date,
-      time: testDriveForm.time,
-      status: 'New'
-    }]);
+    if (isSupabaseConfigured) {
+      await supabase.from('leads').insert([{
+        type: 'Test Drive',
+        vehicle_id: car.id,
+        vehicle_model: `${car.year} ${car.make} ${car.model}`,
+        name: testDriveForm.name,
+        phone: testDriveForm.phone,
+        date: testDriveForm.date,
+        time: testDriveForm.time,
+        status: 'New'
+      }]);
+    }
 
     const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${testDriveForm.name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${testDriveForm.phone}`;
     window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank');
@@ -323,17 +324,21 @@ export default function CarDetail() {
                 
                 <form onSubmit={handleTestDriveSubmit} className="space-y-4 relative z-10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input type="text" placeholder="Your Full Name" required value={testDriveForm.name} onChange={e => setTestDriveForm({ ...testDriveForm, name: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
-                    <input type="tel" placeholder="Contact Number" required value={testDriveForm.phone} onChange={e => setTestDriveForm({ ...testDriveForm, phone: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                    <label className="sr-only" htmlFor="test-drive-name">Your Full Name</label>
+                    <input id="test-drive-name" type="text" placeholder="Your Full Name" required value={testDriveForm.name} onChange={e => setTestDriveForm({ ...testDriveForm, name: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                    <label className="sr-only" htmlFor="test-drive-phone">Contact Number</label>
+                    <input id="test-drive-phone" type="tel" placeholder="Contact Number" required value={testDriveForm.phone} onChange={e => setTestDriveForm({ ...testDriveForm, phone: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative">
                       <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D4AF37]" />
-                      <input type="date" required value={testDriveForm.date} onChange={e => setTestDriveForm({ ...testDriveForm, date: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                      <label className="sr-only" htmlFor="test-drive-date">Preferred date</label>
+                      <input id="test-drive-date" type="date" required value={testDriveForm.date} onChange={e => setTestDriveForm({ ...testDriveForm, date: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
                     </div>
                     <div className="relative">
                       <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D4AF37]" />
-                      <select value={testDriveForm.time} onChange={e => setTestDriveForm({ ...testDriveForm, time: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all appearance-none cursor-pointer">
+                      <label className="sr-only" htmlFor="test-drive-time">Preferred time</label>
+                      <select id="test-drive-time" value={testDriveForm.time} onChange={e => setTestDriveForm({ ...testDriveForm, time: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all appearance-none cursor-pointer">
                         <option className="bg-[#0d0b09]" value="9:30am">9:30 AM</option>
                         <option className="bg-[#0d0b09]" value="1:00pm">1:00 PM</option>
                         <option className="bg-[#0d0b09]" value="4:30pm">4:30 PM</option>
@@ -385,5 +390,4 @@ export default function CarDetail() {
     </div>
   );
 }
-
 

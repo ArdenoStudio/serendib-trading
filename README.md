@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Serendib Trading
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/6939e3be-48e1-4f70-bd92-080fb4e1128b
+Luxury vehicle showroom website and lightweight inventory admin for Serendib Trading.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js 20+
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+
+   ```bash
+   npm install
+   ```
+
+2. Optional: copy `.env.example` to `.env.local` and set Supabase values for live inventory/admin features. Without Supabase env vars, the site uses static demo inventory from `src/data/cars.json`.
+
 3. Run the app:
-   `npm run dev`
+
+   ```bash
+   npm run dev
+   ```
+
+## Checks
+
+```bash
+npm run lint
+npm run build
+```

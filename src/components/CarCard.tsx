@@ -50,6 +50,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
     }
     localStorage.setItem('wishlist', JSON.stringify(newWishlist));
     setIsWishlisted(!isWishlisted);
+    window.dispatchEvent(new Event('wishlistchange'));
   };
 
   const toggleCompare = (e: React.MouseEvent) => {
@@ -69,6 +70,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
     }
     localStorage.setItem('compare', JSON.stringify(newCompare));
     setIsComparing(!isComparing);
+    window.dispatchEvent(new Event('comparechange'));
   };
 
   return (
@@ -214,4 +216,3 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
     </Link>
   );
 }
-

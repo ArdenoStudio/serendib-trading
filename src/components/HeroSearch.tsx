@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useId, useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 
@@ -19,6 +19,7 @@ const CustomSelect = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,6 +40,11 @@ const CustomSelect = ({
         onClick={() => setIsOpen(!isOpen)}
         aria-label={`Select ${placeholder}`}
         aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={listboxId}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setIsOpen(false);
+        }}
         className={`w-full h-full min-h-[56px] flex items-center justify-between px-6 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border transition-all duration-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 active:scale-[0.98] ${isOpen ? 'border-[#C69320] shadow-[0_0_20px_rgba(198,147,32,0.15)] ring-1 ring-[#C69320]/20' : 'border-white/10 hover:border-white/20'}`}
       >
         <span className={`truncate text-[14px] font-semibold ${selectedOption ? 'text-white' : 'text-white/80'}`}>
@@ -70,6 +76,8 @@ const CustomSelect = ({
             }}
             data-lenis-prevent="true"
             onWheel={(e) => e.stopPropagation()}
+            id={listboxId}
+            role="listbox"
           >
             <motion.div
               initial="hidden"
@@ -88,6 +96,8 @@ const CustomSelect = ({
                   show: { opacity: 1, x: 0 }
                 }}
                 type="button"
+                role="option"
+                aria-selected={value === ""}
                 onClick={() => {
                   onChange("");
                   setIsOpen(false);
@@ -106,6 +116,8 @@ const CustomSelect = ({
                   }}
                   key={opt.value}
                   type="button"
+                  role="option"
+                  aria-selected={value === opt.value}
                   onClick={() => {
                     onChange(opt.value);
                     setIsOpen(false);
@@ -136,6 +148,7 @@ export default function HeroSearch() {
 
   useEffect(() => {
     const fetchLiveVehicles = async () => {
+      if (!isSupabaseConfigured) return;
       const { data, error } = await supabase.from('cars').select('*');
       if (!error && data) {
         setCars(data);

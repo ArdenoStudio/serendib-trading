@@ -7,6 +7,7 @@ interface SEOProps {
   canonical?: string;
   ogImage?: string;
   ogType?: 'website' | 'article';
+  noindex?: boolean;
 }
 
 export default function SEO({ 
@@ -14,12 +15,13 @@ export default function SEO({
   description, 
   canonical, 
   ogImage = '/serendib-logo.png', 
-  ogType = 'website' 
+  ogType = 'website',
+  noindex = false,
 }: SEOProps) {
   const siteTitle = 'Serendib Trading | Luxury & Performance Vehicles Sri Lanka';
   const fullTitle = title ? `${title} | Serendib Trading` : siteTitle;
   const siteDescription = description || "Sri Lanka's premier destination for luxury and performance vehicles. Direct imports from UK & Japan with unmatched quality.";
-  const siteUrl = 'https://serendibtrading.lk';
+  const siteUrl = (import.meta.env.VITE_SITE_URL || 'https://serendibtrading.lk').replace(/\/$/, '');
   const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl;
 
   return (
@@ -38,6 +40,8 @@ export default function SEO({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={siteDescription} />
       <meta property="og:image" content={ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`} />
+      <meta property="og:site_name" content="Serendib Trading" />
+      <meta property="og:locale" content="en_LK" />
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
@@ -47,7 +51,7 @@ export default function SEO({
       <meta property="twitter:image" content={ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`} />
       
       {/* Robots */}
-      <meta name="robots" content="index, follow" />
+      <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
     </Helmet>
   );
 }

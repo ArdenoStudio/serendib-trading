@@ -3,17 +3,29 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL or Anon Key is missing.');
+const hasEnvValue = (value?: string) =>
+  Boolean(value && !value.includes('MY_') && !value.includes('placeholder'));
+
+export const isSupabaseConfigured = hasEnvValue(supabaseUrl) && hasEnvValue(supabaseAnonKey);
+
+if (!isSupabaseConfigured && import.meta.env.DEV) {
+  console.info('Supabase env vars are missing; using static inventory data locally.');
 }
 
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder-url.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key'
+  isSupabaseConfigured ? supabaseUrl : 'https://placeholder-url.supabase.co',
+  isSupabaseConfigured ? supabaseAnonKey : 'placeholder-anon-key'
 );
+
+const requireSupabase = () => {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  }
+};
 
 // ── Vehicles ────────────────────────────────────────────────
 export const getVehicles = async () => {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase
     .from('cars')
     .select('*')
@@ -23,6 +35,7 @@ export const getVehicles = async () => {
 };
 
 export const markAsSold = async (id: string) => {
+  requireSupabase();
   const { error } = await supabase
     .from('cars')
     .update({ is_sold: true, sold_at: new Date().toISOString() })
@@ -34,6 +47,7 @@ export const markAsSold = async (id: string) => {
 const STORAGE_BUCKET = 'vehicle-images';
 
 export const uploadVehicleImage = async (file: File): Promise<string> => {
+  requireSupabase();
   const ext = file.name.split('.').pop() ?? 'jpg';
   const path = `vehicles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
@@ -52,6 +66,7 @@ export const uploadVehicleImage = async (file: File): Promise<string> => {
 
 // ── Auth Helpers ─────────────────────────────────────────────
 export const signInWithGoogle = async () => {
+  requireSupabase();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: `${window.location.origin}/admin` },
@@ -62,6 +77,7 @@ export const signInWithGoogle = async () => {
 
 // ── Learning Knowledge Base ────────────────────────────────────────
 export const fetchDynamicKnowledge = async (): Promise<Record<string, any>> => {
+  if (!isSupabaseConfigured) return {};
   try {
     const { data, error } = await supabase.from('vehicle_knowledge').select('*');
     if (error || !data) return {};
@@ -81,6 +97,7 @@ export const fetchDynamicKnowledge = async (): Promise<Record<string, any>> => {
 };
 
 export const learnFromVehicle = async (vehicle: any) => {
+  if (!isSupabaseConfigured) return;
   if (!vehicle.model || !vehicle.make) return;
   const modelKey = vehicle.model.toLowerCase();
   
@@ -101,12 +118,14 @@ export const learnFromVehicle = async (vehicle: any) => {
 };
 
 export const signOut = async () => {
+  requireSupabase();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 };
 
 // ── Advanced Analytics ────────────────────────────────────────
 export const logPageView = async () => {
+  if (!isSupabaseConfigured) return;
   try {
     await supabase.rpc('track_site_visit');
   } catch (err) {
@@ -115,6 +134,7 @@ export const logPageView = async () => {
 };
 
 export const logCarView = async (carId: string) => {
+  if (!isSupabaseConfigured) return;
   try {
     await supabase.rpc('increment_car_view', { car_id: carId });
   } catch (err) {

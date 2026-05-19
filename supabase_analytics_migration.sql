@@ -13,8 +13,12 @@ CREATE TABLE IF NOT EXISTS public.site_traffic (
 ALTER TABLE public.site_traffic ENABLE ROW LEVEL SECURITY;
 
 -- Policies for site_traffic
-CREATE POLICY "Allow public insert/update on site_traffic" ON public.site_traffic
-    FOR ALL USING (true); -- Simplified for tracking; in production, use a more secure method or edge function
+DROP POLICY IF EXISTS "Allow public insert/update on site_traffic" ON public.site_traffic;
+DROP POLICY IF EXISTS "Authenticated users can read site_traffic" ON public.site_traffic;
+
+CREATE POLICY "Authenticated users can read site_traffic" ON public.site_traffic
+    FOR SELECT TO authenticated
+    USING (true);
 
 -- Function to increment car views
 CREATE OR REPLACE FUNCTION increment_car_view(car_id UUID)
@@ -24,7 +28,7 @@ BEGIN
     SET views = views + 1
     WHERE id = car_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to track site visit
 CREATE OR REPLACE FUNCTION track_site_visit()
@@ -37,4 +41,9 @@ BEGIN
         visitor_count = public.site_traffic.visitor_count + 1,
         page_views = public.site_traffic.page_views + 1;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+REVOKE ALL ON FUNCTION increment_car_view(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION track_site_visit() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION increment_car_view(UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION track_site_visit() TO anon, authenticated;

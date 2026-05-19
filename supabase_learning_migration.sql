@@ -19,4 +19,7 @@ CREATE POLICY "Allow public read on vehicle_knowledge" ON public.vehicle_knowled
 
 -- Allow authenticated users to insert/update (the learning part)
 CREATE POLICY "Allow authenticated users to manage vehicle_knowledge" ON public.vehicle_knowledge
-    FOR ALL USING (auth.role() = 'authenticated');
+    FOR ALL
+    TO authenticated
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');

@@ -9,6 +9,7 @@ export default function NotFound() {
         title="Page Not Found"
         description="The page you are looking for doesn't exist. Return to Serendib Trading's vehicle collection."
         canonical="/404"
+        noindex
       />
       <main className="flex flex-col items-center justify-center min-h-screen px-6 text-center relative">
         {/* Ambient glow */}

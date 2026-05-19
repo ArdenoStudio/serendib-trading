@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Outfit:wght@100..900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -51,6 +50,11 @@
     scroll-behavior: smooth;
     /* Prevent overscroll bounce on mobile for a more app-like feel */
     overscroll-behavior-y: none;
+  }
+
+  html, body, #root {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   /* Chrome/Safari Scrollbar */

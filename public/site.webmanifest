@@ -1,0 +1,17 @@
+{
+  "name": "Serendib Trading",
+  "short_name": "Serendib",
+  "description": "Luxury and performance vehicle trading in Sri Lanka.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0b09",
+  "theme_color": "#0d0b09",
+  "icons": [
+    {
+      "src": "/serendib-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

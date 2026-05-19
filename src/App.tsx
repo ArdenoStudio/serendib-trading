@@ -1,41 +1,41 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import Lenis from 'lenis';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Inventory from './pages/Inventory';
-import CarDetail from './pages/CarDetail';
-import About from './pages/About';
-import Gallery from './pages/Gallery';
-import Contact from './pages/Contact';
-import Calculator from './pages/Calculator';
-import AdminLogin from './pages/admin/Login';
-import AdminDashboard from './pages/admin/Dashboard';
-import NotFound from './pages/NotFound';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
-import { Analytics } from "@vercel/analytics/react";
-
+import Loader from './components/Loader';
 import { logPageView } from './lib/supabase';
+
+const Home = lazy(() => import('./pages/Home'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const CarDetail = lazy(() => import('./pages/CarDetail'));
+const About = lazy(() => import('./pages/About'));
+const Gallery = lazy(() => import('./pages/Gallery'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Calculator = lazy(() => import('./pages/Calculator'));
+const AdminLogin = lazy(() => import('./pages/admin/Login'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
 
 export default function App() {
   const location = useLocation();
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     logPageView();
 
-    // Disable Lenis on touch devices — native scroll is already smooth
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
-    if (isTouch) {
+    if (isTouch || shouldReduceMotion) {
       window.scrollTo(0, 0);
       return;
     }
 
-    // Lenis Smooth Scroll (desktop only)
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -54,9 +54,15 @@ export default function App() {
       cancelAnimationFrame(rafId);
       lenis.destroy();
     };
-  }, [location.pathname]);
+  }, [location.pathname, shouldReduceMotion]);
 
   const isAdmin = location.pathname.startsWith('/admin');
+  const motionState = shouldReduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 8, scale: 0.995 },
+        exit: { opacity: 0, y: -8, scale: 0.995 },
+      };
 
   return (
     <>
@@ -65,48 +71,47 @@ export default function App() {
       {!isAdmin && <Navbar />}
       {!isAdmin && <ComparisonTray />}
       <AnimatePresence mode="popLayout" initial={false}>
-      <motion.div
-        key={location.key}
-        initial={{ opacity: 0, y: 8, scale: 0.995 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -8, scale: 0.995 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 30,
-          mass: 0.8,
-          opacity: { duration: 0.15 }
-        }}
-        style={{ willChange: 'transform, opacity' }}
-      >
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/car/:id" element={<CarDetail />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/calculator" element={<Calculator />} />
-        
-        {/* Legal Pages */}
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
+        <motion.div
+          key={location.key}
+          {...motionState}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 300,
+            damping: 30,
+            mass: 0.8,
+            opacity: { duration: 0.15 },
+          }}
+          style={{ willChange: shouldReduceMotion ? 'auto' : 'transform, opacity' }}
+        >
+          <Suspense fallback={<Loader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/car/:id" element={<CarDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/calculator" element={<Calculator />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
 
-        {/* 404 Catch-all */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      </motion.div>
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </motion.div>
       </AnimatePresence>
     </>
   );
 }
-
-
