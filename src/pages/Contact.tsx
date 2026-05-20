@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
+import { SHOWROOM_IMAGES } from '../data/showroomImages';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
@@ -16,20 +17,29 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
+    <div className="relative min-h-screen overflow-hidden font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
       <SEO 
         title="Contact Us"
         description="Get in touch with our automotive specialists for acquisitions, appraisals, or private viewings. Experience bespoke service since 2010."
         canonical="/contact"
       />
       {/* --- CINEMATIC AMBIANCE --- */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-x-0 top-0 z-0 h-[760px] overflow-hidden pointer-events-none">
+        <img
+          src={SHOWROOM_IMAGES[1].src}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.22]"
+          loading="eager"
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-[#0d0b09]/58" />
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#0d0b09] via-transparent to-[#0d0b09]" />
         <div className="absolute top-1/4 -left-1/4 w-[600px] h-[600px] bg-[#D4AF37]/5 rounded-full blur-[160px] animate-pulse" />
         <div className="absolute bottom-1/4 -right-1/4 w-[600px] h-[600px] bg-[#D4AF37]/3 rounded-full blur-[160px] animate-pulse delay-1000" />
       </div>
 
-      <main className="relative z-10 pt-32 pb-40 px-6">
+      <main className="relative z-10 pt-32 pb-24 px-6">
         <div className="max-w-7xl mx-auto space-y-20">
           
           {/* --- MINIMAL HERO --- */}

@@ -118,7 +118,7 @@ export default function CarDetail() {
         ogImage={car.image}
         canonical={`/car/${car.id}`}
       />
-      <main className="pt-40 pb-32 px-6 lg:px-10 max-w-[1400px] mx-auto">
+      <main className="pt-40 pb-20 px-6 lg:px-10 max-w-[1400px] mx-auto">
         {/* Navigation & Actions */}
         <div className="flex items-center justify-between mb-16">
           <Link 
@@ -390,4 +390,3 @@ export default function CarDetail() {
     </div>
   );
 }
-

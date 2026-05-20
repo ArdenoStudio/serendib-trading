@@ -30,7 +30,7 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
   return (
     <div 
       ref={containerRef}
-      className="w-full flex flex-col items-center justify-center pt-2 pb-16 bg-transparent pointer-events-auto mt-24"
+      className="w-full flex flex-col items-center justify-center pt-2 pb-1 bg-transparent pointer-events-auto mt-5"
     >
       <style>{`
         @keyframes shine {
@@ -64,7 +64,7 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
         href="https://ardeno-studio-website.vercel.app/"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex flex-col items-center gap-6 group cursor-pointer no-underline" 
+        className="flex flex-col items-center gap-2 group cursor-pointer no-underline" 
         aria-label="Visit Ardeno Studio Website"
       >
         <div className="relative" aria-hidden="true">
@@ -73,7 +73,7 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
             className="ardeno-mark relative z-10 opacity-70 group-hover:opacity-100 transition-all duration-700"
             viewBox="240 600 285 300"
             xmlns="http://www.w3.org/2000/svg"
-            style={{ height: 42, width: "auto" }}
+            style={{ height: 26, width: "auto" }}
             preserveAspectRatio="xMidYMid meet"
           >
             <path
@@ -83,12 +83,12 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
           </svg>
         </div>
         
-        <div className="flex flex-col items-center gap-2 text-center text-decoration-none">
-          <span className="text-[11px] uppercase tracking-[0.5em] text-white/35 group-hover:text-white/60 transition-all duration-700 font-sans decoration-none">
+        <div className="flex flex-col items-center gap-1.5 text-center text-decoration-none">
+          <span className="text-[9px] uppercase tracking-[0.36em] text-white/35 group-hover:text-white/60 transition-all duration-700 font-sans decoration-none">
             An Ardeno Production
           </span>
           <span 
-            className={`shine-text font-medium tracking-[0.18em] text-lg transition-all duration-700 ${isAutoShining ? 'auto-shine' : ''}`}
+            className={`shine-text font-medium tracking-[0.14em] text-sm transition-all duration-700 ${isAutoShining ? 'auto-shine' : ''}`}
             style={{ fontFamily: "serif" }}
           >
             Based in LK

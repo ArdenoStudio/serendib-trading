@@ -23,6 +23,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
+import { SHOWROOM_IMAGES } from '../data/showroomImages';
 export default function Inventory() {
   const [searchParams] = useSearchParams();
   const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
@@ -214,9 +215,9 @@ export default function Inventory() {
             className="w-full h-full"
           >
             <img 
-              src="/images/inventory_hero.png" 
+              src={SHOWROOM_IMAGES[3].src} 
               className="w-full h-full object-cover" 
-              alt="Serendib Trading luxury vehicle inventory showroom" 
+              alt="Serendib Trading showroom with vehicles displayed indoors" 
             />
           </motion.div>
           <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b09]/80 via-transparent to-[#0d0b09]" />
@@ -276,7 +277,7 @@ export default function Inventory() {
       </section>
 
       {/* --- MAIN CURATION LAYOUT --- */}
-      <div className="max-w-[1500px] mx-auto px-6 lg:px-10 pb-40">
+      <div className="max-w-[1500px] mx-auto px-6 lg:px-10 pb-24 md:pb-28">
         
         {/* Sticky Filters Bar */}
         <div className="sticky top-20 z-40 mb-16 py-6 border-b border-white/5 bg-[#0d0b09]/95">

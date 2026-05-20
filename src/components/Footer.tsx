@@ -9,26 +9,11 @@ export default function Footer() {
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 1 }}
-      className="bg-[#0A0A0A] border-t border-white/10 pt-20 pb-8 text-gray-400"
+      className="bg-[#0A0A0A] border-t border-white/10 pt-12 pb-6 text-gray-400"
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
-
-        {/* ── Brand Hero Strip ── */}
-        <div className="flex flex-col items-center text-center mb-20 pb-16 border-b border-white/5 relative">
-          {/* Ambient glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] bg-[#D4AF37]/5 rounded-full blur-[80px] pointer-events-none" />
-          <img
-            src="/serendib-logo-new.svg"
-            alt="Serendib Trading"
-            className="h-24 md:h-32 w-auto object-contain mb-6 relative z-10"
-          />
-          <p className="text-white/40 text-sm font-light max-w-sm leading-relaxed">
-            Sri Lanka's premier destination for luxury and performance vehicles.
-          </p>
-        </div>
-
         {/* 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-8">
 
           {/* Column 1: Brand */}
           <div className="flex flex-col">
@@ -119,7 +104,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Copyright Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 text-xs font-light tabular-nums">
+        <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-white/5 text-xs font-light tabular-nums">
           <p>© {new Date().getFullYear()} Serendib Trading. All rights reserved.</p>
           <div className="mt-4 md:mt-0 flex gap-6">
             <Link to="/privacy" className="opacity-50 hover:opacity-100 transition-opacity hover:text-[#D4AF37]">Privacy Policy</Link>
@@ -134,4 +119,3 @@ export default function Footer() {
     </motion.footer>
   );
 }
-

@@ -38,7 +38,7 @@ export default function Privacy() {
         description="Serendib Trading's privacy policy — how we collect, use and protect your personal information."
         canonical="/privacy"
       />
-      <main className="pt-40 pb-32 px-6 max-w-3xl mx-auto">
+      <main className="pt-40 pb-20 px-6 max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

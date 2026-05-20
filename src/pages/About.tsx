@@ -12,6 +12,7 @@ import {
 import Footer from '../components/Footer';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
+import { SHOWROOM_IMAGES } from '../data/showroomImages';
 
 export default function About() {
   const shouldReduceMotion = useReducedMotion();
@@ -35,13 +36,13 @@ export default function About() {
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         <div className={`absolute inset-0 z-0 ${noParallax ? '' : ''}`}>
           <img
-            src="/images/showroom.png"
-            alt="Serendib Showroom"
-            className="w-full h-full object-cover brightness-[0.5]"
+            src={SHOWROOM_IMAGES[0].src}
+            alt="Serendib Trading showroom vehicle display"
+            className="w-full h-full object-cover brightness-[0.68] contrast-[1.05]"
             decoding="async"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b09]/60 via-transparent to-[#0d0b09]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b09]/45 via-[#0d0b09]/15 to-[#0d0b09]" />
         </div>
 
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-10 text-center space-y-8">
@@ -141,8 +142,8 @@ export default function About() {
           </div>
           <div className="lg:w-1/2 aspect-video rounded-3xl overflow-hidden border border-white/10">
             <img
-              src="/images/showroom.png"
-              alt="Serendib Trading Showroom"
+              src={SHOWROOM_IMAGES[5].src}
+              alt="Illuminated Serendib Trading logo wall inside the showroom"
               className="w-full h-full object-cover"
               loading="lazy"
             />
@@ -151,7 +152,7 @@ export default function About() {
       </section>
 
       {/* --- WHY CHOOSE US --- */}
-      <section className="py-20 md:py-32 px-6 lg:px-10 bg-white/[0.01] border-t border-white/5">
+      <section className="pt-20 md:pt-28 pb-12 md:pb-16 px-6 lg:px-10 bg-white/[0.01] border-t border-white/5">
         <div className="max-w-[1000px] mx-auto">
           <div className="text-center mb-12">
             <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-[11px] mb-4">Trust</p>

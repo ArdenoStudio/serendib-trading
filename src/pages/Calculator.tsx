@@ -78,7 +78,7 @@ export default function Calculator() {
       </section>
 
       {/* --- CALCULATOR SUITE --- */}
-      <section className="relative z-20 -mt-24 md:-mt-32 pb-40 px-6 lg:px-10">
+      <section className="relative z-20 -mt-24 md:-mt-32 pb-24 md:pb-28 px-6 lg:px-10">
         <div className="max-w-[1400px] mx-auto">
             <motion.div
                 initial={{ opacity: 0, y: 100 }}

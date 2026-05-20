@@ -42,7 +42,7 @@ export default function Terms() {
         description="Serendib Trading's terms of service — governing the use of our website and services."
         canonical="/terms"
       />
-      <main className="pt-40 pb-32 px-6 max-w-3xl mx-auto">
+      <main className="pt-40 pb-20 px-6 max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

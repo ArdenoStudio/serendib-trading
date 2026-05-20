@@ -1,14 +1,27 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { X, Camera, Car, Building2 } from 'lucide-react';
+import { Camera, Car, Building2 } from 'lucide-react';
 import Footer from '../components/Footer';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import ImageLightbox from '../components/ImageLightbox';
 import SEO from '../components/SEO';
+import { SHOWROOM_IMAGES } from '../data/showroomImages';
 
-// Gallery image configuration - 39 images from serendib trading collection
-// Images are categorized by vehicle type based on folder structure
-const GALLERY_IMAGES = [
+type GalleryCategory = 'vehicles' | 'showroom';
+type GalleryImage = {
+  src: string;
+  category: GalleryCategory;
+  alt: string;
+};
+
+const SHOWROOM_GALLERY_IMAGES: GalleryImage[] = SHOWROOM_IMAGES.map((image) => ({
+  src: image.src,
+  category: 'showroom',
+  alt: image.alt,
+}));
+
+const GALLERY_IMAGES: GalleryImage[] = [
+  ...SHOWROOM_GALLERY_IMAGES,
   // Mercedes-Benz (6 images)
   { src: '/images/gallery/vehicle-1.jpg', category: 'vehicles', alt: 'Mercedes-Benz showcase' },
   { src: '/images/gallery/vehicle-2.jpg', category: 'vehicles', alt: 'Mercedes-Benz exterior' },
@@ -57,7 +70,6 @@ const GALLERY_IMAGES = [
   { src: '/images/gallery/vehicle-36.jpg', category: 'showroom', alt: 'Showroom ambiance' },
   { src: '/images/gallery/vehicle-37.jpg', category: 'showroom', alt: 'Vehicle arrangement' },
   { src: '/images/gallery/vehicle-38.jpg', category: 'showroom', alt: 'Collection display' },
-  { src: '/images/gallery/vehicle-39.jpg', category: 'showroom', alt: 'Premium showroom' },
 ];
 
 export default function Gallery() {
@@ -67,11 +79,6 @@ export default function Gallery() {
   const filteredImages = filter === 'all' 
     ? GALLERY_IMAGES 
     : GALLERY_IMAGES.filter(img => img.category === filter);
-
-  // Check if placeholder images exist (for initial setup)
-  const hasPlaceholders = filteredImages.some(img => 
-    img.src.includes('vehicle-') || img.src.includes('showroom-')
-  );
 
   return (
     <div className="min-h-screen bg-[#0d0b09] text-white overflow-x-hidden">
@@ -146,27 +153,19 @@ export default function Gallery() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
             >
               {filteredImages.map((image, i) => (
-                <motion.div
+                <motion.button
+                  type="button"
                   key={image.src}
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
                   onClick={() => setLightboxImage(image.src)}
-                  className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-pointer"
+                  aria-label={`Open ${image.alt}`}
+                  className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/5 bg-cover bg-center text-left cursor-pointer"
+                  style={{ backgroundImage: `url(${image.src})` }}
                 >
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      // Show placeholder if image fails to load
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      (e.target as HTMLImageElement).parentElement!.classList.add('bg-white/10');
-                    }}
-                  />
+                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${image.src})` }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">
@@ -174,7 +173,7 @@ export default function Gallery() {
                     </span>
                     <p className="text-sm font-medium mt-1">{image.alt}</p>
                   </div>
-                </motion.div>
+                </motion.button>
               ))}
             </motion.div>
           ) : (

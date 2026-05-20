@@ -14,10 +14,12 @@ import { LiquidButton } from '../components/ui/liquid-glass-button';
 import { BrandIcons } from '../components/ui/brand-icons';
 import { LocationTag } from '../components/ui/location-tag';
 import SEO from '../components/SEO';
+import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'New' | 'Registered'>('Registered');
   const [cars, setCars] = useState<Car[]>(carsData);
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const navigate = useNavigate();
 
   const fetchLiveVehicles = async () => {
@@ -58,6 +60,16 @@ export default function Home() {
     setIsTouch(window.matchMedia('(pointer: coarse)').matches);
   }, []);
 
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const timer = window.setInterval(() => {
+      setActiveHeroSlide((current) => (current + 1) % HERO_SHOWROOM_SLIDES.length);
+    }, 5200);
+
+    return () => window.clearInterval(timer);
+  }, [shouldReduceMotion]);
+
   const customEase = cubicBezier(0.16, 1, 0.3, 1);
 
   const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.15], { ease: customEase });
@@ -67,6 +79,8 @@ export default function Home() {
   const filteredCars = (cars.length > 0 ? cars : carsData as Car[])
     .filter(car => car.condition === activeTab && !car.is_sold)
     .slice(0, 4);
+
+  const currentHeroSlide = HERO_SHOWROOM_SLIDES[activeHeroSlide];
 
   return (
     <div className="min-h-screen overflow-x-hidden font-sans" style={{ backgroundColor: '#0d0b09', color: '#FFFFFF' }}>
@@ -87,59 +101,50 @@ export default function Home() {
       >
         {/* Background Image Wrapper (Traps scale overflow) */}
         <div className="absolute inset-0 overflow-hidden z-0">
-          {/* Desktop Background Image (landscape) - hidden on mobile */}
           <motion.div
-            className="absolute inset-0 origin-center hidden md:block"
+            className="absolute inset-0 origin-center"
             style={{
-              backgroundImage: 'url("/images/hero_bg-v2.webp")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
               ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
             }}
           >
-            {/* Cinematic gradient overlay with dynamic opacity instead of blur */}
-            <motion.div
-              className="absolute inset-0 bg-black/40 z-[1]"
-              style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.3 }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black z-[2]" />
-
-            {/* Luxury Noise Grain Overlay */}
-            <div className="absolute inset-0 bg-noise z-[2]" />
-
-            {/* Luxury Subtle Grid Overlay */}
-            <div
-               className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-[3]"
-               style={{
-                 backgroundImage: `linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)`,
-                 backgroundSize: '40px 40px'
-               }}
-            />
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.img
+                key={currentHeroSlide.src}
+                src={currentHeroSlide.src}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover brightness-[1.08] contrast-[1.05] saturate-[1.06]"
+                style={{ objectPosition: currentHeroSlide.objectPosition || 'center center' }}
+                decoding="async"
+                loading={activeHeroSlide === 0 ? 'eager' : 'lazy'}
+                initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 1.2, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </AnimatePresence>
           </motion.div>
 
-          {/* Mobile Background Image (portrait) - shown only on mobile */}
+          {/* Cinematic gradient overlays with dynamic opacity instead of blur */}
           <motion.div
-            className="absolute inset-0 origin-center md:hidden"
-            style={{
-              backgroundImage: 'url("/images/hero-mobile.jpg")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center top',
-              ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
-            }}
-          >
-            {/* Stronger cinematic overlay for mobile text readability */}
-            <motion.div
-              className="absolute inset-0 bg-black/60 z-[1]"
-              style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.5 }}
-            />
-            {/* Darker gradient overlay for mobile - ensures text pops */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/50 to-black/90 z-[2]" />
-            {/* Additional mobile vignette for text contrast */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-[2]" />
+            className="absolute inset-0 bg-black/40 md:bg-black/25 z-[1]"
+            style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.32 }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/10 to-black/90 z-[2]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/28 to-transparent z-[2]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_34%,transparent_0%,rgba(0,0,0,0.42)_100%)] z-[2]" />
 
-            {/* Luxury Noise Grain Overlay */}
-            <div className="absolute inset-0 bg-noise z-[2]" />
-          </motion.div>
+          {/* Luxury Noise Grain Overlay */}
+          <div className="absolute inset-0 bg-noise z-[2]" />
+
+          {/* Luxury Subtle Grid Overlay */}
+          <div
+             className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-[3]"
+             style={{
+               backgroundImage: `linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)`,
+               backgroundSize: '40px 40px'
+             }}
+          />
 
           {/* Logo watermark — upper right, desktop only */}
           <div className="hidden lg:block absolute top-12 right-10 z-[3] pointer-events-none">
@@ -149,6 +154,25 @@ export default function Home() {
               aria-hidden="true"
               className="h-20 w-auto opacity-[0.07] select-none"
             />
+          </div>
+
+          <div className="absolute bottom-8 right-6 z-[4] hidden max-w-[400px] items-center gap-4 rounded-full border border-white/10 bg-black/35 px-4 py-3 text-white shadow-2xl backdrop-blur-xl md:flex lg:right-10">
+            <span className="max-w-[190px] truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
+              {currentHeroSlide.caption}
+            </span>
+            <div className="flex items-center gap-2">
+              {HERO_SHOWROOM_SLIDES.map((slide, index) => (
+                <button
+                  key={slide.src}
+                  type="button"
+                  onClick={() => setActiveHeroSlide(index)}
+                  aria-label={`Show ${slide.caption}`}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    activeHeroSlide === index ? 'w-8 bg-[#D4AF37]' : 'w-3 bg-white/30 hover:bg-white/60'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -747,7 +771,7 @@ export default function Home() {
 
 
       {/* ===== CONTACT CTA (CINEMATIC) ===== */}
-      <section className="py-24 relative overflow-hidden bg-[#0d0b09] border-t border-white/5">
+      <section className="pt-20 pb-16 relative overflow-hidden bg-[#0d0b09] border-t border-white/5">
         {/* Atmospheric Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.08)_0%,_transparent_70%)] pointer-events-none" />
         
