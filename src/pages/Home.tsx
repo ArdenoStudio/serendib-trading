@@ -74,7 +74,7 @@ export default function Home() {
 
   const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.15], { ease: customEase });
   const textOpacity = useTransform(scrollYProgress, [0, 1], [1, 0], { ease: customEase });
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0, 0.8]);
+  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0.12, 0.84]);
 
   const filteredCars = (cars.length > 0 ? cars : carsData as Car[])
     .filter(car => car.condition === activeTab && !car.is_sold)
@@ -113,7 +113,7 @@ export default function Home() {
                 src={currentHeroSlide.src}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover brightness-[1.08] contrast-[1.05] saturate-[1.06]"
+                className="absolute inset-0 h-full w-full object-cover brightness-[0.98] contrast-[1.08] saturate-[1.03]"
                 style={{ objectPosition: currentHeroSlide.objectPosition || 'center center' }}
                 decoding="async"
                 loading={activeHeroSlide === 0 ? 'eager' : 'lazy'}
@@ -127,12 +127,12 @@ export default function Home() {
 
           {/* Cinematic gradient overlays with dynamic opacity instead of blur */}
           <motion.div
-            className="absolute inset-0 bg-black/40 md:bg-black/25 z-[1]"
-            style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.32 }}
+            className="absolute inset-0 bg-black/45 md:bg-black/35 z-[1]"
+            style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.38 }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/10 to-black/90 z-[2]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/28 to-transparent z-[2]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_34%,transparent_0%,rgba(0,0,0,0.42)_100%)] z-[2]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/82 via-black/18 to-black/95 z-[2]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/78 via-black/36 to-black/10 z-[2]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_34%,transparent_0%,rgba(0,0,0,0.5)_100%)] z-[2]" />
 
           {/* Luxury Noise Grain Overlay */}
           <div className="absolute inset-0 bg-noise z-[2]" />
