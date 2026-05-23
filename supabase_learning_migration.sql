@@ -14,12 +14,17 @@ CREATE TABLE IF NOT EXISTS public.vehicle_knowledge (
 ALTER TABLE public.vehicle_knowledge ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read (for the parser)
+DROP POLICY IF EXISTS "Allow public read on vehicle_knowledge" ON public.vehicle_knowledge;
+
 CREATE POLICY "Allow public read on vehicle_knowledge" ON public.vehicle_knowledge
     FOR SELECT USING (true);
 
--- Allow authenticated users to insert/update (the learning part)
-CREATE POLICY "Allow authenticated users to manage vehicle_knowledge" ON public.vehicle_knowledge
+-- Allow only known admins to insert/update learned knowledge.
+DROP POLICY IF EXISTS "Allow authenticated users to manage vehicle_knowledge" ON public.vehicle_knowledge;
+DROP POLICY IF EXISTS "Allow admins to manage vehicle_knowledge" ON public.vehicle_knowledge;
+
+CREATE POLICY "Allow admins to manage vehicle_knowledge" ON public.vehicle_knowledge
     FOR ALL
     TO authenticated
-    USING (auth.role() = 'authenticated')
-    WITH CHECK (auth.role() = 'authenticated');
+    USING ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com'))
+    WITH CHECK ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com'));

@@ -192,7 +192,7 @@ export default function SplashLoader({ onComplete }: { onComplete: () => void })
               filter: ["brightness(1) drop-shadow(0 0 20px rgba(212,175,55,0.1))", "brightness(1.2) drop-shadow(0 0 40px rgba(212,175,55,0.3))", "brightness(1) drop-shadow(0 0 20px rgba(212,175,55,0.1))"] 
             }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            src="/serendib-logo-new.svg" 
+            src="/serendib-logo-192.png" 
             alt="Serendib Trading" 
           />
           

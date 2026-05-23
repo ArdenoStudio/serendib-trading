@@ -37,6 +37,8 @@ export default function CarDetail() {
   }, [id]);
 
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
+  const [leadError, setLeadError] = useState('');
+  const [submittingLead, setSubmittingLead] = useState(false);
   const [activeImage, setActiveImage] = useState(car?.image || '');
   const [copyToast, setCopyToast] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -75,22 +77,50 @@ export default function CarDetail() {
 
   const handleTestDriveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const name = testDriveForm.name.trim().replace(/\s+/g, ' ');
+    const phone = testDriveForm.phone.trim();
+    const phonePattern = /^[0-9+() -]{7,20}$/;
+    const requestedDate = new Date(`${testDriveForm.date}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (name.length < 2 || name.length > 120) {
+      setLeadError('Enter a valid full name.');
+      return;
+    }
+    if (!phonePattern.test(phone)) {
+      setLeadError('Enter a valid contact number.');
+      return;
+    }
+    if (Number.isNaN(requestedDate.getTime()) || requestedDate < today) {
+      setLeadError('Choose today or a future date.');
+      return;
+    }
+
+    setLeadError('');
+    setSubmittingLead(true);
+
     if (isSupabaseConfigured) {
-      await supabase.from('leads').insert([{
+      const { error } = await supabase.from('leads').insert([{
         type: 'Test Drive',
         vehicle_id: car.id,
         vehicle_model: `${car.year} ${car.make} ${car.model}`,
-        name: testDriveForm.name,
-        phone: testDriveForm.phone,
+        name,
+        phone,
         date: testDriveForm.date,
         time: testDriveForm.time,
         status: 'New'
       }]);
+
+      if (error) {
+        console.error('Lead capture failed:', error);
+      }
     }
 
-    const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${testDriveForm.name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${testDriveForm.phone}`;
+    const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${phone}`;
     window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank');
+    setSubmittingLead(false);
   };
 
   const handleShare = async () => {
@@ -325,9 +355,9 @@ export default function CarDetail() {
                 <form onSubmit={handleTestDriveSubmit} className="space-y-4 relative z-10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="sr-only" htmlFor="test-drive-name">Your Full Name</label>
-                    <input id="test-drive-name" type="text" placeholder="Your Full Name" required value={testDriveForm.name} onChange={e => setTestDriveForm({ ...testDriveForm, name: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                    <input id="test-drive-name" type="text" placeholder="Your Full Name" required minLength={2} maxLength={120} value={testDriveForm.name} onChange={e => setTestDriveForm({ ...testDriveForm, name: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
                     <label className="sr-only" htmlFor="test-drive-phone">Contact Number</label>
-                    <input id="test-drive-phone" type="tel" placeholder="Contact Number" required value={testDriveForm.phone} onChange={e => setTestDriveForm({ ...testDriveForm, phone: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                    <input id="test-drive-phone" type="tel" placeholder="Contact Number" required maxLength={20} pattern="[0-9+() -]{7,20}" value={testDriveForm.phone} onChange={e => setTestDriveForm({ ...testDriveForm, phone: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative">
@@ -345,8 +375,13 @@ export default function CarDetail() {
                       </select>
                     </div>
                   </div>
-                  <button type="submit" className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98]">
-                    Request Appointment
+                  {leadError && (
+                    <p className="text-xs font-bold text-red-300" role="alert">
+                      {leadError}
+                    </p>
+                  )}
+                  <button type="submit" disabled={submittingLead} className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
+                    {submittingLead ? 'Sending Request' : 'Request Appointment'}
                   </button>
                 </form>
               </div>

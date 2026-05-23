@@ -18,7 +18,7 @@ DROP POLICY IF EXISTS "Authenticated users can read site_traffic" ON public.site
 
 CREATE POLICY "Authenticated users can read site_traffic" ON public.site_traffic
     FOR SELECT TO authenticated
-    USING (true);
+    USING ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com'));
 
 -- Function to increment car views
 CREATE OR REPLACE FUNCTION increment_car_view(car_id UUID)
@@ -43,7 +43,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
-REVOKE ALL ON FUNCTION increment_car_view(UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION track_site_visit() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION increment_car_view(UUID) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION track_site_visit() TO anon, authenticated;
+REVOKE ALL ON FUNCTION increment_car_view(UUID) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION track_site_visit() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION increment_car_view(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION track_site_visit() TO service_role;

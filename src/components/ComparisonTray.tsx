@@ -5,6 +5,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { LiquidButton } from './ui/liquid-glass-button';
+import { readStringList, writeStringList } from '../lib/storage';
 
 export default function ComparisonTray() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -24,7 +25,7 @@ export default function ComparisonTray() {
 
   useEffect(() => {
     const handleStorage = () => {
-      const list = JSON.parse(localStorage.getItem('compare') || '[]');
+      const list = readStringList('compare', 2);
       setCompareIds(list);
     };
 
@@ -59,8 +60,8 @@ export default function ComparisonTray() {
 
   const removeVehicle = (id: string) => {
     const newList = compareIds.filter(i => i !== id);
-    localStorage.setItem('compare', JSON.stringify(newList));
-    setCompareIds(newList);
+    setCompareIds(writeStringList('compare', newList, 2));
+    window.dispatchEvent(new Event('comparechange'));
   };
 
   if (compareIds.length === 0) return null;

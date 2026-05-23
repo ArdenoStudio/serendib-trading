@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const enableSupabaseAnalytics = import.meta.env.VITE_ENABLE_SUPABASE_ANALYTICS === 'true';
 
 const hasEnvValue = (value?: string) =>
   Boolean(value && !value.includes('MY_') && !value.includes('placeholder'));
@@ -45,11 +46,27 @@ export const markAsSold = async (id: string) => {
 
 // ── Image Upload ─────────────────────────────────────────────
 const STORAGE_BUCKET = 'vehicle-images';
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Map([
+  ['image/jpeg', 'jpg'],
+  ['image/png', 'png'],
+  ['image/webp', 'webp'],
+]);
 
 export const uploadVehicleImage = async (file: File): Promise<string> => {
   requireSupabase();
-  const ext = file.name.split('.').pop() ?? 'jpg';
-  const path = `vehicles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const ext = ALLOWED_IMAGE_TYPES.get(file.type);
+  if (!ext) {
+    throw new Error('Unsupported image type. Upload a JPG, PNG, or WebP image.');
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error('Image is too large. Upload images up to 5 MB.');
+  }
+
+  const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const path = `vehicles/${id}.${ext}`;
 
   const { data, error } = await supabase.storage
     .from(STORAGE_BUCKET)
@@ -125,7 +142,7 @@ export const signOut = async () => {
 
 // ── Advanced Analytics ────────────────────────────────────────
 export const logPageView = async () => {
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured || !enableSupabaseAnalytics) return;
   try {
     await supabase.rpc('track_site_visit');
   } catch (err) {
@@ -134,7 +151,7 @@ export const logPageView = async () => {
 };
 
 export const logCarView = async (carId: string) => {
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured || !enableSupabaseAnalytics) return;
   try {
     await supabase.rpc('increment_car_view', { car_id: carId });
   } catch (err) {

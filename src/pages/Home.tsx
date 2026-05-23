@@ -5,6 +5,7 @@ import { Shield, Users, Trophy, Globe, Gauge, CreditCard, FileCheck } from 'luci
 
 import BrandLogoStrip from '../components/BrandLogoStrip';
 import CarCard from '../components/CarCard';
+import InstagramShowcase from '../components/InstagramShowcase';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import Footer from '../components/Footer';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -149,7 +150,7 @@ export default function Home() {
           {/* Logo watermark — upper right, desktop only */}
           <div className="hidden lg:block absolute top-12 right-10 z-[3] pointer-events-none">
             <img
-              src="/serendib-logo-new.svg"
+              src="/serendib-logo-192.png"
               alt=""
               aria-hidden="true"
               className="h-20 w-auto opacity-[0.07] select-none"
@@ -767,6 +768,8 @@ export default function Home() {
         </div>
       </div>
 
+
+      <InstagramShowcase />
 
 
 

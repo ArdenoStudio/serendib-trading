@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { INSTAGRAM_URL } from '../lib/socialLinks';
 
 interface SEOProps {
   title?: string;
@@ -33,6 +34,7 @@ export default function SEO({
 
       {/* Canonical */}
       <link rel="canonical" href={fullCanonical} />
+      <link rel="me" href={INSTAGRAM_URL} />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />

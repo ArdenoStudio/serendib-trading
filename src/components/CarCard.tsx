@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
 import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
+import { readStringList, writeStringList } from '../lib/storage';
 
 interface CarCardProps {
   car: {
@@ -31,32 +32,32 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    const wishlist = readStringList('wishlist');
     setIsWishlisted(wishlist.includes(car.id));
     
-    const compareList = JSON.parse(localStorage.getItem('compare') || '[]');
+    const compareList = readStringList('compare', 2);
     setIsComparing(compareList.includes(car.id));
   }, [car.id]);
 
   const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    const wishlist = readStringList('wishlist');
     let newWishlist;
     if (wishlist.includes(car.id)) {
       newWishlist = wishlist.filter((id: string) => id !== car.id);
     } else {
       newWishlist = [...wishlist, car.id];
     }
-    localStorage.setItem('wishlist', JSON.stringify(newWishlist));
-    setIsWishlisted(!isWishlisted);
+    const normalizedWishlist = writeStringList('wishlist', newWishlist);
+    setIsWishlisted(normalizedWishlist.includes(car.id));
     window.dispatchEvent(new Event('wishlistchange'));
   };
 
   const toggleCompare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const compareList = JSON.parse(localStorage.getItem('compare') || '[]');
+    const compareList = readStringList('compare', 2);
     let newCompare;
     if (compareList.includes(car.id)) {
       newCompare = compareList.filter((id: string) => id !== car.id);
@@ -68,8 +69,8 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
       }
       newCompare = [...compareList, car.id];
     }
-    localStorage.setItem('compare', JSON.stringify(newCompare));
-    setIsComparing(!isComparing);
+    const normalizedCompare = writeStringList('compare', newCompare, 2);
+    setIsComparing(normalizedCompare.includes(car.id));
     window.dispatchEvent(new Event('comparechange'));
   };
 

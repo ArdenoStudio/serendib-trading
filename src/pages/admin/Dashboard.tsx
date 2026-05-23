@@ -307,7 +307,7 @@ export default function AdminDashboard() {
             className="group flex min-w-0 items-center gap-4 text-left"
           >
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 transition-colors group-hover:border-[#D4AF37]/50">
-              <img src="/serendib-logo-new.svg" alt="Serendib Trading" className="h-9 w-auto" />
+              <img src="/serendib-logo-192.png" alt="Serendib Trading" className="h-9 w-auto" />
             </span>
             <span className="min-w-0">
               <span className="block text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Serendib Trading</span>

@@ -22,7 +22,7 @@ export default function Loader() {
           />
           
           <motion.img 
-            src="/serendib-logo-new.svg"
+            src="/serendib-logo-192.png"
             alt="Serendib"
             animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}

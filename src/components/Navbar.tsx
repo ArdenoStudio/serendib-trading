@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Instagram, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedUserIcon } from './ui/animated-user-icon';
+import { INSTAGRAM_URL } from '../lib/socialLinks';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -44,7 +45,7 @@ export default function Navbar() {
           {/* ── Logo ── */}
           <Link to="/" onClick={closeMobile} className="flex items-center shrink-0 group">
             <img
-              src="/serendib-logo-new.svg"
+              src="/serendib-logo-192.png"
               alt="Serendib Trading"
               className={`w-auto object-contain transition-all duration-500 group-hover:opacity-85 ${scrolled ? 'h-[44px]' : 'h-[68px] md:h-[78px]'}`}
             />
@@ -79,6 +80,15 @@ export default function Navbar() {
 
           {/* ── Right CTAs ── */}
           <div className="hidden md:flex items-center gap-3">
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-white/5 text-[#D4AF37] transition-all duration-300 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 active:scale-95"
+              aria-label="Follow Serendib Trading on Instagram"
+            >
+              <Instagram className="size-4" aria-hidden="true" />
+            </a>
             <Link
               to="/admin/login"
               className="flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-white/5 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 transition-all duration-300 active:scale-95"
@@ -132,7 +142,7 @@ export default function Navbar() {
           >
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#D4AF37]/8 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <img src="/serendib-logo-new.svg" alt="" aria-hidden="true" className="w-64 opacity-[0.04]" />
+              <img src="/serendib-logo-192.png" alt="" aria-hidden="true" className="w-64 opacity-[0.04]" />
             </div>
 
             <div className="relative z-10 flex flex-col h-full px-8 pt-24 pb-12">
@@ -183,6 +193,15 @@ export default function Navbar() {
                   style={{ background: 'linear-gradient(135deg,#E5C158 0%,#D4AF37 100%)' }}
                 >
                   Get In Touch
+                </a>
+                <a
+                  href={INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeMobile}
+                  className="w-full py-4 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-white/65 border border-white/10 rounded-2xl active:scale-[0.98] transition-transform"
+                >
+                  Instagram
                 </a>
                 <Link
                   to="/admin/login"

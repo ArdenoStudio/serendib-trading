@@ -25,14 +25,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE cars;
 -- Bucket name: vehicle-images
 -- Set to PUBLIC so uploaded images are accessible via URL
 
--- 5. Storage RLS policy — allow authenticated users to upload
--- Run after creating the bucket:
-CREATE POLICY "Authenticated users can upload vehicle images"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = 'vehicle-images');
-
-CREATE POLICY "Anyone can read vehicle images"
-  ON storage.objects FOR SELECT
-  TO public
-  USING (bucket_id = 'vehicle-images');
+-- 5. Storage RLS policies
+-- Storage access is locked down in supabase_security_hardening.sql.
+-- Do not add broad authenticated upload or public list policies here.

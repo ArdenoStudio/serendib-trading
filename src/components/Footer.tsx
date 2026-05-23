@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Instagram } from 'lucide-react';
 import ArdenoProductionCredit from './ArdenoProductionCredit';
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/socialLinks';
 
 export default function Footer() {
   return (
@@ -19,7 +21,7 @@ export default function Footer() {
           <div className="flex flex-col">
             <div className="flex items-center gap-3 mb-5">
               <img
-                src="/serendib-logo-new.svg"
+                src="/serendib-logo-192.png"
                 alt="Serendib Trading"
                 className="h-12 w-auto object-contain shrink-0"
               />
@@ -35,6 +37,16 @@ export default function Footer() {
             <p className="text-sm leading-relaxed max-w-xs font-light">
               Direct imports from the UK and Japan. Every vehicle curated for quality, performance, and prestige.
             </p>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex w-fit items-center gap-3 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white/70 transition-colors duration-200 hover:border-[#D4AF37]/40 hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+              aria-label="Follow Serendib Trading on Instagram"
+            >
+              <Instagram className="size-4" aria-hidden="true" />
+              <span>{INSTAGRAM_HANDLE}</span>
+            </a>
           </div>
 
           {/* Column 2: Quick Links */}
