@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Lenis from 'lenis';
 import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
@@ -59,12 +59,9 @@ export default function App() {
   }, [pathname, shouldReduceMotion]);
 
   const isAdmin = pathname.startsWith('/admin');
-  const motionState = shouldReduceMotion
+  const pageInitial = shouldReduceMotion
     ? {}
-    : {
-        initial: { opacity: 0, y: 8, scale: 0.995 },
-        exit: { opacity: 0, y: -8, scale: 0.995 },
-      };
+    : { opacity: 0, y: 8, scale: 0.995 };
 
   return (
     <>
@@ -72,48 +69,46 @@ export default function App() {
       <ScrollToTop />
       {!isAdmin && <Navbar />}
       {!isAdmin && <ComparisonTray />}
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.div
-          key={location.key}
-          {...motionState}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 300,
-            damping: 30,
-            mass: 0.8,
-            opacity: { duration: 0.15 },
-          }}
-          style={{ willChange: shouldReduceMotion ? 'auto' : 'transform, opacity' }}
-        >
-          <Suspense fallback={<Loader />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/car/:id" element={<CarDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/calculator" element={<Calculator />} />
+      <motion.div
+        key={pathname}
+        initial={pageInitial}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 30,
+          mass: 0.8,
+          opacity: { duration: 0.15 },
+        }}
+        style={{ willChange: shouldReduceMotion ? 'auto' : 'transform, opacity' }}
+      >
+        <Suspense fallback={<Loader />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/car/:id" element={<CarDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/calculator" element={<Calculator />} />
 
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
 
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </motion.div>
-      </AnimatePresence>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </motion.div>
     </>
   );
 }
