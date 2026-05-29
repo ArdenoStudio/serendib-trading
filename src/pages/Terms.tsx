@@ -39,8 +39,12 @@ export default function Terms() {
     <div className="min-h-screen bg-[#0d0b09] text-white font-sans overflow-x-hidden selection:bg-[#D4AF37] selection:text-black">
       <SEO
         title="Terms of Service"
-        description="Serendib Trading's terms of service — governing the use of our website and services."
+        description="Serendib Trading's website terms of service for vehicle listing information, inquiries, pricing, and site use."
         canonical="/terms"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'Terms of Service', path: '/terms' },
+        ]}
       />
       <main className="pt-40 pb-20 px-6 max-w-3xl mx-auto">
         <motion.div

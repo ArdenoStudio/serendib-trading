@@ -24,6 +24,7 @@ import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
+import { createInventoryItemListSchema } from '../lib/seo';
 export default function Inventory() {
   const [searchParams] = useSearchParams();
   const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
@@ -109,7 +110,7 @@ export default function Inventory() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchLiveVehicles)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { void channel.unsubscribe(); };
   }, []);
 
   // Sync filters with URL parameters when they change
@@ -198,9 +199,24 @@ export default function Inventory() {
   return (
     <div className="min-h-screen bg-[#0d0b09] text-white overflow-x-hidden selection:bg-[#D4AF37] selection:text-black">
       <SEO 
-        title="Vehicle Inventory"
-        description="Explore our curated collection of luxury and performance vehicles. From SUVs to Sedans, find your perfect drive in our master inventory."
+        title="Imported Cars for Sale in Sri Lanka"
+        description="Browse Serendib Trading's inspected vehicle inventory in Sri Lanka with filters for make, body type, fuel, transmission, mileage, and budget."
         canonical="/inventory"
+        pageType="CollectionPage"
+        ogImage={SHOWROOM_IMAGES[3].src}
+        ogImageAlt="Serendib Trading showroom inventory display"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'Inventory', path: '/inventory' },
+        ]}
+        keywords={[
+          'cars for sale Sri Lanka',
+          'imported cars for sale',
+          'registered vehicles Sri Lanka',
+          'reconditioned cars Sri Lanka',
+          'Serendib Trading inventory',
+        ]}
+        structuredData={createInventoryItemListSchema(filteredCars)}
       />
       <main>
 
@@ -240,7 +256,7 @@ export default function Inventory() {
             </div>
 
             <h1 className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight md:tracking-[-0.08em] leading-[0.92] uppercase text-wrap-balance">
-              Master <br />
+              Available <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Inventory</span>
             </h1>
             <div className="mx-auto max-w-[21.5rem] space-y-8 px-1 sm:max-w-xl">
@@ -248,17 +264,17 @@ export default function Inventory() {
                 className="max-w-full whitespace-normal break-words text-sm font-medium leading-7 text-gray-400 md:text-lg md:leading-relaxed"
                 style={{ overflowWrap: 'break-word', textWrap: 'wrap' }}
               >
-                <span className="block sm:inline">A meticulously curated selection of </span>
-                <span className="block sm:inline">the world's most desired automotive </span>
-                <span className="block sm:inline">masterpieces, verified by our experts.</span>
+                <span className="block sm:inline">Browse inspected vehicles currently listed by </span>
+                <span className="block sm:inline">Serendib Trading, with filters built for how </span>
+                <span className="block sm:inline">Sri Lankan buyers actually compare cars.</span>
               </p>
               
               {/* Stats Row */}
               <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 pt-4 tabular-nums">
                 {[
                   { label: "Vehicles", val: "40+" },
-                  { label: "Global Marks", val: "12" },
-                  { label: "Verified Heritage", val: "100%" }
+                  { label: "Makes Listed", val: "12" },
+                  { label: "Record Checks", val: "100%" }
                 ].map((s, idx) => (
                   <div key={idx} className="flex flex-col items-center gap-1">
                     <span className="text-2xl font-black text-white">{s.val}</span>
@@ -405,7 +421,7 @@ export default function Inventory() {
           <aside className="hidden lg:block w-[300px] shrink-0">
              <div className="sticky top-44 space-y-12">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
-                    <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#D4AF37]">Curation Palette</h3>
+                    <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#D4AF37]">Filter Panel</h3>
                     <button onClick={clearFilters} className="text-[10px] font-bold text-gray-600 hover:text-white transition-colors">Reset All</button>
                 </div>
 
@@ -626,13 +642,14 @@ export default function Inventory() {
                         </div>
                     </div>
 
-                    {/* Investment Range */}
+                    {/* Budget Range */}
                     <div className="space-y-6 pt-6">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black tracking-widest uppercase text-gray-500">Max Investment</label>
+                            <label htmlFor="inventory-max-price-desktop" className="text-[10px] font-black tracking-widest uppercase text-gray-500">Max Budget</label>
                             <span className="text-sm font-black text-[#D4AF37] tabular-nums">LKR {(filters.maxPrice / 1000000).toFixed(0)}M</span>
                         </div>
-                        <input 
+                        <input
+                            id="inventory-max-price-desktop"
                             type="range" 
                             min="1000000" 
                             max="150000000" 
@@ -654,7 +671,7 @@ export default function Inventory() {
           <main className="flex-1">
              <div className="mb-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">Verified <span className="text-gray-500">Assets</span></h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Verified <span className="text-gray-500">Vehicles</span></h2>
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
                         {filteredCars.length} Handpicked Results
                     </p>
@@ -712,17 +729,17 @@ export default function Inventory() {
                                 <Search className="w-12 h-12 text-[#D4AF37] opacity-40" />
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-4xl font-black uppercase tracking-tighter">Bespoke sourcing <br /> <span className="text-[#D4AF37]">Required</span></h3>
+                                <h3 className="text-4xl font-black uppercase tracking-tighter">No Matching <br /> <span className="text-[#D4AF37]">Vehicles</span></h3>
                                 <p className="text-gray-400 max-w-sm mx-auto font-medium leading-relaxed">
-                                    Our current collection does not meet these exact specifications. Allow our specialists to hunt your ideal masterpiece.
+                                    Adjust the filters or send us the make, model, and budget you are looking for.
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-6">
                                 <button onClick={clearFilters} className="px-10 py-5 bg-white text-black font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-[#D4AF37] hover:scale-105 transition-all">
-                                    Clear Parameters
+                                    Clear Filters
                                 </button>
                                 <a href="https://wa.me/94756363427" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
-                                    Concierge Request
+                                    Message Us
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                                 </a>
                             </div>
@@ -753,7 +770,7 @@ export default function Inventory() {
                     className="absolute bottom-0 inset-x-0 h-[85vh] bg-[#0d0b09] rounded-t-[40px] border-t border-[#D4AF37]/20 p-8 flex flex-col overflow-hidden"
                   >
                         <div className="flex items-center justify-between mb-10">
-                            <h3 className="text-2xl font-black uppercase tracking-tighter text-[#D4AF37]">Advanced <span className="text-white">Curation</span></h3>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter text-[#D4AF37]">Vehicle <span className="text-white">Filters</span></h3>
                             <button onClick={() => setIsMobileFilterOpen(false)} className="p-3 bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
                         </div>
                         
@@ -882,10 +899,11 @@ export default function Inventory() {
                                 {/* Price Threshold */}
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Max Investment</label>
+                                        <label htmlFor="inventory-max-price-mobile" className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Max Budget</label>
                                         <span className="text-sm font-black text-[#D4AF37]">LKR {(filters.maxPrice / 1000000).toFixed(0)}M</span>
                                     </div>
                                     <input
+                                        id="inventory-max-price-mobile"
                                         type="range"
                                         min="1000000"
                                         max="150000000"

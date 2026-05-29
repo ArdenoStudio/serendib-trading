@@ -6,6 +6,7 @@ import { LiquidButton } from '../components/ui/liquid-glass-button';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
+import { createOrganizationSchema } from '../lib/seo';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
@@ -19,9 +20,23 @@ export default function Contact() {
   return (
     <div className="relative min-h-screen overflow-hidden font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
       <SEO 
-        title="Contact Us"
-        description="Get in touch with our automotive specialists for acquisitions, appraisals, or private viewings. Experience bespoke service since 2010."
+        title="Contact Serendib Trading Dehiwala"
+        description="Contact Serendib Trading for imported vehicle inquiries, trade-in evaluations, showroom visits, finance questions, and WhatsApp support in Sri Lanka."
         canonical="/contact"
+        pageType="ContactPage"
+        ogImage={SHOWROOM_IMAGES[1].src}
+        ogImageAlt="Serendib Trading showroom contact and viewing location"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'Contact', path: '/contact' },
+        ]}
+        keywords={[
+          'contact Serendib Trading',
+          'Dehiwala vehicle showroom contact',
+          'car dealer WhatsApp Sri Lanka',
+          'vehicle trade-in Sri Lanka',
+        ]}
+        structuredData={createOrganizationSchema()}
       />
       {/* --- CINEMATIC AMBIANCE --- */}
       <div className="absolute inset-x-0 top-0 z-0 h-[760px] overflow-hidden pointer-events-none">
@@ -50,7 +65,7 @@ export default function Contact() {
                className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 backdrop-blur-xl"
             >
                 <div className="size-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
-                <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">The Concierge Experience</span>
+                <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">Visit or Message Us</span>
             </motion.div>
             
             <motion.h1 
@@ -58,8 +73,8 @@ export default function Contact() {
               animate={{ opacity: 1, y: 0 }}
               className="text-4xl md:text-7xl lg:text-8xl font-black tracking-[-0.08em] uppercase leading-[0.9]"
             >
-              Elevated <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Engagement</span>
+              Contact <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Serendib</span>
             </motion.h1>
             
             <motion.p 
@@ -68,7 +83,7 @@ export default function Contact() {
               transition={{ delay: 0.3 }}
               className="text-gray-500 font-bold uppercase tracking-[0.1em] text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
             >
-              For acquisitions, appraisals, or private viewings, our specialists <span className="text-white">provide a bespoke level of service</span> since 2010.
+              Ask about an available vehicle, trade-in value, finance option, or showroom viewing. We reply fastest through WhatsApp.
             </motion.p>
           </div>
 
@@ -83,8 +98,8 @@ export default function Contact() {
             {/* Sidebar (Details) */}
             <div className="lg:col-span-4 p-10 md:p-14 bg-white/[0.02] border-r border-white/10 space-y-14">
               <div className="space-y-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#D4AF37]">Intelligence</p>
-                <h3 className="text-3xl font-black uppercase tracking-tighter">Immediate <br/> Access</h3>
+                <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#D4AF37]">Contact Details</p>
+                <h3 className="text-3xl font-black uppercase tracking-tighter">Quick <br/> Response</h3>
               </div>
 
               <div className="space-y-10">
@@ -116,10 +131,10 @@ export default function Contact() {
               <div className="pt-10 border-t border-white/5 space-y-6">
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="size-4 text-[#D4AF37]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Secure Protocol</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Private Inquiry</span>
                 </div>
                 <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
-                  Your privacy is paramount. All inquiries are handled exclusively by <span className="text-white">private brokerage</span>.
+                  We use your details only to respond to your vehicle inquiry and coordinate the next step.
                 </p>
               </div>
             </div>
@@ -127,8 +142,8 @@ export default function Contact() {
             {/* Main Section (Form) */}
             <div className="lg:col-span-8 p-10 md:p-20 space-y-16 bg-gradient-to-br from-white/[0.01] to-transparent">
               <div className="space-y-4">
-                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">Bespoke <span className="text-gray-500">Inquiry</span></h2>
-                <p className="text-gray-500 font-black uppercase tracking-[0.4em] text-[10px]">Response window: 2 business hours.</p>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">Send an <span className="text-gray-500">Inquiry</span></h2>
+                <p className="text-gray-500 font-black uppercase tracking-[0.4em] text-[10px]">Response window: same business day.</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-16">
@@ -190,7 +205,7 @@ export default function Contact() {
                 <div className="pt-6">
                   <LiquidButton asChild size="xxl" className="w-full md:w-auto">
                     <button type="submit" className="w-full md:w-auto px-16 flex items-center justify-center gap-6 text-[11px] font-black tracking-[0.4em] uppercase">
-                      Launch Priority Thread <ArrowRight className="size-5" />
+                      Send via WhatsApp <ArrowRight className="size-5" />
                     </button>
                   </LiquidButton>
                 </div>
@@ -202,8 +217,8 @@ export default function Contact() {
           <section className="space-y-12 pt-10">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                 <p className="text-[10px] font-black uppercase tracking-[0.5em] text-[#D4AF37]">Location Hub</p>
-                 <h3 className="text-3xl font-black uppercase tracking-tighter">Regional <span className="text-gray-600">Headquarters</span></h3>
+                 <p className="text-[10px] font-black uppercase tracking-[0.5em] text-[#D4AF37]">Showroom Location</p>
+                 <h3 className="text-3xl font-black uppercase tracking-tighter">Dehiwala <span className="text-gray-600">Showroom</span></h3>
               </div>
               <div className="h-px bg-white/5 flex-1 mx-16 hidden md:block" />
             </div>

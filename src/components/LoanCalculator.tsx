@@ -39,20 +39,20 @@ export default function LoanCalculator() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 relative z-10">
         
-        {/* --- LEFT: CALIBRATION --- */}
+        {/* --- LEFT: PAYMENT INPUTS --- */}
         <div className="p-10 md:p-16 space-y-16 border-r border-white/5">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center border border-[#D4AF37]/20">
                 <CalcIcon className="w-5 h-5 text-[#D4AF37]" />
             </div>
-            <h3 className="text-sm font-black uppercase tracking-[0.4em] text-white">Parameter Calibration</h3>
+            <h3 className="text-sm font-black uppercase tracking-[0.4em] text-white">Payment Inputs</h3>
           </div>
 
           <div className="space-y-12">
             {/* Price Slider */}
             <div className="space-y-6">
               <div className="flex justify-between items-end">
-                <label className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">Asset Valuation</label>
+                <label htmlFor="loan-price" className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">Vehicle Price</label>
                 <motion.span 
                     key={price}
                     initial={{ opacity: 0, x: 10 }}
@@ -63,7 +63,8 @@ export default function LoanCalculator() {
                 </motion.span>
               </div>
               <div className="relative pt-2">
-                <input 
+                <input
+                  id="loan-price"
                   type="range" 
                   min="2000000" 
                   max="150000000" 
@@ -83,7 +84,7 @@ export default function LoanCalculator() {
             <div className="space-y-6">
               <div className="flex justify-between items-end">
                 <div className="space-y-1">
-                    <label className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">Initial Equity</label>
+                    <label htmlFor="loan-down-payment" className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">Down Payment</label>
                     <p className="text-[10px] font-bold text-gray-600 uppercase">Min 10% Required</p>
                 </div>
                 <div className="text-right">
@@ -92,7 +93,8 @@ export default function LoanCalculator() {
                 </div>
               </div>
               <div className="relative pt-2">
-                <input 
+                <input
+                  id="loan-down-payment"
                   type="range" 
                   min="10" 
                   max="80" 
@@ -108,7 +110,7 @@ export default function LoanCalculator() {
             <div className="space-y-6">
               <label className="text-xs font-black uppercase tracking-[0.3em] text-gray-500 flex items-center gap-3">
                 <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
-                Tenure Strategy (Months)
+                Term (Months)
               </label>
 
               <div className="grid grid-cols-5 gap-3">
@@ -130,15 +132,15 @@ export default function LoanCalculator() {
           </div>
         </div>
 
-        {/* --- RIGHT: INVESTMENT SUMMARY --- */}
+        {/* --- RIGHT: PAYMENT SUMMARY --- */}
         <div className="bg-white/[0.02] p-10 md:p-16 flex flex-col justify-between relative overflow-hidden">
           {/* Subtle Grid Pattern Overlay */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #D4AF37 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           
           <div className="space-y-12 relative z-10 text-center lg:text-left">
             <div className="space-y-2">
-                <span className="text-xs font-black tracking-[0.5em] uppercase text-[#D4AF37]">Estimated Investment</span>
-                <p className="text-gray-500 text-[13px] font-medium uppercase tracking-widest">Per Calendary Month</p>
+                <span className="text-xs font-black tracking-[0.5em] uppercase text-[#D4AF37]">Estimated Payment</span>
+                <p className="text-gray-500 text-[13px] font-medium uppercase tracking-widest">Per Calendar Month</p>
             </div>
 
             <div className="space-y-2">
@@ -159,7 +161,7 @@ export default function LoanCalculator() {
                 <div className="flex items-center justify-center lg:justify-start gap-4 pt-4">
                     <div className="px-3 py-1 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-full flex items-center gap-2">
                         <TrendingUp className="w-3 h-3 text-[#D4AF37]" />
-                        <span className="text-[9px] font-black uppercase text-[#D4AF37]">12.5% Base APR</span>
+                        <span className="text-[9px] font-black uppercase text-[#D4AF37]">12.5% Sample APR</span>
                     </div>
                 </div>
             </div>
@@ -167,12 +169,12 @@ export default function LoanCalculator() {
             {/* Breakdown Mini-Stats */}
             <div className="pt-12 space-y-6">
                 <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-gray-600">
-                    <span>Principal Amount</span>
+                    <span>Financed Amount</span>
                     <span className="text-white">{fmt(price - (price * (downPayment / 100)))}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-gray-600">
-                    <span>Finance Charges</span>
-                    <span className="text-white">Variable</span>
+                    <span>Bank Rate</span>
+                    <span className="text-white">Subject to Approval</span>
                 </div>
                 <div className="w-full h-[1px] bg-white/5" />
             </div>
@@ -194,7 +196,7 @@ export default function LoanCalculator() {
                     className="flex items-center justify-center gap-4 w-full text-[14px] font-bold tracking-[0.1em] uppercase text-white"
                 >
                     <Wallet className="w-4 h-4" />
-                    Proceed to Luxury Financing
+                    Ask About Financing
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                 </a>
             </LiquidButton>

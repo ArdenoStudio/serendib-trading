@@ -1,7 +1,9 @@
 {
   "name": "Serendib Trading",
   "short_name": "Serendib",
-  "description": "Luxury and performance vehicle trading in Sri Lanka.",
+  "description": "Inspected UK and Japan vehicle imports, finance guidance, trade-in help, and showroom viewing in Dehiwala, Sri Lanka.",
+  "categories": ["auto", "business", "shopping"],
+  "lang": "en-LK",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d0b09",

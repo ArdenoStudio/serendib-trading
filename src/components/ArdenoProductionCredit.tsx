@@ -2,18 +2,20 @@ import React, { useEffect, useRef, useState } from 'react';
 
 const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE" }) => {
   const [isAutoShining, setIsAutoShining] = useState(false);
-  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasPlayedOnceRef = useRef(false);
+  const shineTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasPlayedOnce) {
+        if (entry.isIntersecting && !hasPlayedOnceRef.current) {
+          hasPlayedOnceRef.current = true;
           setIsAutoShining(true);
-          setHasPlayedOnce(true);
           // Stop the auto-shine after one pass (2 seconds)
-          setTimeout(() => {
+          shineTimerRef.current = window.setTimeout(() => {
             setIsAutoShining(false);
+            shineTimerRef.current = null;
           }, 2000);
         }
       },
@@ -24,8 +26,14 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
       observer.observe(containerRef.current);
     }
 
-    return () => observer.disconnect();
-  }, [hasPlayedOnce]);
+    return () => {
+      if (shineTimerRef.current !== null) {
+        window.clearTimeout(shineTimerRef.current);
+        shineTimerRef.current = null;
+      }
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <div 

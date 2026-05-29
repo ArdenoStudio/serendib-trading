@@ -15,7 +15,7 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !src) return;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -33,6 +33,8 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
       previousFocusRef.current?.focus?.();
     };
   }, [isOpen, onClose]);
+
+  if (!isOpen || !src) return null;
 
   return createPortal(
     <AnimatePresence>

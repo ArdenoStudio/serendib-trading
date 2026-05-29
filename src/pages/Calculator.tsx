@@ -29,9 +29,21 @@ export default function Calculator() {
   return (
     <div className="min-h-screen font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
       <SEO 
-        title="Finance Calculator"
-        description="Architect your acquisition strategy with precision using our lease and finance calculator. Tailored financial solutions for luxury vehicles."
+        title="Vehicle Finance Calculator Sri Lanka"
+        description="Estimate monthly vehicle finance and leasing payments in Sri Lanka before requesting a Serendib Trading finance quote."
         canonical="/calculator"
+        ogImage="/images/dashboard.png"
+        ogImageAlt="Vehicle dashboard used for finance calculator preview"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'Finance Calculator', path: '/calculator' },
+        ]}
+        keywords={[
+          'vehicle finance calculator Sri Lanka',
+          'car leasing calculator Sri Lanka',
+          'Serendib Trading finance',
+          'monthly car payment estimator',
+        ]}
       />
       
       {/* Cinematic Hero / Background */}
@@ -57,22 +69,22 @@ export default function Calculator() {
           >
             <div className="inline-flex items-center gap-4 px-6 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 backdrop-blur-md">
               <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">Financial Engineering</span>
+              <span className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px]">Finance Calculator</span>
             </div>
 
             <h1 className="text-5xl md:text-9xl font-black tracking-[-0.08em] uppercase leading-[0.8]">
-              Capital <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Bespoke</span>
+              Estimate <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">Payments</span>
             </h1>
 
             <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-medium leading-relaxed">
-                Architect your acquisition strategy with precision. Adjust parameters to witness the alignment of luxury and logic.
+                Adjust price, down payment, rate, and term to understand a realistic monthly range before you visit the showroom.
             </p>
           </motion.div>
         </div>
         
         {/* Animated Scroll Visual */}
-        <div className="absolute bottom-12 left-1/2 -track-x-1/2 flex flex-col items-center gap-4 opacity-20">
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-20">
             <div className="w-[1px] h-16 bg-gradient-to-b from-white to-transparent" />
         </div>
       </section>
@@ -92,20 +104,20 @@ export default function Calculator() {
             {/* Additional Context Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-40">
                 {[
-                    { 
-                        title: "Premier Banking", 
-                        icon: ShieldCheck, 
-                        desc: "Direct integration with Sampath Bank, HNB, and Commercial Bank for instant facility approval." 
+                    {
+                        title: "Bank Leasing",
+                        icon: ShieldCheck,
+                        desc: "Compare sample leasing numbers before speaking with Sampath Bank, HNB, Commercial Bank, or your preferred lender."
                     },
-                    { 
-                        title: "Corporate Leasing", 
-                        icon: TrendingUp, 
-                        desc: "Tax-efficient acquisition structures for corporate entities and multi-fleet operations." 
+                    {
+                        title: "Business Purchases",
+                        icon: TrendingUp,
+                        desc: "Estimate vehicle costs for company directors, small fleets, and owner-managed businesses."
                     },
-                    { 
-                        title: "Flexible Tenure", 
-                        icon: CircleDot, 
-                        desc: "Agile repayment periods extending up to 7 years with bespoke seasonal balloon payment structures." 
+                    {
+                        title: "Flexible Terms",
+                        icon: CircleDot,
+                        desc: "Review different down payments and repayment periods before requesting a formal quote."
                     }
                 ].map((item, idx) => (
                     <motion.div 
@@ -135,9 +147,9 @@ export default function Calculator() {
                 </div>
                 
                 <div className="space-y-6">
-                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Request a Bespoke Offer</h2>
+                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Request a Finance Quote</h2>
                     <p className="max-w-xl mx-auto text-gray-500 font-medium">
-                        For institutional acquisitions or high-value individual trade-ins, our head of finance will personally architect your facility structure.
+                        Send us the vehicle, budget, down payment, and preferred term. We will guide you through the next finance steps.
                     </p>
                 </div>
 
@@ -146,7 +158,7 @@ export default function Calculator() {
                         href="https://wa.me/94756363427"
                         className="flex items-center gap-6 text-[14px] font-bold tracking-[0.1em] uppercase text-white"
                     >
-                        Contact Head of Finance
+                        Message Finance Team
                     </a>
                 </LiquidButton>
             </div>

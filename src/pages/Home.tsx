@@ -3,8 +3,8 @@ import { motion, useScroll, useTransform, cubicBezier, AnimatePresence, useReduc
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Users, Trophy, Globe, Gauge, CreditCard, FileCheck } from 'lucide-react';
 
-import BrandLogoStrip from '../components/BrandLogoStrip';
 import CarCard from '../components/CarCard';
+import FAQAccordion, { serendibFaqs } from '../components/FAQAccordion';
 import InstagramShowcase from '../components/InstagramShowcase';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import Footer from '../components/Footer';
@@ -16,6 +16,18 @@ import { BrandIcons } from '../components/ui/brand-icons';
 import { LocationTag } from '../components/ui/location-tag';
 import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
+import { createFAQSchema, createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
+
+const popularBrandLogos = [
+  { name: 'Mercedes', label: 'Mercedes-Benz', icon: BrandIcons.Mercedes },
+  { name: 'Toyota', label: 'Toyota', icon: BrandIcons.Toyota },
+  { name: 'BMW', label: 'BMW', icon: BrandIcons.BMW },
+  { name: 'Land Rover', label: 'Land Rover', icon: BrandIcons.LandRover },
+  { name: 'Honda', label: 'Honda', icon: BrandIcons.Honda },
+  { name: 'Nissan', label: 'Nissan', icon: BrandIcons.Nissan },
+  { name: 'Suzuki', label: 'Suzuki', icon: BrandIcons.Suzuki },
+  { name: 'Mitsubishi', label: 'Mitsubishi', icon: BrandIcons.Mitsubishi },
+];
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'New' | 'Registered'>('Registered');
@@ -45,7 +57,7 @@ export default function Home() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchLiveVehicles)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { void channel.unsubscribe(); };
   }, []);
 
   
@@ -86,8 +98,24 @@ export default function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden font-sans" style={{ backgroundColor: '#0d0b09', color: '#FFFFFF' }}>
       <SEO 
-        title="Home"
-        description="Sri Lanka's premier destination for luxury and performance vehicles. Explore our curated collection of SUVs, Sedans, and Luxury vehicles imported directly from UK & Japan."
+        title="Imported Vehicles in Sri Lanka"
+        description="Serendib Trading in Dehiwala offers inspected UK and Japan vehicle imports, clear histories, finance support, trade-in help, and showroom viewing for Sri Lankan buyers."
+        canonical="/"
+        ogImage="/images/showroom/serendib-showroom-floor-02.jpg"
+        ogImageAlt="Serendib Trading Dehiwala showroom with imported vehicles"
+        breadcrumbs={[{ name: 'Home', path: '/' }]}
+        keywords={[
+          'Serendib Trading',
+          'imported cars Sri Lanka',
+          'Dehiwala car showroom',
+          'UK Japan vehicle imports',
+          'luxury cars Sri Lanka',
+        ]}
+        structuredData={[
+          createOrganizationSchema(),
+          createWebsiteSchema(),
+          createFAQSchema(serendibFaqs),
+        ]}
       />
       <main>
 
@@ -258,7 +286,7 @@ export default function Home() {
               className="relative z-10 mb-10 w-full max-w-[21.5rem] whitespace-normal break-words text-[15px] font-medium leading-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:max-w-[30rem] md:max-w-[500px] md:text-lg md:leading-relaxed md:text-white/80 md:drop-shadow-md"
               style={{ overflowWrap: 'break-word', textWrap: 'wrap' }}
             >
-              The pinnacle of automotive excellence. Discover outstanding performance, unparalleled luxury, and a curated selection of the world's most desired vehicles.
+              Inspected vehicles, clear histories, and practical guidance from inquiry to handover. Browse direct UK and Japan imports ready for Sri Lankan roads.
             </motion.p>
 
             {/* Dual CTA Buttons */}
@@ -295,16 +323,22 @@ export default function Home() {
 
       </section>
 
-      {/* INFINITE BRAND MARQUEE */}
-      <div className="w-full mt-4 border-t border-b border-white/5 py-10 overflow-hidden relative">
+      {/* POPULAR BRAND LOGO MARQUEE */}
+      <div className="w-full mt-4 border-t border-b border-white/5 py-8 overflow-hidden relative">
         <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-[#0d0b09] to-transparent z-10" />
         <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-[#0d0b09] to-transparent z-10" />
         
-        <div className="animate-marquee flex items-center gap-20 whitespace-nowrap px-10">
-          {Array(2).fill(['MERCEDES-BENZ', 'RANGE ROVER', 'BMW', 'AUDI SPORT', 'TOYOTA GAZOO', 'LAND CRUISER', 'ROLLS-ROYCE', 'PORSCHE']).flat().map((brand, i) => (
-            <span key={i} className="text-4xl md:text-6xl font-black tracking-tighter text-white/20 hover:text-[#D4AF37] transition-colors duration-500 cursor-default uppercase select-none">
-              {brand}
-            </span>
+        <div className="animate-marquee flex items-center gap-6 whitespace-nowrap px-10 md:gap-8">
+          {Array(3).fill(popularBrandLogos).flat().map((brand, i) => (
+            <button
+              key={`${brand.name}-${i}`}
+              type="button"
+              onClick={() => navigate(`/inventory?make=${brand.name}`)}
+              aria-label={`Browse ${brand.label} vehicles`}
+              className="group flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] text-white/26 transition-all duration-500 hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37] md:h-24 md:w-24"
+            >
+              <brand.icon aria-hidden="true" className="h-10 w-10 transition-transform duration-500 group-hover:scale-110 md:h-12 md:w-12" />
+            </button>
           ))}
         </div>
       </div>
@@ -635,7 +669,7 @@ export default function Home() {
                 >
                   <p className="text-[10px] font-black uppercase tracking-[0.5em]">No {activeTab} inventory available</p>
                   <LiquidButton asChild>
-                     <Link to="/contact">Request Bespoke Sourcing</Link>
+                     <Link to="/contact">Request Vehicle Sourcing</Link>
                   </LiquidButton>
                 </motion.div>
               )}
@@ -681,7 +715,7 @@ export default function Home() {
           </h2>
           
           <p className="text-gray-400 text-lg md:text-xl font-light leading-relaxed max-w-2xl mb-12">
-            Considering an upgrade? We offer competitive, fair evaluation for your current vehicle against our premium collection.
+            Planning to upgrade? Share your current vehicle details and our team will review a fair trade-in value against the model you want next.
           </p>
 
           <motion.a
@@ -730,10 +764,10 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
             {[
-              { title: "Direct Global Imports", desc: "Sourced strictly from trusted, certified partners in the UK & Japan.", icon: Globe },
-              { title: "100% Verified Mileage", desc: "Guaranteed authentic mileage with full documented international history.", icon: Gauge },
-              { title: "Premium Finance", desc: "Exclusive leasing and flexible financing packages tailored to you.", icon: CreditCard },
-              { title: "Hassle-Free RMV", desc: "We professionally handle all clearance, registration, and documentation.", icon: FileCheck },
+              { title: "Direct UK & Japan Imports", desc: "Sourced through trusted partners with records checked before listing.", icon: Globe },
+              { title: "Verified Mileage", desc: "Odometer readings and documents are reviewed before vehicles reach the floor.", icon: Gauge },
+              { title: "Finance Support", desc: "Leasing guidance with local finance partners and clear monthly estimates.", icon: CreditCard },
+              { title: "RMV Guidance", desc: "Support for clearance, registration, insurance, and handover paperwork.", icon: FileCheck },
             ].map((feature, idx) => {
               const Icon = feature.icon;
               return (
@@ -768,6 +802,24 @@ export default function Home() {
         </div>
       </div>
 
+      {/* SEO FAQ SECTION */}
+      <section className="relative overflow-hidden border-t border-white/5 bg-[#0d0b09] px-6 py-24 lg:px-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.05)_0%,_transparent_68%)]" />
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
+          <div className="mb-12 flex flex-col items-center">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="h-px w-12 bg-white/15" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.4em] text-[#D4AF37]">Buyer Questions</span>
+              <div className="h-px w-12 bg-white/15" />
+            </div>
+            <h2 className="text-4xl font-black leading-none tracking-tighter text-white md:text-6xl">
+              Vehicle Buying FAQ
+            </h2>
+          </div>
+
+          <FAQAccordion />
+        </div>
+      </section>
 
       <InstagramShowcase />
 
@@ -785,10 +837,10 @@ export default function Home() {
 
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight mb-4 drop-shadow-2xl">
-                Ready to find <br className="hidden md:block"/> your <span className="text-[#D4AF37]">dream car?</span>
+                Ready to view <br className="hidden md:block"/> your <span className="text-[#D4AF37]">next car?</span>
               </h2>
               <p className="text-gray-400 text-lg md:text-xl font-light leading-relaxed max-w-xl">
-                Visit our showroom or contact our specialists for a personalized consultation today.
+                Visit the Dehiwala showroom or message us with the model, budget, and timing you have in mind.
               </p>
             </div>
 

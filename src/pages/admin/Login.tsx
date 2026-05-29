@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogIn, ShieldAlert } from 'lucide-react';
 import { signInWithGoogle } from '../../lib/supabase';
+import SEO from '../../components/SEO';
 
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,12 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      <SEO
+        title="Admin Login"
+        description="Serendib Trading dashboard sign-in for authorized team members."
+        canonical="/admin/login"
+        noindex
+      />
       {/* Background Ambience */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#D4AF37]/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-[120px]" />
@@ -36,8 +43,8 @@ export default function AdminLogin() {
              </div>
           </div>
           <div className="space-y-1">
-            <h1 className="text-4xl font-black uppercase tracking-tighter text-white">Concierge <span className="text-gray-500">Access</span></h1>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Admin Control Terminal</p>
+            <h1 className="text-4xl font-black uppercase tracking-tighter text-white">Dashboard <span className="text-gray-500">Access</span></h1>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Authorized Team Login</p>
           </div>
         </div>
 
@@ -78,7 +85,7 @@ export default function AdminLogin() {
         </div>
 
         <p className="text-center text-[9px] font-bold text-gray-700 uppercase tracking-widest">
-          Secured by Supabase Identity Protocol
+          Secured with Google sign-in
         </p>
       </motion.div>
     </div>

@@ -142,7 +142,7 @@ export default function AdminDashboard() {
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        void channel.unsubscribe();
       };
     }
   }, []);
@@ -647,7 +647,7 @@ export default function AdminDashboard() {
                   <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Buyer pipeline</p>
                 </div>
                 <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Lead concierge
+                  Lead follow-up
                 </h2>
               </div>
 
@@ -671,7 +671,7 @@ export default function AdminDashboard() {
                   <Users className="mx-auto mb-4 h-8 w-8 text-[#D4AF37]" />
                   <h3 className="text-2xl font-black uppercase tracking-tight text-white">No leads yet</h3>
                   <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-white/45">
-                    New enquiries, test drives, and acquisition requests will appear here.
+                    New enquiries, test drives, and vehicle requests will appear here.
                   </p>
                 </div>
               ) : (

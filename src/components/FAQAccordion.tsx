@@ -2,22 +2,22 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 
-const faqs = [
+export const serendibFaqs = [
   { 
     question: "Do you accept vehicle exchanges?", 
-    answer: "Yes, we facilitate professional trade-ins. Every exchange vehicle undergoes a transparent market valuation by our appraisal head to ensure you receive a fair and competitive offer against your new Serendib acquisition." 
+    answer: "Yes. We can review your current vehicle, check condition and market pricing, then share a clear trade-in offer against the vehicle you want next."
   },
-  { 
-    question: "What financing options are available for premium vehicles?", 
-    answer: "We maintain strategic partnerships with Sri Lanka's leading financial institutions including Sampath Bank, HNB, and Commercial Bank. We offer bespoke lease structures with competitive rates and terms extended up to 7 years for qualifying clients." 
+  {
+    question: "What financing options are available for premium vehicles?",
+    answer: "We work with leading Sri Lankan finance partners, including Sampath Bank, HNB, and Commercial Bank. Our team can help you compare leasing terms, down payments, and monthly commitments before you decide."
   },
   { 
     question: "Can I verify the vehicle history and mileage?", 
-    answer: "Absolute transparency is our hallmark. Every vehicle in our showroom is accompanied by its original JAAI/HPI certification and full maintenance logs from its country of origin (UK/Japan). We welcome independent inspections at any certified facility." 
+    answer: "Yes. Available documents such as JAAI/HPI reports, auction sheets, service history, and mileage records can be reviewed before purchase. Independent inspections are welcome."
   },
-  { 
-    question: "Do you offer doorstep delivery throughout Sri Lanka?", 
-    answer: "Yes, our Concierge Delivery service ensures your vehicle arrives at your residence in showroom condition. We handle the entire RMV registration process, insurance documentation, and final detailing prior to handover." 
+  {
+    question: "Do you offer doorstep delivery throughout Sri Lanka?",
+    answer: "Yes. We can arrange islandwide delivery after the vehicle is inspected, detailed, and documented. We also assist with RMV registration, insurance paperwork, and handover coordination."
   }
 ];
 
@@ -26,7 +26,7 @@ export default function FAQAccordion() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      {faqs.map((faq, index) => (
+      {serendibFaqs.map((faq, index) => (
         <div
           key={index}
           className={`overflow-hidden rounded-3xl transition-[border-color,background-color,box-shadow] duration-500 border ${

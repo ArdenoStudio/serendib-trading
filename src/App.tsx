@@ -25,7 +25,9 @@ const Terms = lazy(() => import('./pages/Terms'));
 
 export default function App() {
   const location = useLocation();
+  const pathname = location.pathname;
   const shouldReduceMotion = useReducedMotion();
+  const enableAnalytics = !['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   useEffect(() => {
     logPageView();
@@ -54,9 +56,9 @@ export default function App() {
       cancelAnimationFrame(rafId);
       lenis.destroy();
     };
-  }, [location.pathname, shouldReduceMotion]);
+  }, [pathname, shouldReduceMotion]);
 
-  const isAdmin = location.pathname.startsWith('/admin');
+  const isAdmin = pathname.startsWith('/admin');
   const motionState = shouldReduceMotion
     ? {}
     : {
@@ -66,7 +68,7 @@ export default function App() {
 
   return (
     <>
-      <Analytics />
+      {enableAnalytics && <Analytics />}
       <ScrollToTop />
       {!isAdmin && <Navbar />}
       {!isAdmin && <ComparisonTray />}

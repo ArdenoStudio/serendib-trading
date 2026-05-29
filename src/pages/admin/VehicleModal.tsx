@@ -190,7 +190,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                 />
                 <button onClick={handleParse} disabled={parsing || !pasteText.trim()}
                   className="px-8 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-xs rounded-xl hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-2">
-                  {parsing ? <><span className="animate-spin">⟳</span> {parseStatus}</> : <><Sparkles className="w-4 h-4" />Parse & Intelligence Fill</>}
+                  {parsing ? <><span className="animate-spin">⟳</span> {parseStatus}</> : <><Sparkles className="w-4 h-4" />Parse & Auto-Fill</>}
                 </button>
               </motion.div>
             ) : (

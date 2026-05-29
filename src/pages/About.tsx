@@ -1,10 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import {
-  ShieldCheck,
-  Target,
-  Award,
-  Truck,
   MapPin,
   Heart,
   CheckCircle2
@@ -13,6 +9,7 @@ import Footer from '../components/Footer';
 import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
+import { createOrganizationSchema } from '../lib/seo';
 
 export default function About() {
   const shouldReduceMotion = useReducedMotion();
@@ -26,9 +23,23 @@ export default function About() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
       <SEO
-        title="About Us"
-        description="Serendib Trading - Sri Lanka's fresh face in luxury automotive. Premium vehicles, transparent service, since 2025."
+        title="About Serendib Trading Dehiwala"
+        description="Learn about Serendib Trading, our Dehiwala showroom, and how we source inspected UK and Japan vehicle imports for Sri Lankan buyers."
         canonical="/about"
+        pageType="AboutPage"
+        ogImage={SHOWROOM_IMAGES[0].src}
+        ogImageAlt="Serendib Trading showroom vehicle display"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'About', path: '/about' },
+        ]}
+        keywords={[
+          'Serendib Trading Dehiwala',
+          'Dehiwala car dealership',
+          'imported vehicle showroom Sri Lanka',
+          'Sri Lanka premium vehicle dealer',
+        ]}
+        structuredData={createOrganizationSchema()}
       />
       <main>
 
@@ -88,40 +99,6 @@ export default function About() {
               No hidden histories. No surprises. Just exceptional vehicles and honest service.
             </p>
           </motion.div>
-        </div>
-      </section>
-
-      {/* --- WHAT WE STAND FOR --- */}
-      <section className="py-20 md:py-32 px-6 lg:px-10 bg-white/[0.01] border-y border-white/5">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-[11px] mb-4">Our Promise</p>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter">What We Stand For</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Target, title: "Handpicked Quality", desc: "Every vehicle personally selected and verified." },
-              { icon: ShieldCheck, title: "Full Transparency", desc: "Complete history, inspection reports, and documentation." },
-              { icon: Award, title: "Premium Standards", desc: "Only the best make it to our showroom." },
-              { icon: Truck, title: "End-to-End Service", desc: "From sourcing to delivery, we handle everything." },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="p-8 bg-white/[0.03] border border-white/5 rounded-2xl space-y-4 hover:border-[#D4AF37]/30 transition-colors"
-              >
-                <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-xl flex items-center justify-center">
-                  <item.icon className="w-6 h-6 text-[#D4AF37]" />
-                </div>
-                <h3 className="text-lg font-black uppercase tracking-tight">{item.title}</h3>
-                <p className="text-sm text-white/50 leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 

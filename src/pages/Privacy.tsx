@@ -35,8 +35,12 @@ export default function Privacy() {
     <div className="min-h-screen bg-[#0d0b09] text-white font-sans overflow-x-hidden selection:bg-[#D4AF37] selection:text-black">
       <SEO
         title="Privacy Policy"
-        description="Serendib Trading's privacy policy — how we collect, use and protect your personal information."
+        description="Serendib Trading's privacy policy explaining how we collect, use, and protect vehicle inquiry and contact information."
         canonical="/privacy"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'Privacy Policy', path: '/privacy' },
+        ]}
       />
       <main className="pt-40 pb-20 px-6 max-w-3xl mx-auto">
         <motion.div

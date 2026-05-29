@@ -219,7 +219,7 @@ export default function SplashLoader({ onComplete }: { onComplete: () => void })
             transition={{ delay: 0.8, duration: 1 }}
             className="serendib-sub"
             >
-            Excellence Since 2010
+            Verified Imports
             </motion.div>
         </motion.div>
 

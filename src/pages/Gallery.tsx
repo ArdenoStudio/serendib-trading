@@ -83,9 +83,22 @@ export default function Gallery() {
   return (
     <div className="min-h-screen bg-[#0d0b09] text-white overflow-x-hidden">
       <SEO
-        title="Gallery"
-        description="Explore our collection of premium vehicles and showroom moments at Serendib Trading."
+        title="Vehicle and Showroom Gallery"
+        description="Explore Serendib Trading showroom photos, imported vehicle details, and premium car display moments from Dehiwala, Sri Lanka."
         canonical="/gallery"
+        pageType="ImageGallery"
+        ogImage={SHOWROOM_IMAGES[0].src}
+        ogImageAlt="Serendib Trading showroom and vehicle gallery"
+        breadcrumbs={[
+          { name: 'Home', path: '/' },
+          { name: 'Gallery', path: '/gallery' },
+        ]}
+        keywords={[
+          'Serendib Trading gallery',
+          'Sri Lanka vehicle showroom photos',
+          'imported car gallery Sri Lanka',
+          'Dehiwala car showroom',
+        ]}
       />
 
       <main className="pt-32 pb-20">
@@ -177,29 +190,22 @@ export default function Gallery() {
               ))}
             </motion.div>
           ) : (
-            /* Empty State - Instructions for adding images */
             <div className="text-center py-20 px-6">
               <div className="max-w-md mx-auto space-y-6">
                 <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10">
                   <Camera className="w-10 h-10 text-[#D4AF37]/50" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tight">Gallery Coming Soon</h3>
+                <h3 className="text-2xl font-black uppercase tracking-tight">No Photos Found</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
-                  To add your photos, copy them from:
-                  <br />
-                  <code className="text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded text-xs">
-                    C:
-                  </code>
+                  There are no images in this category yet. View the full gallery to see the showroom and vehicle collection.
                 </p>
-                <div className="text-left bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
-                  <p className="text-sm text-white/60">Follow these steps:</p>
-                  <ol className="space-y-3 text-sm text-white/80 list-decimal list-inside">
-                    <li>Copy your images from the OneDrive folder</li>
-                    <li>Paste them into <code className="text-[#D4AF37]">public/images/gallery/</code></li>
-                    <li>Update the image list in <code className="text-[#D4AF37]">src/pages/Gallery.tsx</code></li>
-                    <li>Refresh the page to see your gallery</li>
-                  </ol>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setFilter('all')}
+                  className="rounded-full bg-[#D4AF37] px-6 py-3 text-[11px] font-black uppercase tracking-widest text-black transition-transform active:scale-[0.98]"
+                >
+                  View All Photos
+                </button>
               </div>
             </div>
           )}

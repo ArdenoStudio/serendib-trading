@@ -84,8 +84,8 @@ export default function ComparisonTray() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             <BarChart2 className="w-5 h-5 text-[#D4AF37] group-hover:rotate-12 transition-transform" />
             <div className="text-left py-0.5">
-               <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]/70">Analysis Terminal</p>
-               <p className="text-[11px] font-black uppercase tracking-[0.1em] text-white">Compare {compareIds.length} Assets</p>
+               <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]/70">Compare Vehicles</p>
+               <p className="text-[11px] font-black uppercase tracking-[0.1em] text-white">Review {compareIds.length} Picks</p>
             </div>
             <div className="size-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-[10px] font-black">
               {compareIds.length}
@@ -186,12 +186,12 @@ export default function ComparisonTray() {
                                     <span className="text-white/90">{v.make}</span>
                                     <span className="text-white">{v.model}</span>
                                  </h3>
-                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]/70">Investment ID: SR{v.id?.slice(0, 6)}</p>
+                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]/70">Stock ID: SR{v.id?.slice(0, 6)}</p>
                               </div>
 
                               <div className="grid grid-cols-2 gap-y-10 gap-x-8">
                                 {[
-                                  { label: 'Current Valuation', value: `LKR ${v.price.toLocaleString()}`, accent: true },
+                                  { label: 'Listed Price', value: `LKR ${v.price.toLocaleString()}`, accent: true },
                                   { label: 'Odometer Reading', value: `${v.mileage.toLocaleString()} KM` },
                                   { label: 'Transmission System', value: v.transmission },
                                   { label: 'Power Source', value: v.fuel },
@@ -223,8 +223,8 @@ export default function ComparisonTray() {
                              <Plus className="w-10 h-10 text-gray-600 group-hover:text-[#D4AF37] relative z-10" />
                           </div>
                           <div className="space-y-2">
-                             <p className="text-xl font-black uppercase tracking-tighter text-gray-400 group-hover:text-white transition-colors">Compare Counterpart</p>
-                             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-700 max-w-[200px]">Select another asset from inventory to begin side-by-side analysis</p>
+                             <p className="text-xl font-black uppercase tracking-tighter text-gray-400 group-hover:text-white transition-colors">Add Another Vehicle</p>
+                             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-700 max-w-[200px]">Select one more vehicle from inventory to compare side by side</p>
                           </div>
                           
                           <LiquidButton asChild variant="gold" size="sm" className="opacity-0 group-hover:opacity-100 transition-all">
@@ -239,10 +239,10 @@ export default function ComparisonTray() {
                     <div className="flex items-center gap-8">
                        <div className="flex items-center gap-3 grayscale opacity-30 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
                           <ShieldCheck className="w-5 h-5" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Assets</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Vehicles</span>
                        </div>
                     </div>
-                    <p className="text-[10px] text-gray-700 font-bold uppercase tracking-[0.5em] text-center">Serendib Intelligence Terminal ⋅ Since 2010</p>
+                    <p className="text-[10px] text-gray-700 font-bold uppercase tracking-[0.5em] text-center">Serendib Trading vehicle comparison</p>
                  </div>
               </div>
             </motion.div>

@@ -16,6 +16,7 @@ const navLinks = [
 
 export default function Navbar() {
   const location = useLocation();
+  const pathname = location.pathname;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -26,7 +27,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -42,21 +43,54 @@ export default function Navbar() {
       >
         <div className={`max-w-[1400px] mx-auto px-6 lg:px-10 flex items-center justify-between relative transition-[height] duration-500 ${scrolled ? 'h-[72px]' : 'h-[88px]'}`}>
 
-          {/* ── Logo ── */}
-          <Link to="/" onClick={closeMobile} className="flex items-center shrink-0 group">
-            <img
-              src="/serendib-logo-192.png"
-              alt="Serendib Trading"
-              className={`w-auto object-contain transition-all duration-500 group-hover:opacity-85 ${scrolled ? 'h-[44px]' : 'h-[68px] md:h-[78px]'}`}
-            />
+          {/* ── Brand ── */}
+          <Link
+            to="/"
+            onClick={closeMobile}
+            className={`group relative flex shrink-0 items-center overflow-hidden transition-[height,width] duration-500 ${
+              scrolled ? 'h-12 w-[156px] sm:w-[184px]' : 'h-[68px] w-[82px] md:h-[78px] md:w-[94px]'
+            }`}
+            aria-label="Serendib Trading home"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {scrolled ? (
+                <motion.span
+                  key="wordmark"
+                  initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -8, filter: 'blur(6px)' }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col leading-none"
+                >
+                  <span className="text-[13px] font-black uppercase tracking-[0.22em] text-white sm:text-sm">
+                    Serendib
+                  </span>
+                  <span className="mt-1 text-[9px] font-black uppercase tracking-[0.44em] text-[#D4AF37] sm:text-[10px]">
+                    Trading
+                  </span>
+                </motion.span>
+              ) : (
+                <motion.img
+                  key="logo"
+                  src="/serendib-logo-navbar.png"
+                  alt=""
+                  aria-hidden="true"
+                  initial={{ opacity: 0, scale: 0.94, filter: 'blur(6px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 0.94, filter: 'blur(6px)' }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="h-full w-full object-contain transition-opacity duration-300 group-hover:opacity-85"
+                />
+              )}
+            </AnimatePresence>
           </Link>
 
           {/* ── Desktop nav (true center) ── */}
           <ul className="hidden md:flex items-center gap-9 absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) => {
               const isActive = link.to === '/'
-                ? location.pathname === '/'
-                : location.pathname === link.to || location.pathname.startsWith(link.to + '/');
+                ? pathname === '/'
+                : pathname === link.to || pathname.startsWith(link.to + '/');
               return (
                 <li key={link.to}>
                   <Link
@@ -142,7 +176,7 @@ export default function Navbar() {
           >
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#D4AF37]/8 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <img src="/serendib-logo-192.png" alt="" aria-hidden="true" className="w-64 opacity-[0.04]" />
+              <img src="/serendib-logo-navbar.png" alt="" aria-hidden="true" className="w-64 opacity-[0.04]" />
             </div>
 
             <div className="relative z-10 flex flex-col h-full px-8 pt-24 pb-12">
@@ -151,7 +185,7 @@ export default function Navbar() {
               <nav aria-label="Mobile navigation">
                 <ul className="flex flex-col gap-1">
                   {navLinks.map((link, i) => {
-                    const isActive = location.pathname === link.to;
+                    const isActive = pathname === link.to;
                     return (
                       <motion.li
                         key={link.to}
@@ -213,7 +247,7 @@ export default function Navbar() {
               </motion.div>
 
               <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.3em] text-white/20 text-center">
-                Serendib Trading &bull; Est. 2010
+                Serendib Trading &bull; Dehiwala
               </p>
             </div>
           </motion.div>
