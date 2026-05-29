@@ -18,17 +18,6 @@ import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createFAQSchema, createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 
-const popularBrandLogos = [
-  { name: 'Mercedes', label: 'Mercedes-Benz', icon: BrandIcons.Mercedes },
-  { name: 'Toyota', label: 'Toyota', icon: BrandIcons.Toyota },
-  { name: 'BMW', label: 'BMW', icon: BrandIcons.BMW },
-  { name: 'Land Rover', label: 'Land Rover', icon: BrandIcons.LandRover },
-  { name: 'Honda', label: 'Honda', icon: BrandIcons.Honda },
-  { name: 'Nissan', label: 'Nissan', icon: BrandIcons.Nissan },
-  { name: 'Suzuki', label: 'Suzuki', icon: BrandIcons.Suzuki },
-  { name: 'Mitsubishi', label: 'Mitsubishi', icon: BrandIcons.Mitsubishi },
-];
-
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'New' | 'Registered'>('Registered');
   const [cars, setCars] = useState<Car[]>(carsData);
@@ -323,28 +312,8 @@ export default function Home() {
 
       </section>
 
-      {/* POPULAR BRAND LOGO MARQUEE */}
-      <div className="w-full mt-4 border-t border-b border-white/5 py-8 overflow-hidden relative">
-        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-[#0d0b09] to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-[#0d0b09] to-transparent z-10" />
-        
-        <div className="animate-marquee flex items-center gap-6 whitespace-nowrap px-10 md:gap-8">
-          {Array(3).fill(popularBrandLogos).flat().map((brand, i) => (
-            <button
-              key={`${brand.name}-${i}`}
-              type="button"
-              onClick={() => navigate(`/inventory?make=${brand.name}`)}
-              aria-label={`Browse ${brand.label} vehicles`}
-              className="group flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] text-white/26 transition-all duration-500 hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37] md:h-24 md:w-24"
-            >
-              <brand.icon aria-hidden="true" className="h-10 w-10 transition-transform duration-500 group-hover:scale-110 md:h-12 md:w-12" />
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* BROWSE BY BODY TYPE */}
-      <div className="w-full max-w-[1400px] mx-auto mt-32 px-6 lg:px-10 pb-20 z-10 relative">
+      <div className="w-full max-w-[1400px] mx-auto mt-24 px-6 lg:px-10 pb-20 z-10 relative">
         <div className="flex flex-col items-center text-center mb-16">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
