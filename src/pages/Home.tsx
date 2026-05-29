@@ -6,7 +6,6 @@ import { Shield, Users, Trophy, Globe, Gauge, CreditCard, FileCheck } from 'luci
 import CarCard from '../components/CarCard';
 import FAQAccordion, { serendibFaqs } from '../components/FAQAccordion';
 import InstagramShowcase from '../components/InstagramShowcase';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import Footer from '../components/Footer';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
@@ -849,7 +848,6 @@ export default function Home() {
       <Suspense fallback={<div className="h-60 bg-[#0d0b09]" />}>
         <Footer />
       </Suspense>
-      <WhatsAppFloat />
     </div>
   );
 }

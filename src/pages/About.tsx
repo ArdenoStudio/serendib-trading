@@ -6,7 +6,6 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import Footer from '../components/Footer';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createOrganizationSchema } from '../lib/seo';
@@ -165,7 +164,6 @@ export default function About() {
       </main>
 
       <Footer />
-      <WhatsAppFloat />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Camera, Car, Building2 } from 'lucide-react';
 import Footer from '../components/Footer';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import ImageLightbox from '../components/ImageLightbox';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
@@ -213,7 +212,6 @@ export default function Gallery() {
       </main>
 
       <Footer />
-      <WhatsAppFloat />
 
       {/* Lightbox */}
       <ImageLightbox

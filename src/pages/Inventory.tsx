@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
@@ -932,7 +931,6 @@ export default function Inventory() {
       </main>
 
       <Footer />
-      <WhatsAppFloat />
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settings, ShieldCheck, MapPin, Share2, Award, CheckCircle2 } from 'lucide-react';
 import Footer from '../components/Footer';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import CarCard from '../components/CarCard';
 import { isSupabaseConfigured, logCarView, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
@@ -434,7 +433,6 @@ export default function CarDetail() {
 
 
       <Footer />
-      <WhatsAppFloat />
       
       {/* Image Lightbox */}
       <ImageLightbox

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, Send, MessageSquare, Compass, ShieldCheck, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createOrganizationSchema } from '../lib/seo';
@@ -244,7 +243,6 @@ export default function Contact() {
       </main>
 
       <Footer />
-      <WhatsAppFloat />
     </div>
   );
 }

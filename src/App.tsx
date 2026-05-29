@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
+import WhatsAppFloat from './components/WhatsAppFloat';
 import Loader from './components/Loader';
 import { logPageView } from './lib/supabase';
 
@@ -109,6 +110,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </motion.div>
+      {!isAdmin && <WhatsAppFloat />}
     </>
   );
 }

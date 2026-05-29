@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Footer from '../components/Footer';
 import LoanCalculator from '../components/LoanCalculator';
-import WhatsAppFloat from '../components/WhatsAppFloat';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { 
@@ -166,7 +165,6 @@ export default function Calculator() {
       </section>
 
       <Footer />
-      <WhatsAppFloat />
     </div>
   );
 }
