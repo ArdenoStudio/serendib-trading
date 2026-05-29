@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Sparkles, ImagePlus, Trash2, Tag, Plus } from 'lucide-react';
-import { supabase, uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle } from '../../lib/supabase';
+import { supabase, uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle, isSupabaseConfigured } from '../../lib/supabase';
 
 export interface VehicleFormData {
   id?: string;
@@ -44,6 +45,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [formError, setFormError] = useState('');
   const [heroPreview, setHeroPreview] = useState(initial?.image ?? '');
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>(initial?.gallery ?? []);
   const [newFeature, setNewFeature] = useState('');
@@ -55,23 +57,40 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     fetchDynamicKnowledge().then(setDynamicKB);
   }, []);
 
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   const set = (k: keyof VehicleFormData, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   const handleHeroUpload = async (file: File) => {
     const preview = URL.createObjectURL(file);
     setHeroPreview(preview);
     setUploading(true);
+    setFormError('');
     try {
       const url = await uploadVehicleImage(file);
       set('image', url);
     } catch {
       try { set('image', preview); } catch {}
-      alert('Storage upload failed — image stored locally. Set up Supabase Storage "vehicle-images" bucket for permanent hosting.');
+      setFormError('Storage upload failed. The image preview is local only until Supabase Storage is available.');
     } finally { setUploading(false); }
   };
 
   const handleGalleryUpload = async (files: FileList) => {
     setUploading(true);
+    setFormError('');
     const newPreviews: string[] = [];
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
@@ -126,6 +145,12 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setFormError('');
+    if (!isSupabaseConfigured) {
+      setFormError('Supabase is not configured, so inventory changes cannot be saved from this environment.');
+      setSaving(false);
+      return;
+    }
     const { id, ...data } = form;
     try {
       if (id) {
@@ -142,45 +167,48 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
       onSaved();
       onClose();
     } catch (err: any) {
-      alert('Error saving vehicle: ' + err.message);
+      setFormError(`Error saving vehicle: ${err.message}`);
     } finally { setSaving(false); }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+  const modal = (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 px-3 py-4 sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="vehicle-modal-title">
+      <div className="flex min-h-full items-start justify-center">
       <motion.div
-        initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
-        className="w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[#0A0A0A] border border-white/10 rounded-[32px] shadow-2xl relative"
+        initial={{ opacity:0, y:12, scale:0.98 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:12, scale:0.98 }}
+        transition={{ duration: 0.16, ease: 'easeOut' }}
+        className="relative w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-[#0A0A0A] shadow-2xl"
       >
-        <button onClick={onClose} className="absolute top-6 right-6 z-10 p-2 text-gray-500 hover:text-white transition-colors">
+        <button type="button" onClick={onClose} aria-label="Close vehicle form" className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/70 text-gray-500 transition-colors hover:text-white">
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-8 space-y-8">
-          {/* Header + tabs */}
-          <div className="flex items-start justify-between">
+        <div className="sticky top-0 z-10 border-b border-white/10 bg-[#0A0A0A]/95 p-5 sm:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h3 className="text-2xl font-black uppercase tracking-tighter">
+              <h3 id="vehicle-modal-title" className="text-2xl font-black uppercase tracking-tight text-balance">
                 {initial ? 'Edit' : 'New'} <span className="text-[#D4AF37]">Vehicle</span>
               </h3>
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">
                 {initial ? 'Modify Existing Entry' : 'Add to Inventory'}
               </p>
             </div>
-            <div className="flex gap-2 mr-10">
+            <div className="flex flex-wrap gap-2 pr-12 lg:justify-end">
               {(['form','paste'] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)}
+                <button key={t} type="button" onClick={() => setTab(t)}
                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${tab===t ? 'bg-[#D4AF37] text-black' : 'bg-white/5 text-gray-400 hover:text-white'}`}>
                   {t === 'paste' ? <><Sparkles className="w-3 h-3" />Smart Fill</> : 'Manual Form'}
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
+        <div className="p-5 sm:p-8">
           <AnimatePresence mode="wait">
             {tab === 'paste' ? (
               <motion.div key="paste" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="space-y-4">
-                <p className="text-xs text-gray-400 leading-relaxed">Paste any vehicle description, ad text, or spec sheet below. We'll auto-identify all details and fill the form for you.</p>
+                <p className="text-xs text-gray-400 leading-relaxed text-pretty">Paste any vehicle description, ad text, or spec sheet below. We'll auto-identify all details and fill the form for you.</p>
                 <textarea
                   value={pasteText}
                   onChange={e => setPasteText(e.target.value)}
@@ -190,13 +218,13 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                 />
                 <button onClick={handleParse} disabled={parsing || !pasteText.trim()}
                   className="px-8 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-xs rounded-xl hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-2">
-                  {parsing ? <><span className="animate-spin">⟳</span> {parseStatus}</> : <><Sparkles className="w-4 h-4" />Parse & Auto-Fill</>}
+                  {parsing ? parseStatus : <><Sparkles className="w-4 h-4" />Parse & Auto-Fill</>}
                 </button>
               </motion.div>
             ) : (
               <motion.form key="form" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} onSubmit={handleSubmit} className="space-y-6">
                 {/* Row 1 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div><label className={lbl}>Make</label><input required value={form.make} onChange={e=>set('make',e.target.value)} className={inp} placeholder="Toyota"/></div>
                   <div><label className={lbl}>Model</label><input required value={form.model} onChange={e=>set('model',e.target.value)} className={inp} placeholder="Land Cruiser"/></div>
                   <div><label className={lbl}>Year</label><input required type="number" value={form.year} onChange={e=>set('year',Number(e.target.value))} className={inp}/></div>
@@ -208,7 +236,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                   </div>
                 </div>
                 {/* Row 2 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div><label className={lbl}>Price (LKR)</label><input required type="number" value={form.price} onChange={e=>set('price',Number(e.target.value))} className={inp}/></div>
                   <div><label className={lbl}>Mileage (KM)</label><input required type="number" value={form.mileage} onChange={e=>set('mileage',Number(e.target.value))} className={inp}/></div>
                    <div>
@@ -225,14 +253,14 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                   </div>
                 </div>
                 {/* Row 3 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <label className={lbl}>Body Type</label>
                     <select value={form.bodyType} onChange={e=>set('bodyType',e.target.value)} className={inp}>
                       {['Sedan','Hatchback','SUV','Coupe','Pickup','Double Cab','Van','Wagon','Convertible'].map(b=><option key={b} value={b} className="bg-black">{b}</option>)}
                     </select>
                   </div>
-                  <div className="col-span-3"><label className={lbl}>Color</label><input value={form.color} onChange={e=>set('color',e.target.value)} className={inp} placeholder="Pearl White"/></div>
+                  <div className="sm:col-span-1 lg:col-span-3"><label className={lbl}>Color</label><input value={form.color} onChange={e=>set('color',e.target.value)} className={inp} placeholder="Pearl White"/></div>
                 </div>
 
                 {/* Hero Image */}
@@ -286,7 +314,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                 {/* Description */}
                 <div>
                   <label className={lbl}>Description</label>
-                  <textarea rows={3} value={form.description} onChange={e=>set('description',e.target.value)} className={inp+' resize-none'}/>
+                  <textarea rows={4} value={form.description} onChange={e=>set('description',e.target.value)} className={inp+' resize-none'}/>
                 </div>
 
                 {/* Key Features */}
@@ -303,14 +331,20 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                   <div className="flex gap-2">
                     <input value={newFeature} onChange={e=>setNewFeature(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addFeature();}}}
                       className={inp+' flex-1'} placeholder="e.g. Sunroof, Apple CarPlay, 4WD..."/>
-                    <button type="button" onClick={addFeature} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-[#D4AF37] transition-colors">
+                    <button type="button" onClick={addFeature} aria-label="Add feature" className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-[#D4AF37] transition-colors">
                       <Plus className="w-4 h-4"/>
                     </button>
                   </div>
                 </div>
 
+                {formError && (
+                  <div className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-200" role="alert">
+                    {formError}
+                  </div>
+                )}
+
                 {/* Submit */}
-                <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
+                <div className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-col-reverse gap-3 border-t border-white/10 bg-[#0A0A0A]/95 p-5 sm:-mx-8 sm:-mb-8 sm:flex-row sm:justify-end sm:p-6">
                   <button type="button" onClick={onClose} className="px-6 py-3 text-gray-500 font-black uppercase tracking-widest text-[11px] hover:text-white transition-colors">Cancel</button>
                   <button type="submit" disabled={saving || uploading}
                     className="px-10 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] rounded-xl hover:scale-105 transition-all shadow-xl disabled:opacity-60">
@@ -322,6 +356,9 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
           </AnimatePresence>
         </div>
       </motion.div>
+      </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

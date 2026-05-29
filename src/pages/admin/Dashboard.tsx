@@ -58,8 +58,13 @@ interface Vehicle {
   views?: number;
 }
 
-type DashboardTab = 'inventory' | 'analytics' | 'leads';
+type DashboardTab = 'overview' | 'inventory' | 'analytics' | 'leads';
+type InventoryFilter = 'All' | 'Available' | 'Sold' | 'New' | 'Registered' | 'Reconditioned';
+type LeadFilter = 'All' | Lead['status'];
 type Notice = { type: 'success' | 'error'; message: string };
+
+const inventoryFilters: InventoryFilter[] = ['All', 'Available', 'Sold', 'New', 'Registered', 'Reconditioned'];
+const leadFilters: LeadFilter[] = ['All', 'New', 'Contacted', 'Closed'];
 
 const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 const daysUntilRemoval = (iso: string) => Math.max(0, 14 - daysSince(iso));
@@ -91,13 +96,16 @@ const leadStatusStyles: Record<Lead['status'], { badge: string; dot: string; act
 };
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState<DashboardTab>('inventory');
+  const [tab, setTab] = useState<DashboardTab>('overview');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [traffic, setTraffic] = useState<{ date: string; visitor_count: number; page_views: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVehicle, setModalVehicle] = useState<VehicleFormData | null | undefined>(undefined);
   const [search, setSearch] = useState('');
+  const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>('All');
+  const [leadFilter, setLeadFilter] = useState<LeadFilter>('All');
+  const [leadSearch, setLeadSearch] = useState('');
   const [notice, setNotice] = useState<Notice | null>(null);
   const navigate = useNavigate();
 
@@ -178,17 +186,61 @@ export default function AdminDashboard() {
   }, [vehicles]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return vehicles;
+    let result = vehicles;
+    if (inventoryFilter === 'Available') result = result.filter((v) => !v.is_sold);
+    if (inventoryFilter === 'Sold') result = result.filter((v) => v.is_sold);
+    if (['New', 'Registered', 'Reconditioned'].includes(inventoryFilter)) {
+      result = result.filter((v) => v.condition === inventoryFilter);
+    }
 
-    return vehicles.filter((v) =>
+    const query = search.trim().toLowerCase();
+    if (!query) return result;
+
+    return result.filter((v) =>
       [v.make, v.model, String(v.year), v.bodyType, v.condition, v.color]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
         .includes(query),
     );
-  }, [vehicles, search]);
+  }, [vehicles, search, inventoryFilter]);
+
+  const filteredLeads = useMemo(() => {
+    const query = leadSearch.trim().toLowerCase();
+    return leads.filter((lead) => {
+      if (leadFilter !== 'All' && lead.status !== leadFilter) return false;
+      if (!query) return true;
+      return [lead.name, lead.phone, lead.type, lead.vehicle_model, lead.message, lead.date, lead.time, lead.status]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [leads, leadFilter, leadSearch]);
+
+  const dashboardHealth = useMemo(() => {
+    const missingImages = vehicles.filter((vehicle) => !vehicle.image);
+    const incompleteListings = vehicles.filter((vehicle) =>
+      !vehicle.description || !(vehicle.key_features?.length)
+    );
+    const archiveReady = vehicles.filter((vehicle) =>
+      vehicle.is_sold && vehicle.sold_at && daysUntilRemoval(vehicle.sold_at) === 0
+    );
+    const staleNewLeads = leads.filter((lead) => lead.status === 'New' && daysSince(lead.created_at) > 1);
+    const readiness = vehicles.length > 0
+      ? Math.round(((vehicles.length - incompleteListings.length) / vehicles.length) * 100)
+      : 100;
+
+    return {
+      archiveReady,
+      incompleteListings,
+      missingImages,
+      recentLeads: leads.slice(0, 3),
+      readiness,
+      staleNewLeads,
+      todayTraffic: traffic[0],
+    };
+  }, [vehicles, leads, traffic]);
 
   if (loading && vehicles.length === 0) return <Loader />;
 
@@ -196,8 +248,14 @@ export default function AdminDashboard() {
   const contactedLeadCount = leads.filter((lead) => lead.status === 'Contacted').length;
   const closedLeadCount = leads.filter((lead) => lead.status === 'Closed').length;
   const maxPageViews = Math.max(1, ...traffic.map((item) => item.page_views || 0));
+  const attentionCount =
+    newLeadCount +
+    dashboardHealth.staleNewLeads.length +
+    dashboardHealth.missingImages.length +
+    dashboardHealth.archiveReady.length;
 
   const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: Activity, count: attentionCount },
     { id: 'inventory' as const, label: 'Inventory', icon: LayoutDashboard, count: stats.total },
     { id: 'leads' as const, label: 'Leads', icon: Users, count: newLeadCount },
     { id: 'analytics' as const, label: 'Analytics', icon: PieChart, count: traffic.length },
@@ -426,6 +484,7 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => setModalVehicle(null)}
+                aria-label="Add a new vehicle to inventory"
                 className="group flex items-center justify-between gap-4 rounded-2xl bg-[#D4AF37] px-5 py-4 text-left text-black transition-transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 <span>
@@ -495,6 +554,188 @@ export default function AdminDashboard() {
           )}
         </AnimatePresence>
 
+        {tab === 'overview' && (
+          <section className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+            <div className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+              <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="h-px w-10 bg-white/15" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Today desk</p>
+                  </div>
+                  <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white text-balance md:text-5xl">
+                    Admin overview
+                  </h2>
+                </div>
+                <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
+                  {isSupabaseConfigured ? 'Live Supabase data' : 'Local fallback mode'}
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  {
+                    label: 'New buyer leads',
+                    value: newLeadCount,
+                    meta: 'Waiting for follow-up',
+                    icon: Users,
+                    action: () => setTab('leads'),
+                  },
+                  {
+                    label: 'Stale leads',
+                    value: dashboardHealth.staleNewLeads.length,
+                    meta: 'New for over 24 hours',
+                    icon: Clock3,
+                    action: () => setTab('leads'),
+                  },
+                  {
+                    label: 'Missing photos',
+                    value: dashboardHealth.missingImages.length,
+                    meta: 'Listings need hero images',
+                    icon: ImageIcon,
+                    action: () => setTab('inventory'),
+                  },
+                  {
+                    label: 'Archive ready',
+                    value: dashboardHealth.archiveReady.length,
+                    meta: 'Sold units past 14 days',
+                    icon: CheckCircle2,
+                    action: () => setTab('inventory'),
+                  },
+                ].map(({ label, value, meta, icon: Icon, action }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={action}
+                    className="group border border-white/10 bg-black/25 p-4 text-left transition-all hover:border-[#D4AF37]/35 hover:bg-black/40"
+                  >
+                    <div className="mb-5 flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">{label}</span>
+                      <Icon className="h-4 w-4 text-[#D4AF37]" />
+                    </div>
+                    <p className="text-3xl font-black leading-none text-white tabular-nums">{value}</p>
+                    <p className="mt-3 truncate text-[10px] font-black uppercase tracking-[0.16em] text-white/32">{meta}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+                <section className="border border-white/10 bg-black/20 p-5">
+                  <div className="mb-5 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Listing quality</p>
+                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Readiness score</h3>
+                    </div>
+                    <p className="text-4xl font-black leading-none text-white tabular-nums">{dashboardHealth.readiness}%</p>
+                  </div>
+                  <div className="h-3 overflow-hidden bg-white/[0.06]">
+                    <div className="h-full bg-[#D4AF37]" style={{ width: `${dashboardHealth.readiness}%` }} />
+                  </div>
+                  <div className="mt-5 grid gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/42 sm:grid-cols-3">
+                    <span>{stats.available} live units</span>
+                    <span>{dashboardHealth.incompleteListings.length} incomplete</span>
+                    <span>{stats.topMake} leads stock mix</span>
+                  </div>
+                </section>
+
+                <section className="border border-white/10 bg-black/20 p-5">
+                  <div className="mb-5 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Traffic pulse</p>
+                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Latest signal</h3>
+                    </div>
+                    <BarChart2 className="h-5 w-5 text-white/28" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Visitors</p>
+                      <p className="mt-3 text-3xl font-black leading-none text-white tabular-nums">
+                        {dashboardHealth.todayTraffic?.visitor_count || 0}
+                      </p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.035] p-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Page views</p>
+                      <p className="mt-3 text-3xl font-black leading-none text-white tabular-nums">
+                        {dashboardHealth.todayTraffic?.page_views || 0}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm font-medium leading-6 text-white/45 text-pretty">
+                    Last tracked day: {formatDate(dashboardHealth.todayTraffic?.date)}. Use the analytics tab for the full 7-day view.
+                  </p>
+                </section>
+              </div>
+            </div>
+
+            <aside className="grid gap-4">
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Quick actions</p>
+                <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+                  {[
+                    { label: 'Add vehicle', icon: Plus, action: () => setModalVehicle(null) },
+                    { label: 'Manage inventory', icon: Car, action: () => setTab('inventory') },
+                    { label: 'Review leads', icon: Users, action: () => setTab('leads') },
+                    { label: 'Open analytics', icon: PieChart, action: () => setTab('analytics') },
+                    { label: 'View public showroom', icon: ArrowUpRight, action: () => navigate('/inventory') },
+                  ].map(({ label, icon: Icon, action }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={action}
+                      className="flex items-center justify-between gap-4 border border-white/10 bg-black/25 px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.16em] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-white"
+                    >
+                      {label}
+                      <Icon className="h-4 w-4 text-[#D4AF37]" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Recent leads</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Buyer inbox</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTab('leads')}
+                    className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/45 transition-all hover:border-[#D4AF37]/35 hover:text-white"
+                  >
+                    View all
+                  </button>
+                </div>
+
+                <div className="grid gap-3">
+                  {dashboardHealth.recentLeads.length === 0 ? (
+                    <div className="border border-dashed border-white/10 px-4 py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">
+                      No incoming leads yet
+                    </div>
+                  ) : (
+                    dashboardHealth.recentLeads.map((lead) => {
+                      const tone = leadStatusStyles[lead.status] ?? leadStatusStyles.New;
+                      return (
+                        <article key={lead.id} className="border border-white/10 bg-black/25 p-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <h4 className="truncate text-sm font-black uppercase tracking-tight text-white">{lead.name}</h4>
+                            <span className={`inline-flex shrink-0 items-center gap-1.5 border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${tone.badge}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                              {lead.status}
+                            </span>
+                          </div>
+                          <p className="truncate text-[11px] font-bold uppercase tracking-[0.13em] text-white/45">
+                            {lead.vehicle_model || lead.type} - {lead.phone}
+                          </p>
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            </aside>
+          </section>
+        )}
+
         {tab === 'inventory' && (
           <section className="mt-8">
             <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -520,6 +761,27 @@ export default function AdminDashboard() {
               </label>
             </div>
 
+            <div className="mb-5 flex flex-wrap gap-2">
+              {inventoryFilters.map((filter) => {
+                const active = inventoryFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    type="button"
+                    onClick={() => setInventoryFilter(filter)}
+                    aria-pressed={active}
+                    className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] transition-all ${
+                      active
+                        ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
+                        : 'border-white/10 bg-white/[0.035] text-white/45 hover:border-[#D4AF37]/35 hover:text-white'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="grid gap-3">
               {filtered.length === 0 ? (
                 <div className="border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
@@ -528,6 +790,14 @@ export default function AdminDashboard() {
                   <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-white/45">
                     Adjust the search term or add a new unit to the live inventory.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => setModalVehicle(null)}
+                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-transform hover:-translate-y-0.5"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add vehicle
+                  </button>
                 </div>
               ) : (
                 filtered.map((vehicle) => {
@@ -665,17 +935,55 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            <div className="mb-5 grid gap-3 xl:grid-cols-[1fr_420px] xl:items-center">
+              <div className="flex flex-wrap gap-2">
+                {leadFilters.map((filter) => {
+                  const active = leadFilter === filter;
+                  return (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setLeadFilter(filter)}
+                      aria-pressed={active}
+                      className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] transition-all ${
+                        active
+                          ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
+                          : 'border-white/10 bg-white/[0.035] text-white/45 hover:border-[#D4AF37]/35 hover:text-white'
+                      }`}
+                    >
+                      {filter}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <label className="relative w-full">
+                <span className="sr-only">Search leads</span>
+                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <input
+                  value={leadSearch}
+                  onChange={(event) => setLeadSearch(event.target.value)}
+                  placeholder="Search buyer, phone, vehicle..."
+                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37]"
+                />
+              </label>
+            </div>
+
             <div className="grid gap-3">
-              {leads.length === 0 ? (
+              {filteredLeads.length === 0 ? (
                 <div className="border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
                   <Users className="mx-auto mb-4 h-8 w-8 text-[#D4AF37]" />
-                  <h3 className="text-2xl font-black uppercase tracking-tight text-white">No leads yet</h3>
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-white">
+                    {leads.length === 0 ? 'No leads yet' : 'No matching leads'}
+                  </h3>
                   <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-white/45">
-                    New enquiries, test drives, and vehicle requests will appear here.
+                    {leads.length === 0
+                      ? 'New enquiries, test drives, and vehicle requests will appear here.'
+                      : 'Adjust the status filter or search term to widen the buyer queue.'}
                   </p>
                 </div>
               ) : (
-                leads.map((lead) => {
+                filteredLeads.map((lead) => {
                   const tone = leadStatusStyles[lead.status] ?? leadStatusStyles.New;
                   const phoneDigits = lead.phone.replace(/\D/g, '');
                   return (
