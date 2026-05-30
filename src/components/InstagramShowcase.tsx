@@ -1,154 +1,200 @@
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ExternalLink, Instagram } from 'lucide-react';
+import { ExternalLink, Grid3X3, Heart, Instagram, MessageCircle, Play, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
+import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/socialLinks';
 import { cn } from '../lib/utils';
 
-const instagramSlides = HERO_SHOWROOM_SLIDES.map((slide) => ({
-  ...slide,
-  label: slide.caption,
-}));
+const storyHighlights = [
+  { label: 'Arrivals', image: SHOWROOM_IMAGES[0] },
+  { label: 'Walkarounds', image: SHOWROOM_IMAGES[2] },
+  { label: 'Showroom', image: SHOWROOM_IMAGES[5] },
+  { label: 'Deliveries', image: SHOWROOM_IMAGES[7] },
+];
+
+const feedPosts = [
+  { image: SHOWROOM_IMAGES[2], label: 'Feature display', type: 'reel' },
+  { image: SHOWROOM_IMAGES[3], label: 'New arrival bay', type: 'post' },
+  { image: SHOWROOM_IMAGES[1], label: 'Showroom floor', type: 'post' },
+  { image: SHOWROOM_IMAGES[5], label: 'Logo wall', type: 'reel' },
+  { image: SHOWROOM_IMAGES[6], label: 'Interior details', type: 'post' },
+  { image: SHOWROOM_IMAGES[7], label: 'Collection view', type: 'post' },
+];
+
+const profileStats = [
+  { value: 'Daily', label: 'Stories' },
+  { value: 'Fresh', label: 'Arrivals' },
+  { value: 'DM', label: 'Inquiries' },
+];
 
 export default function InstagramShowcase() {
-  const [activeSlide, setActiveSlide] = useState(0);
-  const shouldReduceMotion = useReducedMotion();
-  const currentSlide = instagramSlides[activeSlide];
-
-  useEffect(() => {
-    if (shouldReduceMotion) return;
-
-    const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % instagramSlides.length);
-    }, 5200);
-
-    return () => window.clearInterval(timer);
-  }, [shouldReduceMotion]);
-
   return (
     <section
       aria-labelledby="instagram-showcase-title"
-      className="relative flex min-h-[720px] items-end overflow-hidden border-y border-white/5 bg-[#0A0A0A] md:min-h-[780px]"
+      className="relative scroll-mt-28 overflow-hidden border-y border-white/5 bg-[#0A0A0A] px-6 py-24 lg:px-10"
     >
-      <div className="absolute inset-0">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.img
-            key={currentSlide.src}
-            src={currentSlide.src}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover brightness-[0.92] contrast-[1.08] saturate-[1.03]"
-            style={{ objectPosition: currentSlide.objectPosition || 'center center' }}
-            initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.03 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 1, ease: [0.16, 1, 0.3, 1] }}
-          />
-        </AnimatePresence>
-
-        <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b09]/80 via-[#0d0b09]/12 to-[#0d0b09]/96" aria-hidden="true" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0b09]/88 via-[#0d0b09]/38 to-transparent" aria-hidden="true" />
-        <div className="absolute inset-0 bg-noise" aria-hidden="true" />
-      </div>
-
-      <div className="relative z-10 mx-auto flex min-h-[720px] w-full max-w-[1400px] flex-col justify-between px-6 py-14 md:min-h-[780px] md:py-20 lg:px-10">
-        <div className="flex justify-end">
-          <div className="hidden max-w-[400px] items-center gap-4 rounded-full border border-white/10 bg-black/35 px-4 py-3 text-white shadow-2xl backdrop-blur-xl md:flex">
-            <span className="max-w-[190px] truncate text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
-              {currentSlide.label}
-            </span>
-            <div className="flex items-center gap-2">
-              {instagramSlides.map((slide, index) => (
-                <button
-                  key={slide.src}
-                  type="button"
-                  onClick={() => setActiveSlide(index)}
-                  aria-label={`Show ${slide.caption}`}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-500',
-                    activeSlide === index ? 'w-8 bg-[#D4AF37]' : 'w-3 bg-white/30 hover:bg-white/60',
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
-          <div className="max-w-2xl">
+      <div className="mx-auto w-full max-w-[1400px]">
+        <div className="mb-12 flex flex-col gap-8 border-b border-white/10 pb-10 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex min-w-0 flex-col gap-7 sm:flex-row sm:items-center">
             <a
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mb-5 inline-flex max-w-full items-center gap-3 rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-4 py-2 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
               aria-label="Open Serendib Trading Instagram profile"
+              className="group relative size-28 shrink-0 rounded-full border border-[#D4AF37]/35 bg-black p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
             >
-              <Instagram className="size-4 shrink-0" aria-hidden="true" />
-              <span className="truncate">{INSTAGRAM_HANDLE}</span>
+              <span className="absolute inset-[-5px] rounded-full border border-[#D4AF37]/25" aria-hidden="true" />
+              <img
+                src="/serendib-logo-192.png"
+                alt="Serendib Trading"
+                className="size-full rounded-full object-contain transition-transform duration-200 group-hover:scale-[1.03]"
+                loading="lazy"
+                decoding="async"
+              />
             </a>
 
-            <h2
-              id="instagram-showcase-title"
-              className="mb-6 max-w-xl text-4xl font-black leading-none text-balance text-white md:text-6xl"
-            >
-              See what is on the showroom floor.
-            </h2>
+            <div className="min-w-0">
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <a
+                  href={INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-w-0 items-center gap-2 text-xl font-black text-white transition-colors duration-200 hover:text-[#F3D67E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+                >
+                  <Instagram className="size-5 shrink-0 text-[#D4AF37]" aria-hidden="true" />
+                  <span className="truncate">{INSTAGRAM_HANDLE.replace('@', '')}</span>
+                </a>
+                <a
+                  href={INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2 text-xs font-black uppercase text-black transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+                >
+                  Follow
+                </a>
+                <Link
+                  to="/gallery"
+                  className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-2 text-xs font-bold uppercase text-white/70 transition-colors duration-200 hover:border-white/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+                >
+                  Gallery
+                </Link>
+              </div>
 
-            <p className="mb-9 max-w-xl text-pretty text-base leading-8 text-white/72 md:text-lg">
-              Follow new arrivals, walkaround clips, delivery moments, and behind-the-scenes updates from the Serendib Trading showroom.
-            </p>
+              <div className="mb-5 flex flex-wrap gap-x-8 gap-y-3">
+                {profileStats.map((stat) => (
+                  <div key={stat.label} className="flex items-baseline gap-2">
+                    <span className="text-sm font-black text-white">{stat.value}</span>
+                    <span className="text-sm text-white/55">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <a
-                href={INSTAGRAM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-3 rounded-full bg-[#D4AF37] px-7 py-4 text-sm font-black uppercase text-black transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+              <h2
+                id="instagram-showcase-title"
+                className="mb-3 max-w-2xl text-balance text-4xl font-black leading-none text-white md:text-5xl"
               >
-                Open Instagram
-                <ExternalLink className="size-4" aria-hidden="true" />
-              </a>
-              <Link
-                to="/gallery"
-                className="inline-flex items-center justify-center rounded-full border border-white/10 px-7 py-4 text-sm font-bold text-white/80 transition-colors duration-200 hover:border-[#D4AF37]/45 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
-              >
-                View Website Gallery
-              </Link>
+                Follow the showroom feed.
+              </h2>
+              <p className="max-w-2xl text-pretty text-base leading-8 text-white/62">
+                New arrivals, walkaround clips, delivery moments, and quick showroom updates from Serendib Trading.
+              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-4">
-            {instagramSlides.map((slide, index) => (
-              <button
-                key={slide.src}
-                type="button"
-                onClick={() => setActiveSlide(index)}
-                aria-label={`Show ${slide.caption}`}
-                className={cn(
-                  'group relative aspect-[4/3] overflow-hidden rounded-2xl border bg-black/30 text-left transition-all duration-300',
-                  activeSlide === index ? 'border-[#D4AF37] p-1' : 'border-white/10 opacity-70 hover:opacity-100',
-                  index === 0 ? 'col-span-2 sm:col-span-1' : '',
-                )}
-              >
-                <img
-                  src={slide.src}
-                  alt={slide.alt}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full rounded-[14px] object-cover transition-transform duration-700 group-hover:scale-105"
-                  style={{ objectPosition: slide.objectPosition || 'center center' }}
-                />
-                <span className="absolute inset-x-3 bottom-3 truncate rounded-full bg-black/60 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/80 backdrop-blur-md">
-                  {slide.label}
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-fit items-center justify-center gap-3 rounded-full border border-[#D4AF37]/30 px-6 py-3 text-sm font-black uppercase text-[#D4AF37] transition-colors duration-200 hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+          >
+            Open Instagram
+            <ExternalLink className="size-4" aria-hidden="true" />
+          </a>
+        </div>
+
+        <div className="mb-12 flex gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {storyHighlights.map((story) => (
+            <a
+              key={story.label}
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex w-24 shrink-0 flex-col items-center gap-3 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+            >
+              <span className="rounded-full border border-white/10 bg-white/[0.03] p-1 transition-colors duration-200 group-hover:border-[#D4AF37]/45">
+                <span className="block size-20 overflow-hidden rounded-full bg-black">
+                  <img
+                    src={story.image.src}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
+                    style={{ objectPosition: story.image.objectPosition || 'center center' }}
+                  />
                 </span>
-              </button>
-            ))}
+              </span>
+              <span className="max-w-full truncate text-xs font-bold text-white/70">{story.label}</span>
+            </a>
+          ))}
+        </div>
+
+        <div className="mb-6 grid grid-cols-3 border-t border-white/10 text-center text-[11px] font-black uppercase text-white/45">
+          <div className="flex items-center justify-center gap-2 border-t border-[#D4AF37] py-4 text-[#D4AF37]">
+            <Grid3X3 className="size-3.5" aria-hidden="true" />
+            Posts
           </div>
+          <div className="flex items-center justify-center gap-2 py-4">
+            <Play className="size-3.5" aria-hidden="true" />
+            Reels
+          </div>
+          <div className="flex items-center justify-center gap-2 py-4">
+            <UserRound className="size-3.5" aria-hidden="true" />
+            Tagged
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:gap-2">
+          {feedPosts.map((post, index) => (
+            <a
+              key={`${post.image.src}-${post.label}`}
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${post.label} on Instagram`}
+              className={cn(
+                'group relative aspect-square overflow-hidden bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]',
+                index === 0 ? 'rounded-tl-2xl' : '',
+                index === 2 ? 'sm:rounded-tr-2xl' : '',
+                index === 3 ? 'sm:rounded-bl-2xl' : '',
+                index === 5 ? 'rounded-br-2xl' : '',
+              )}
+            >
+              <img
+                src={post.image.src}
+                alt={post.image.alt}
+                loading="lazy"
+                decoding="async"
+                className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                style={{ objectPosition: post.image.objectPosition || 'center center' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-[background-color,opacity] duration-200 group-hover:bg-black/55 group-hover:opacity-100">
+                <div className="flex items-center gap-5 text-sm font-black text-white">
+                  <span className="inline-flex items-center gap-2">
+                    <Heart className="size-5 fill-white" aria-hidden="true" />
+                    View
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <MessageCircle className="size-5" aria-hidden="true" />
+                    DM
+                  </span>
+                </div>
+              </div>
+              <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-black uppercase text-white/85">
+                {post.type}
+              </div>
+            </a>
+          ))}
         </div>
       </div>
     </section>
