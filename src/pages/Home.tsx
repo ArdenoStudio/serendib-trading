@@ -11,7 +11,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
-import { BrandIcons } from '../components/ui/brand-icons';
+import { BrandMark } from '../components/brand/BrandMark';
 import { LocationTag } from '../components/ui/location-tag';
 import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
@@ -407,30 +407,33 @@ export default function Home() {
         
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {[
-            { name: 'Toyota', icon: BrandIcons.Toyota },
-            { name: 'Honda', icon: BrandIcons.Honda },
-            { name: 'Suzuki', icon: BrandIcons.Suzuki },
-            { name: 'Nissan', icon: BrandIcons.Nissan },
-            { name: 'Mitsubishi', icon: BrandIcons.Mitsubishi },
-            { name: 'Mercedes', icon: BrandIcons.Mercedes },
+            { label: 'Toyota', make: 'Toyota' },
+            { label: 'Honda', make: 'Honda' },
+            { label: 'Suzuki', make: 'Suzuki' },
+            { label: 'Nissan', make: 'Nissan' },
+            { label: 'Mitsubishi', make: 'Mitsubishi' },
+            { label: 'Mercedes', make: 'Mercedes-Benz' },
           ].map((brand, i) => (
             <motion.button 
-              key={brand.name}
+              key={brand.make}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05, duration: 0.5 }}
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`/inventory?make=${brand.name}`)}
+              onClick={() => navigate(`/inventory?make=${encodeURIComponent(brand.make)}`)}
               className="group relative flex h-[166px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[176px]"
             >
               <div className="relative z-10 flex flex-col items-center w-full">
-                <div className="mb-5 flex h-20 w-full items-center justify-center text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]">
-                  <brand.icon className="size-16 object-contain transition-transform duration-300 group-hover:scale-105 lg:size-20" />
-                </div>
+                <BrandMark
+                  make={brand.make}
+                  tone="mono"
+                  className="mb-5 h-20 w-full text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]"
+                  iconClassName="mx-auto size-16 transition-transform duration-300 group-hover:scale-105 lg:size-20"
+                />
                 <span className="w-full truncate text-center text-[9px] font-black tracking-[0.22em] uppercase text-white/50 transition-colors group-hover:text-white">
-                  {brand.name}
+                  {brand.label}
                 </span>
 
                 {/* Sub-indicator */}
@@ -523,7 +526,11 @@ export default function Home() {
                 {/* Card Content */}
                 <div className="p-8 md:p-10 relative">
                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-5 h-[1px] bg-white/20" />
+                      <BrandMark
+                        make={car.make}
+                        tone="mono"
+                        className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover/card:border-[#D4AF37]/35 group-hover/card:text-[#D4AF37]"
+                      />
                       <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{car.make}</span>
                    </div>
                    

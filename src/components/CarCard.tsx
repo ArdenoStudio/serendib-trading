@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
 import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
 import { readStringList, writeStringList } from '../lib/storage';
+import { BrandMark } from './brand/BrandMark';
 
 interface CarCardProps {
   car: {
@@ -175,7 +176,11 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
         <div className="p-6 pb-8 flex-1 flex flex-col justify-between relative">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-5 h-[1px] bg-white/20" />
+              <BrandMark
+                make={car.make}
+                tone="mono"
+                className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover:border-[#D4AF37]/35 group-hover:text-[#D4AF37]"
+              />
               <h3 className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#D4AF37]">
                 {car.make}
               </h3>

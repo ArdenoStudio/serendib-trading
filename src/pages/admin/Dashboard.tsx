@@ -35,6 +35,7 @@ import { isSupabaseConfigured, supabase, signOut } from '../../lib/supabase';
 import Loader from '../../components/Loader';
 import { Lead } from '../../data/types';
 import VehicleModal, { VehicleFormData } from './VehicleModal';
+import { BrandMark } from '../../components/brand/BrandMark';
 
 interface Vehicle {
   id: string;
@@ -836,7 +837,12 @@ export default function AdminDashboard() {
 
                       <div className="min-w-0">
                         <div className="mb-3 flex flex-wrap items-center gap-2">
-                          <span className="border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+                          <span className="inline-flex items-center gap-2 border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+                            <BrandMark
+                              make={vehicle.make}
+                              tone="mono"
+                              className="size-4 shrink-0 text-[#D4AF37]"
+                            />
                             {vehicle.make}
                           </span>
                           <span className="border border-white/10 bg-white/[0.035] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-white/45">
@@ -1086,7 +1092,15 @@ export default function AdminDashboard() {
               ].map(({ icon: Icon, label, value, meta }) => (
                 <article key={label} className="border border-white/10 bg-white/[0.035] p-5">
                   <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-[#D4AF37]">
-                    <Icon className="h-5 w-5" />
+                    {label === 'Top brand' ? (
+                      <BrandMark
+                        make={String(value)}
+                        tone="mono"
+                        className="size-6 text-[#D4AF37]"
+                      />
+                    ) : (
+                      <Icon className="h-5 w-5" />
+                    )}
                   </div>
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">{label}</p>
                   <h3 className="mt-2 truncate text-2xl font-black uppercase leading-none tracking-tight text-white tabular-nums">{value}</h3>
@@ -1120,9 +1134,16 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                         <div className="min-w-0">
-                          <h4 className="truncate text-sm font-black uppercase tracking-tight text-white">
-                            {vehicle.make} {vehicle.model}
-                          </h4>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <BrandMark
+                              make={vehicle.make}
+                              tone="mono"
+                              className="size-6 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-white/50"
+                            />
+                            <h4 className="truncate text-sm font-black uppercase tracking-tight text-white">
+                              {vehicle.make} {vehicle.model}
+                            </h4>
+                          </div>
                           <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">
                             {formatMillions(vehicle.price)}
                           </p>

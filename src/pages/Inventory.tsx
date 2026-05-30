@@ -24,6 +24,7 @@ import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createInventoryItemListSchema } from '../lib/seo';
+import { BrandMark } from '../components/brand/BrandMark';
 export default function Inventory() {
   const [searchParams] = useSearchParams();
   const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
@@ -440,8 +441,17 @@ export default function Inventory() {
                                     : 'border-white/10 hover:border-white/20'
                                 }`}
                             >
-                                <span className={`truncate ${filters.make ? "text-white" : "text-gray-500"}`}>
-                                    {filters.make || "All Makers"}
+                                <span className="flex min-w-0 items-center gap-3">
+                                    {filters.make && (
+                                        <BrandMark
+                                            make={filters.make}
+                                            tone="mono"
+                                            className="size-5 shrink-0 text-white/50"
+                                        />
+                                    )}
+                                    <span className={`truncate ${filters.make ? "text-white" : "text-gray-500"}`}>
+                                        {filters.make || "All Makers"}
+                                    </span>
                                 </span>
                                 <ChevronDown className={`w-4 h-4 text-[#D4AF37]/70 transition-transform duration-300 ${isMakeOpen ? 'rotate-180' : ''}`} strokeWidth={2.5} />
                             </button>
@@ -482,7 +492,10 @@ export default function Inventory() {
                                                         filters.make === '' ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:text-white hover:bg-white/5'
                                                     }`}
                                                 >
-                                                    All Makers
+                                                    <span className="flex items-center gap-3">
+                                                        <span className="size-5 rounded-full border border-white/10 bg-white/[0.04]" />
+                                                        All Makers
+                                                    </span>
                                                 </motion.button>
                                                 {filterOptions.makes.map(m => (
                                                     <motion.button
@@ -499,7 +512,14 @@ export default function Inventory() {
                                                             filters.make === m ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:text-white hover:bg-white/5'
                                                         }`}
                                                     >
-                                                        {m}
+                                                        <span className="flex items-center gap-3">
+                                                            <BrandMark
+                                                                make={m}
+                                                                tone="mono"
+                                                                className="size-5 shrink-0 text-white/45"
+                                                            />
+                                                            <span className="truncate">{m}</span>
+                                                        </span>
                                                     </motion.button>
                                                 ))}
                                             </motion.div>
@@ -788,7 +808,16 @@ export default function Inventory() {
                                                 isMakeOpen ? 'border-[#C69320]' : 'border-white/10'
                                             }`}
                                         >
-                                            <span className={filters.make ? 'text-white' : 'text-gray-500'}>{filters.make || 'All Makers'}</span>
+                                            <span className="flex min-w-0 items-center gap-3">
+                                                {filters.make && (
+                                                    <BrandMark
+                                                        make={filters.make}
+                                                        tone="mono"
+                                                        className="size-5 shrink-0 text-white/50"
+                                                    />
+                                                )}
+                                                <span className={`truncate ${filters.make ? 'text-white' : 'text-gray-500'}`}>{filters.make || 'All Makers'}</span>
+                                            </span>
                                             <motion.div animate={{ rotate: isMakeOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
                                                 <ChevronDown className="w-4 h-4 text-[#D4AF37]/70" strokeWidth={2.5} />
                                             </motion.div>
@@ -803,9 +832,23 @@ export default function Inventory() {
                                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                                         className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl max-h-60 overflow-y-auto"
                                                     >
-                                                        <button onClick={() => { handleFilterChange('make', ''); setIsMakeOpen(false); }} className={`w-full text-left px-5 py-3 rounded-xl text-xs font-black transition-all ${ filters.make === '' ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:bg-white/5' }`}>All Makers</button>
+                                                        <button onClick={() => { handleFilterChange('make', ''); setIsMakeOpen(false); }} className={`w-full text-left px-5 py-3 rounded-xl text-xs font-black transition-all ${ filters.make === '' ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:bg-white/5' }`}>
+                                                            <span className="flex items-center gap-3">
+                                                                <span className="size-5 rounded-full border border-white/10 bg-white/[0.04]" />
+                                                                All Makers
+                                                            </span>
+                                                        </button>
                                                         {filterOptions.makes.map(m => (
-                                                            <button key={m} onClick={() => { handleFilterChange('make', m); setIsMakeOpen(false); }} className={`w-full text-left px-5 py-3 rounded-xl text-xs font-black transition-all ${ filters.make === m ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:bg-white/5' }`}>{m}</button>
+                                                            <button key={m} onClick={() => { handleFilterChange('make', m); setIsMakeOpen(false); }} className={`w-full text-left px-5 py-3 rounded-xl text-xs font-black transition-all ${ filters.make === m ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:bg-white/5' }`}>
+                                                                <span className="flex items-center gap-3">
+                                                                    <BrandMark
+                                                                        make={m}
+                                                                        tone="mono"
+                                                                        className="size-5 shrink-0 text-white/45"
+                                                                    />
+                                                                    <span className="truncate">{m}</span>
+                                                                </span>
+                                                            </button>
                                                         ))}
                                                     </motion.div>
                                                 </>

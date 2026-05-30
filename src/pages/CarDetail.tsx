@@ -12,25 +12,51 @@ import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
 import { createVehicleSchema } from '../lib/seo';
 import { submitLead } from '../lib/leads';
+import { BrandMark } from '../components/brand/BrandMark';
+
+const fallbackCars = carsData as Car[];
+
+const normalizeVehicle = (vehicle: any): Car => ({
+  ...vehicle,
+  bodyType: vehicle.bodyType || vehicle.body_type || '',
+  fuel: vehicle.fuel || vehicle.fuel_type || '',
+  transmission: vehicle.transmission || vehicle.transmission_type || '',
+  key_features: vehicle.key_features || vehicle.keyFeatures || [],
+});
+
+const isSoldExpired = (vehicle: Car): boolean => {
+  if (!vehicle.is_sold || !vehicle.sold_at) return false;
+  const soldMs = new Date(vehicle.sold_at).getTime();
+  if (Number.isNaN(soldMs)) return false;
+  return Date.now() - soldMs > 14 * 24 * 60 * 60 * 1000;
+};
 
 export default function CarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [car, setCar] = useState<Car | null>(null);
+  const [inventoryCars, setInventoryCars] = useState<Car[]>(fallbackCars);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCar = async () => {
       if (isSupabaseConfigured) {
-        const { data, error } = await supabase.from('cars').select('*').eq('id', id).single();
-        if (!error && data) {
-          setCar(data);
-          setLoading(false);
-          return;
+        const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          const liveCars = data.map(normalizeVehicle);
+          setInventoryCars(liveCars.filter((vehicle) => !isSoldExpired(vehicle)));
+
+          const liveCar = liveCars.find((vehicle) => vehicle.id === id);
+          if (liveCar) {
+            setCar(liveCar);
+            setLoading(false);
+            return;
+          }
         }
       }
 
-      const fallback = (carsData as Car[]).find(c => c.id === id);
+      setInventoryCars(fallbackCars);
+      const fallback = fallbackCars.find(c => c.id === id);
       setCar(fallback || null);
       setLoading(false);
     };
@@ -52,13 +78,13 @@ export default function CarDetail() {
     }
   }, [car]);
 
-  // Similar Vehicles Logic - Pull from live or fallback
+  // Similar Vehicles Logic - use the same inventory source as home/inventory.
   const similarVehicles = useMemo(() => {
     if (!car) return [];
-    return (carsData as Car[])
-      .filter(c => c.id !== car.id && (c.make === car.make || c.bodyType === car.bodyType) && !c.is_sold)
+    return inventoryCars
+      .filter(c => c.id !== car.id && (c.make === car.make || c.bodyType === car.bodyType) && !c.is_sold && !isSoldExpired(c))
       .slice(0, 3);
-  }, [car]);
+  }, [car, inventoryCars]);
 
 
   if (loading) return <Loader />;
@@ -293,6 +319,11 @@ export default function CarDetail() {
             <div className="space-y-6 sticky top-32">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
+                  <BrandMark
+                    make={car.make}
+                    tone="color"
+                    className="size-12 shrink-0 rounded-2xl border border-white/10 bg-white/[0.04] p-2.5"
+                  />
                   <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">{car.make} ⋅ {car.year} Edition</span>
                 </div>
                 <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-[-0.08em] uppercase text-wrap-balance">
