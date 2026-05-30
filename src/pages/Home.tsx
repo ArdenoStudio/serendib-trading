@@ -405,7 +405,7 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-flow-col auto-cols-[minmax(132px,1fr)] gap-3 overflow-x-auto pb-3 lg:grid-flow-row lg:grid-cols-10 lg:overflow-visible lg:pb-0">
           {[
             { name: 'Toyota', icon: BrandIcons.Toyota },
             { name: 'Honda', icon: BrandIcons.Honda },
@@ -419,7 +419,7 @@ export default function Home() {
             { name: 'Hyundai', icon: BrandIcons.Hyundai },
           ].map((brand, i) => (
             <motion.button 
-              key={i}
+              key={brand.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -427,16 +427,13 @@ export default function Home() {
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(`/inventory?make=${brand.name}`)}
-              className="group relative flex flex-col items-center justify-center p-8 bg-white/[0.02] border border-white/5 rounded-3xl transition-colors duration-500 hover:bg-white/[0.05] hover:border-[#D4AF37]/40 h-[180px] overflow-hidden will-change-transform"
+              className="group relative flex h-[142px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[150px]"
             >
-              {/* Background Glow on Hover */}
-              <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
               <div className="relative z-10 flex flex-col items-center w-full">
-                <div className="flex items-center justify-center w-full mb-6 text-white/40 group-hover:text-[#D4AF37] transition-colors duration-500">
-                  <brand.icon className="w-12 h-12 object-contain transition-transform duration-700 group-hover:scale-110 will-change-transform" />
+                <div className="mb-5 flex w-full items-center justify-center text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]">
+                  <brand.icon className="size-10 object-contain transition-transform duration-300 group-hover:scale-105" />
                 </div>
-                <span className="text-[10px] font-black tracking-[0.3em] uppercase text-white/50 group-hover:text-white transition-colors">
+                <span className="w-full truncate text-center text-[9px] font-black tracking-[0.22em] uppercase text-white/50 transition-colors group-hover:text-white">
                   {brand.name}
                 </span>
 
