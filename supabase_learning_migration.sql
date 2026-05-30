@@ -26,5 +26,5 @@ DROP POLICY IF EXISTS "Allow admins to manage vehicle_knowledge" ON public.vehic
 CREATE POLICY "Allow admins to manage vehicle_knowledge" ON public.vehicle_knowledge
     FOR ALL
     TO authenticated
-    USING ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com'))
-    WITH CHECK ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com'));
+    USING ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com', 'suvenseoras@gmail.com'))
+    WITH CHECK ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com', 'suvenseoras@gmail.com'));

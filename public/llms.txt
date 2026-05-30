@@ -4,7 +4,7 @@ Serendib Trading is an imported vehicle showroom in Dehiwala-Mount Lavinia, Sri 
 
 ## Core facts
 
-- Website: https://serendibtrading.lk/
+- Website: https://serendib-trading.vercel.app/
 - Business type: Imported vehicle dealer and showroom
 - Location: 47/A S. De S. Jayasinghe Mawatha, Dehiwala-Mount Lavinia, Sri Lanka
 - Phone: +94 75 636 3427
@@ -15,12 +15,12 @@ Serendib Trading is an imported vehicle showroom in Dehiwala-Mount Lavinia, Sri 
 
 ## Key pages
 
-- Home: https://serendibtrading.lk/
-- Vehicle inventory: https://serendibtrading.lk/inventory
-- Finance calculator: https://serendibtrading.lk/calculator
-- Gallery: https://serendibtrading.lk/gallery
-- About: https://serendibtrading.lk/about
-- Contact: https://serendibtrading.lk/contact
+- Home: https://serendib-trading.vercel.app/
+- Vehicle inventory: https://serendib-trading.vercel.app/inventory
+- Finance calculator: https://serendib-trading.vercel.app/calculator
+- Gallery: https://serendib-trading.vercel.app/gallery
+- About: https://serendib-trading.vercel.app/about
+- Contact: https://serendib-trading.vercel.app/contact
 
 ## What to cite
 

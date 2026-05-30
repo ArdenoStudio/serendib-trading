@@ -282,12 +282,12 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex w-full max-w-[21.5rem] flex-col gap-4 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-5"
+              className="flex w-full max-w-[21.5rem] flex-col items-stretch gap-4 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-5"
             >
-              <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div className="w-full sm:w-[18rem]" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/inventory"
-                  className="relative overflow-hidden inline-flex w-full items-center justify-center px-11 py-5 text-[15px] font-black tracking-[0.1em] uppercase group rounded-full shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)] sm:w-auto"
+                  className="relative inline-flex h-16 w-full items-center justify-center overflow-hidden rounded-full px-8 text-center text-[15px] font-black uppercase tracking-[0.1em] shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)] group"
                   style={{ background: 'linear-gradient(135deg, #E5C158 0%, #D4AF37 100%)', color: '#000000' }}
                 >
                   <span className="relative z-10">Explore Collection</span>
@@ -295,11 +295,11 @@ export default function Home() {
                 </Link>
               </motion.div>
 
-              <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <LiquidButton asChild size="xl" className="w-full sm:w-auto">
+              <motion.div className="w-full sm:w-[18rem]" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <LiquidButton asChild size="xl" className="h-16 w-full !px-0">
                   <Link
                     to="/contact"
-                    className="text-[15px] font-bold tracking-[0.1em] uppercase text-white"
+                    className="h-full w-full text-[15px] font-black uppercase tracking-[0.1em] text-white"
                   >
                     Contact Us
                   </Link>

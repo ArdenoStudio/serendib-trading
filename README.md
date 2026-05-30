@@ -25,4 +25,16 @@ Luxury vehicle showroom website and lightweight inventory admin for Serendib Tra
 ```bash
 npm run lint
 npm run build
+npm run test:e2e
 ```
+
+## Launch Hardening
+
+Apply `supabase_launch_hardening_20260530.sql` in Supabase if the production database already has the earlier hardening script. The lead forms now post to `/api/leads`, so Vercel also needs these server-only environment variables:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=...
+LEAD_RATE_LIMIT_SALT=...
+```
+
+Keep leaked-password protection enabled in Supabase Auth, or disable password login entirely if Google OAuth is the only admin sign-in method.

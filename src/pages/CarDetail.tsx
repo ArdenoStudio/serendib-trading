@@ -11,6 +11,7 @@ import Loader from '../components/Loader';
 import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
 import { createVehicleSchema } from '../lib/seo';
+import { submitLead } from '../lib/leads';
 
 export default function CarDetail() {
   const { id } = useParams();
@@ -107,8 +108,8 @@ export default function CarDetail() {
     setLeadError('');
     setSubmittingLead(true);
 
-    if (isSupabaseConfigured) {
-      const { error } = await supabase.from('leads').insert([{
+    try {
+      await submitLead({
         type: 'Test Drive',
         vehicle_id: car.id,
         vehicle_model: `${car.year} ${car.make} ${car.model}`,
@@ -116,16 +117,13 @@ export default function CarDetail() {
         phone,
         date: testDriveForm.date,
         time: testDriveForm.time,
-        status: 'New'
-      }]);
-
-      if (error) {
-        console.error('Lead capture failed:', error);
-      }
+      });
+    } catch (error) {
+      console.error('Lead capture failed:', error);
     }
 
     const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${phone}`;
-    window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
     setSubmittingLead(false);
   };
 
@@ -330,7 +328,7 @@ export default function CarDetail() {
               <div className="space-y-4 pt-4">
                 <button 
                   disabled={car.is_sold}
-                  onClick={() => window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank')}
+                  onClick={() => window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank', 'noopener,noreferrer')}
                   className={`w-full py-5 text-black font-black uppercase tracking-widest text-[13px] rounded-2xl flex items-center justify-center gap-3 transition-all relative overflow-hidden group active:scale-[0.96] ${
                     car.is_sold ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#D4AF37] shadow-[0_20px_40px_rgba(212,175,55,0.2)] hover:scale-[1.02]'
                   }`}

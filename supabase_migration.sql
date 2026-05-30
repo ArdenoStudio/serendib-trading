@@ -15,16 +15,20 @@ ALTER TABLE cars
 ALTER TABLE cars
   ALTER COLUMN is_sold SET DEFAULT FALSE;
 
--- 3. Enable Realtime on the cars table
+-- 3. Lead capture endpoint support
+ALTER TABLE public.leads
+  ADD COLUMN IF NOT EXISTS message TEXT;
+
+-- 4. Enable Realtime on the cars table
 -- (In Supabase Dashboard: Database → Replication → enable 'cars' table)
 -- OR via SQL:
 ALTER PUBLICATION supabase_realtime ADD TABLE cars;
 
--- 4. Create the vehicle-images Storage bucket
+-- 5. Create the vehicle-images Storage bucket
 -- (Do this in Supabase Dashboard → Storage → New Bucket)
 -- Bucket name: vehicle-images
 -- Set to PUBLIC so uploaded images are accessible via URL
 
--- 5. Storage RLS policies
+-- 6. Storage RLS policies
 -- Storage access is locked down in supabase_security_hardening.sql.
 -- Do not add broad authenticated upload or public list policies here.

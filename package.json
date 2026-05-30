@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
+    "test:e2e": "npm run build && playwright test",
     "remotion:studio": "remotion studio src/remotion/index.ts",
     "render:teaser": "remotion render src/remotion/index.ts SerendibTeaser renders/serendib-teaser.mp4 --codec=h264 --pixel-format=yuv420p",
     "render:showcase": "remotion render src/remotion/index.ts SerendibWebsiteShowcase renders/serendib-website-showcase.mp4 --codec=h264 --pixel-format=yuv420p",
@@ -30,6 +31,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@remotion/cli": "^4.0.464",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^22.19.19",

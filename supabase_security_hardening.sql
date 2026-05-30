@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
 INSERT INTO public.admin_users (email)
 VALUES
   ('bilalikras1@gmail.com'),
-  ('ardenostudio@gmail.com')
+  ('ardenostudio@gmail.com'),
+  ('suvenseoras@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
@@ -84,6 +85,8 @@ CREATE POLICY "Admins can delete inventory"
 
 -- Leads: anonymous visitors can submit only bounded lead payloads; only admins can read/update.
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leads
+  ADD COLUMN IF NOT EXISTS message TEXT;
 
 DROP POLICY IF EXISTS "Allow public insert" ON public.leads;
 DROP POLICY IF EXISTS "Allow admin select" ON public.leads;
@@ -92,20 +95,8 @@ DROP POLICY IF EXISTS "Public can submit valid leads" ON public.leads;
 DROP POLICY IF EXISTS "Admins can read leads" ON public.leads;
 DROP POLICY IF EXISTS "Admins can update leads" ON public.leads;
 
-CREATE POLICY "Public can submit valid leads"
-  ON public.leads
-  FOR INSERT
-  TO anon, authenticated
-  WITH CHECK (
-    type IN ('Test Drive', 'General Inquiry')
-    AND status = 'New'
-    AND length(btrim(name)) BETWEEN 2 AND 120
-    AND length(btrim(phone)) BETWEEN 7 AND 20
-    AND phone ~ '^[0-9+() -]{7,20}$'
-    AND (vehicle_model IS NULL OR length(vehicle_model) <= 160)
-    AND (date IS NULL OR date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-    AND (time IS NULL OR time IN ('9:30am', '1:00pm', '4:30pm'))
-  );
+-- Public lead writes go through /api/leads with the service role key and rate limiting.
+-- Do not recreate an anon/authenticated INSERT policy here.
 
 CREATE POLICY "Admins can read leads"
   ON public.leads
@@ -123,7 +114,18 @@ CREATE POLICY "Admins can update leads"
     AND status IN ('New', 'Contacted', 'Closed')
   );
 
-CREATE INDEX IF NOT EXISTS leads_vehicle_id_idx ON public.leads (vehicle_id);
+DROP INDEX IF EXISTS public.leads_vehicle_id_idx;
+
+CREATE TABLE IF NOT EXISTS public.lead_rate_limits (
+  id BIGSERIAL PRIMARY KEY,
+  key_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.lead_rate_limits ENABLE ROW LEVEL SECURITY;
+DROP INDEX IF EXISTS public.lead_rate_limits_key_hash_created_at_idx;
+CREATE INDEX lead_rate_limits_key_hash_created_at_idx
+  ON public.lead_rate_limits (key_hash, created_at DESC);
 
 -- Vehicle knowledge: public read is needed for parsing; learning writes are admin-only.
 ALTER TABLE public.vehicle_knowledge ENABLE ROW LEVEL SECURITY;

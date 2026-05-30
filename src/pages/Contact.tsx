@@ -6,14 +6,27 @@ import { LiquidButton } from '../components/ui/liquid-glass-button';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createOrganizationSchema } from '../lib/seo';
+import { submitLead } from '../lib/leads';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = `Hi, I'm ${formData.name}. My phone number is ${formData.phone}. ${formData.message}`;
-    window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank');
+
+    try {
+      await submitLead({
+        type: 'General Inquiry',
+        name: formData.name,
+        phone: formData.phone,
+        message: formData.message,
+      });
+    } catch (error) {
+      console.error('Lead capture failed:', error);
+    }
+
+    window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
