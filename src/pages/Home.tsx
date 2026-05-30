@@ -405,7 +405,7 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="grid grid-flow-col auto-cols-[minmax(132px,1fr)] gap-3 overflow-x-auto pb-3 lg:grid-flow-row lg:grid-cols-10 lg:overflow-visible lg:pb-0">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {[
             { name: 'Toyota', icon: BrandIcons.Toyota },
             { name: 'Honda', icon: BrandIcons.Honda },
@@ -413,10 +413,6 @@ export default function Home() {
             { name: 'Nissan', icon: BrandIcons.Nissan },
             { name: 'Mitsubishi', icon: BrandIcons.Mitsubishi },
             { name: 'Mercedes', icon: BrandIcons.Mercedes },
-            { name: 'BMW', icon: BrandIcons.BMW },
-            { name: 'Land Rover', icon: BrandIcons.LandRover },
-            { name: 'Mazda', icon: BrandIcons.Mazda },
-            { name: 'Hyundai', icon: BrandIcons.Hyundai },
           ].map((brand, i) => (
             <motion.button 
               key={brand.name}
@@ -427,7 +423,7 @@ export default function Home() {
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(`/inventory?make=${brand.name}`)}
-              className="group relative flex h-[142px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[150px]"
+              className="group relative flex h-[154px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[164px]"
             >
               <div className="relative z-10 flex flex-col items-center w-full">
                 <div className="mb-5 flex w-full items-center justify-center text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]">
