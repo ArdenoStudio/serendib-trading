@@ -1,10 +1,7 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { motion, useScroll, useTransform, cubicBezier, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Users, Trophy, Globe, Gauge, CreditCard, FileCheck } from 'lucide-react';
 
-import CarCard from '../components/CarCard';
-import FAQAccordion, { serendibFaqs } from '../components/FAQAccordion';
 import InstagramShowcase from '../components/InstagramShowcase';
 import Footer from '../components/Footer';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -15,10 +12,9 @@ import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/B
 import { LocationTag } from '../components/ui/location-tag';
 import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
-import { createFAQSchema, createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
+import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'New' | 'Registered'>('Registered');
   const [cars, setCars] = useState<Car[]>(carsData);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const navigate = useNavigate();
@@ -77,10 +73,6 @@ export default function Home() {
   const textOpacity = useTransform(scrollYProgress, [0, 1], [1, 0], { ease: customEase });
   const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0.12, 0.84]);
 
-  const filteredCars = (cars.length > 0 ? cars : carsData as Car[])
-    .filter(car => car.condition === activeTab && !car.is_sold)
-    .slice(0, 4);
-
   const currentHeroSlide = HERO_SHOWROOM_SLIDES[activeHeroSlide];
 
   return (
@@ -102,7 +94,6 @@ export default function Home() {
         structuredData={[
           createOrganizationSchema(),
           createWebsiteSchema(),
-          createFAQSchema(serendibFaqs),
         ]}
       />
       <main>
@@ -566,101 +557,6 @@ export default function Home() {
           </motion.div>
         </div>
       </div>
-      {/* ===== FEATURED LISTINGS (MOVED UP) ===== */}
-
-      <div className="w-full mt-32 z-10 relative">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex flex-col items-center text-center">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-4 mb-4"
-          >
-            <div className="w-12 h-[1px] bg-white/15" />
-            <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">The Collection</span>
-            <div className="w-12 h-[1px] bg-white/15" />
-          </motion.div>
-          
-          <div className="flex flex-col items-center mb-12">
-            <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-white/50 mb-4">Discover our</span>
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none text-wrap-balance">
-              Available Inventory
-            </h2>
-          </div>
-
-          {/* Premium Tab Switcher */}
-          <div className="flex p-1 bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-full mb-20 relative overflow-hidden w-full max-w-[400px]">
-            <div 
-              className="absolute inset-y-1 bg-white shadow-xl rounded-full transition-all duration-500 ease-[cubic-bezier(0.2,1,0.3,1)]"
-              style={{
-                width: 'calc(50% - 4px)',
-                left: activeTab === 'Registered' ? '4px' : 'calc(50%)',
-              }}
-            />
-            
-            {(['Registered', 'New'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                aria-label={`View ${tab} inventory`}
-                className={`relative z-10 flex-1 px-8 py-4 text-[10px] font-black tracking-[0.4em] uppercase transition-colors duration-500 ${
-                  activeTab === tab ? 'text-black' : 'text-white/60 hover:text-white'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 pb-20">
-          <AnimatePresence mode="wait" initial={false}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {filteredCars.map((car, index) => (
-                <motion.div
-                  key={car.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <CarCard car={car} />
-                </motion.div>
-              ))}
-              {filteredCars.length === 0 && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="col-span-full py-20 flex flex-col items-center gap-6 opacity-40"
-                >
-                  <p className="text-[10px] font-black uppercase tracking-[0.5em]">No {activeTab} inventory available</p>
-                  <LiquidButton asChild>
-                     <Link to="/contact">Request Vehicle Sourcing</Link>
-                  </LiquidButton>
-                </motion.div>
-              )}
-            </div>
-          </AnimatePresence>
-
-          <div className="mt-24 flex justify-center">
-            <Link
-              to="/inventory"
-              className="group relative px-12 py-5 bg-white/5 backdrop-blur-md border border-white/10 rounded-full overflow-hidden transition-all duration-500 hover:bg-white/10 hover:border-[#D4AF37]/50"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-              <div className="flex items-center gap-6">
-                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 group-hover:text-white transition-colors">
-                  View Full Collection
-                </span>
-                <span className="text-[#D4AF37] text-xl group-hover:translate-x-2 transition-transform duration-500">&rarr;</span>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* ===== TRADE-IN SECTION (DARK) ===== */}
       <section className="py-32 relative overflow-hidden text-center bg-[#0d0b09]">
         {/* Cinematic Backdrop Glow */}
@@ -699,93 +595,6 @@ export default function Home() {
               Get Evaluation via WhatsApp
             </span>
           </motion.a>
-        </div>
-      </section>
-
-      {/* WHY CHOOSE US - TRUST PILLARS */}
-      <div className="w-full mt-40 pb-40 z-10 relative overflow-hidden">
-        {/* Cinematic Backdrop Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.03)_0%,_transparent_70%)] pointer-events-none" />
-
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex flex-col items-center">
-          {/* Centered Heading */}
-          <div className="flex flex-col items-center text-center mb-24 max-w-4xl">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-4 mb-4"
-            >
-              <div className="w-12 h-[1px] bg-white/20" />
-              <span className="text-[11px] uppercase tracking-[0.4em] font-bold text-[#D4AF37]">Our Values</span>
-              <div className="w-12 h-[1px] bg-white/20" />
-            </motion.div>
-            
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-8 drop-shadow-2xl">
-              Why Choose <span className="text-[#D4AF37]">Serendib</span>
-            </h2>
-            
-            <p className="text-gray-400 text-lg md:text-xl font-light leading-relaxed max-w-2xl">
-              We deliver uncompromising quality, transparent vehicle histories, and a seamless buying experience from global selection to your driveway.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
-            {[
-              { title: "Direct UK & Japan Imports", desc: "Sourced through trusted partners with records checked before listing.", icon: Globe },
-              { title: "Verified Mileage", desc: "Odometer readings and documents are reviewed before vehicles reach the floor.", icon: Gauge },
-              { title: "Finance Support", desc: "Leasing guidance with local finance partners and clear monthly estimates.", icon: CreditCard },
-              { title: "RMV Guidance", desc: "Support for clearance, registration, insurance, and handover paperwork.", icon: FileCheck },
-            ].map((feature, idx) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25, delay: idx * 0.1 }}
-                  whileHover={{ y: -10 }}
-                  className="group relative flex flex-col items-center text-center p-10 bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl hover:border-[#D4AF37]/40 shadow-2xl transition-[border-color,background-color,opacity,transform] duration-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-                >
-                  {/* Decorative Icon Glow */}
-                  <div className="w-20 h-20 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center mb-8 relative transition-all duration-500 group-hover:bg-[#D4AF37]/10 group-hover:border-[#D4AF37]/30 group-hover:shadow-[0_0_40px_rgba(212,175,55,0.2)]">
-                    <Icon className="w-8 h-8 text-white/40 group-hover:text-[#D4AF37] transition-colors duration-500" />
-                  </div>
-                  
-                  <h3 className="text-white font-bold text-lg mb-3 tracking-wide transition-colors duration-500 group-hover:text-[#F3D67E]">
-                    {feature.title}
-                  </h3>
-                  
-                  <p className="text-gray-400 text-[13px] font-light leading-relaxed max-w-[220px]">
-                    {feature.desc}
-                  </p>
-
-                  {/* Corner Accent */}
-                  <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* SEO FAQ SECTION */}
-      <section className="relative overflow-hidden border-t border-white/5 bg-[#0d0b09] px-6 py-24 lg:px-10">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.05)_0%,_transparent_68%)]" />
-        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
-          <div className="mb-12 flex flex-col items-center">
-            <div className="mb-4 flex items-center gap-4">
-              <div className="h-px w-12 bg-white/15" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.4em] text-[#D4AF37]">Buyer Questions</span>
-              <div className="h-px w-12 bg-white/15" />
-            </div>
-            <h2 className="text-4xl font-black leading-none tracking-tighter text-white md:text-6xl">
-              Vehicle Buying FAQ
-            </h2>
-          </div>
-
-          <FAQAccordion />
         </div>
       </section>
 

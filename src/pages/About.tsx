@@ -3,12 +3,16 @@ import { useEffect, useState } from 'react';
 import {
   MapPin,
   Heart,
-  CheckCircle2
+  Globe,
+  Gauge,
+  CreditCard,
+  FileCheck,
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
+import FAQAccordion, { serendibFaqs } from '../components/FAQAccordion';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
-import { createOrganizationSchema } from '../lib/seo';
+import { createFAQSchema, createOrganizationSchema } from '../lib/seo';
 
 export default function About() {
   const shouldReduceMotion = useReducedMotion();
@@ -38,7 +42,10 @@ export default function About() {
           'imported vehicle showroom Sri Lanka',
           'Sri Lanka premium vehicle dealer',
         ]}
-        structuredData={createOrganizationSchema()}
+        structuredData={[
+          createOrganizationSchema(),
+          createFAQSchema(serendibFaqs),
+        ]}
       />
       <main>
 
@@ -127,37 +134,83 @@ export default function About() {
         </div>
       </section>
 
-      {/* --- WHY CHOOSE US --- */}
-      <section className="pt-20 md:pt-28 pb-12 md:pb-16 px-6 lg:px-10 bg-white/[0.01] border-t border-white/5">
-        <div className="max-w-[1000px] mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-[11px] mb-4">Trust</p>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter">Why Choose Serendib?</h2>
+      {/* WHY CHOOSE US - TRUST PILLARS */}
+      <section className="relative overflow-hidden border-t border-white/5 px-6 py-24 lg:px-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.04)_0%,_transparent_70%)]" />
+
+        <div className="relative z-10 mx-auto flex max-w-[1400px] flex-col items-center">
+          <div className="mb-20 flex max-w-4xl flex-col items-center text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="mb-4 flex items-center gap-4"
+            >
+              <div className="h-px w-12 bg-white/20" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.4em] text-[#D4AF37]">Our Values</span>
+              <div className="h-px w-12 bg-white/20" />
+            </motion.div>
+
+            <h2 className="mb-8 text-balance text-4xl font-black leading-none text-white md:text-6xl">
+              Why Choose <span className="text-[#D4AF37]">Serendib</span>
+            </h2>
+
+            <p className="max-w-2xl text-pretty text-lg font-light leading-relaxed text-gray-400 md:text-xl">
+              We deliver uncompromising quality, transparent vehicle histories, and a seamless buying experience from global selection to your driveway.
+            </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
             {[
-              { title: "Verified Vehicles", desc: "Every car comes with complete inspection reports and authentic documentation." },
-              { title: "Fair Pricing", desc: "Transparent pricing with no hidden fees or surprise charges." },
-              { title: "Personal Service", desc: "We're a small team that cares—every customer gets our full attention." },
-              { title: "After-Sale Support", desc: "Our relationship doesn't end when you drive off. We're here for the long haul." },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="flex items-start gap-4 p-6 bg-white/[0.03] border border-white/5 rounded-2xl"
-              >
-                <CheckCircle2 className="w-6 h-6 text-[#D4AF37] shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-lg font-black mb-1">{item.title}</h3>
-                  <p className="text-white/50 text-sm">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+              { title: "Direct UK & Japan Imports", desc: "Sourced through trusted partners with records checked before listing.", icon: Globe },
+              { title: "Verified Mileage", desc: "Odometer readings and documents are reviewed before vehicles reach the floor.", icon: Gauge },
+              { title: "Finance Support", desc: "Leasing guidance with local finance partners and clear monthly estimates.", icon: CreditCard },
+              { title: "RMV Guidance", desc: "Support for clearance, registration, insurance, and handover paperwork.", icon: FileCheck },
+            ].map((feature, idx) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: idx * 0.08 }}
+                  className="group relative flex flex-col items-center rounded-3xl border border-white/5 bg-white/[0.03] p-10 text-center transition-[border-color,background-color] duration-200 hover:border-[#D4AF37]/40 hover:bg-white/[0.05]"
+                >
+                  <div className="relative mb-8 flex size-20 items-center justify-center rounded-full border border-white/5 bg-white/[0.03] transition-colors duration-200 group-hover:border-[#D4AF37]/30 group-hover:bg-[#D4AF37]/10">
+                    <Icon className="size-8 text-white/40 transition-colors duration-200 group-hover:text-[#D4AF37]" aria-hidden="true" />
+                  </div>
+
+                  <h3 className="mb-3 text-lg font-bold text-white transition-colors duration-200 group-hover:text-[#F3D67E]">
+                    {feature.title}
+                  </h3>
+
+                  <p className="max-w-[220px] text-pretty text-[13px] font-light leading-relaxed text-gray-400">
+                    {feature.desc}
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
+        </div>
+      </section>
+
+      {/* SEO FAQ SECTION */}
+      <section className="relative overflow-hidden border-t border-white/5 bg-[#0d0b09] px-6 py-24 lg:px-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.05)_0%,_transparent_68%)]" />
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
+          <div className="mb-12 flex flex-col items-center">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="h-px w-12 bg-white/15" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.4em] text-[#D4AF37]">Buyer Questions</span>
+              <div className="h-px w-12 bg-white/15" />
+            </div>
+            <h2 className="text-balance text-4xl font-black leading-none text-white md:text-6xl">
+              Vehicle Buying FAQ
+            </h2>
+          </div>
+
+          <FAQAccordion />
         </div>
       </section>
 

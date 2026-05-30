@@ -1,47 +1,54 @@
-import { ExternalLink, Grid3X3, Heart, Instagram, MessageCircle, Play, UserRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ExternalLink, Instagram } from 'lucide-react';
 
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/socialLinks';
 import { cn } from '../lib/utils';
 
-const storyHighlights = [
-  { label: 'Arrivals', image: SHOWROOM_IMAGES[0] },
-  { label: 'Walkarounds', image: SHOWROOM_IMAGES[2] },
-  { label: 'Showroom', image: SHOWROOM_IMAGES[5] },
-  { label: 'Deliveries', image: SHOWROOM_IMAGES[7] },
-];
-
-const feedPosts = [
-  { image: SHOWROOM_IMAGES[2], label: 'Feature display', type: 'reel' },
-  { image: SHOWROOM_IMAGES[3], label: 'New arrival bay', type: 'post' },
-  { image: SHOWROOM_IMAGES[1], label: 'Showroom floor', type: 'post' },
-  { image: SHOWROOM_IMAGES[5], label: 'Logo wall', type: 'reel' },
-  { image: SHOWROOM_IMAGES[6], label: 'Interior details', type: 'post' },
-  { image: SHOWROOM_IMAGES[7], label: 'Collection view', type: 'post' },
+const showroomSlides = [
+  SHOWROOM_IMAGES[2],
+  SHOWROOM_IMAGES[3],
+  SHOWROOM_IMAGES[1],
+  SHOWROOM_IMAGES[5],
+  SHOWROOM_IMAGES[7],
 ];
 
 const profileStats = [
-  { value: 'Daily', label: 'Stories' },
-  { value: 'Fresh', label: 'Arrivals' },
-  { value: 'DM', label: 'Inquiries' },
+  { value: 'New', label: 'arrivals' },
+  { value: 'Walkaround', label: 'clips' },
+  { value: 'Showroom', label: 'updates' },
 ];
 
 export default function InstagramShowcase() {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
+  const currentSlide = showroomSlides[activeSlide];
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % showroomSlides.length);
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, [shouldReduceMotion]);
+
   return (
     <section
       aria-labelledby="instagram-showcase-title"
-      className="relative scroll-mt-28 overflow-hidden border-y border-white/5 bg-[#0A0A0A] px-6 py-24 lg:px-10"
+      className="relative scroll-mt-28 overflow-hidden border-y border-white/5 bg-[#0A0A0A] px-6 py-20 lg:px-10"
     >
       <div className="mx-auto w-full max-w-[1400px]">
-        <div className="mb-12 flex flex-col gap-8 border-b border-white/10 pb-10 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mb-10 flex flex-col gap-8 border-b border-white/10 pb-10 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex min-w-0 flex-col gap-7 sm:flex-row sm:items-center">
             <a
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Open Serendib Trading Instagram profile"
-              className="group relative size-28 shrink-0 rounded-full border border-[#D4AF37]/35 bg-black p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
+              className="group relative size-24 shrink-0 rounded-full border border-[#D4AF37]/35 bg-black p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
             >
               <span className="absolute inset-[-5px] rounded-full border border-[#D4AF37]/25" aria-hidden="true" />
               <img
@@ -72,15 +79,9 @@ export default function InstagramShowcase() {
                 >
                   Follow
                 </a>
-                <Link
-                  to="/gallery"
-                  className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-2 text-xs font-bold uppercase text-white/70 transition-colors duration-200 hover:border-white/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
-                >
-                  Gallery
-                </Link>
               </div>
 
-              <div className="mb-5 flex flex-wrap gap-x-8 gap-y-3">
+              <div className="mb-5 flex flex-wrap gap-x-7 gap-y-2">
                 {profileStats.map((stat) => (
                   <div key={stat.label} className="flex items-baseline gap-2">
                     <span className="text-sm font-black text-white">{stat.value}</span>
@@ -96,7 +97,7 @@ export default function InstagramShowcase() {
                 Follow the showroom feed.
               </h2>
               <p className="max-w-2xl text-pretty text-base leading-8 text-white/62">
-                New arrivals, walkaround clips, delivery moments, and quick showroom updates from Serendib Trading.
+                New arrivals, showroom walkarounds, and quick updates from Serendib Trading.
               </p>
             </div>
           </div>
@@ -112,89 +113,76 @@ export default function InstagramShowcase() {
           </a>
         </div>
 
-        <div className="mb-12 flex gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {storyHighlights.map((story) => (
-            <a
-              key={story.label}
-              href={INSTAGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex w-24 shrink-0 flex-col items-center gap-3 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
-            >
-              <span className="rounded-full border border-white/10 bg-white/[0.03] p-1 transition-colors duration-200 group-hover:border-[#D4AF37]/45">
-                <span className="block size-20 overflow-hidden rounded-full bg-black">
-                  <img
-                    src={story.image.src}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                    className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
-                    style={{ objectPosition: story.image.objectPosition || 'center center' }}
-                  />
-                </span>
-              </span>
-              <span className="max-w-full truncate text-xs font-bold text-white/70">{story.label}</span>
-            </a>
-          ))}
-        </div>
-
-        <div className="mb-6 grid grid-cols-3 border-t border-white/10 text-center text-[11px] font-black uppercase text-white/45">
-          <div className="flex items-center justify-center gap-2 border-t border-[#D4AF37] py-4 text-[#D4AF37]">
-            <Grid3X3 className="size-3.5" aria-hidden="true" />
-            Posts
-          </div>
-          <div className="flex items-center justify-center gap-2 py-4">
-            <Play className="size-3.5" aria-hidden="true" />
-            Reels
-          </div>
-          <div className="flex items-center justify-center gap-2 py-4">
-            <UserRound className="size-3.5" aria-hidden="true" />
-            Tagged
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:gap-2">
-          {feedPosts.map((post, index) => (
-            <a
-              key={`${post.image.src}-${post.label}`}
-              href={INSTAGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${post.label} on Instagram`}
-              className={cn(
-                'group relative aspect-square overflow-hidden bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]',
-                index === 0 ? 'rounded-tl-2xl' : '',
-                index === 2 ? 'sm:rounded-tr-2xl' : '',
-                index === 3 ? 'sm:rounded-bl-2xl' : '',
-                index === 5 ? 'rounded-br-2xl' : '',
-              )}
-            >
-              <img
-                src={post.image.src}
-                alt={post.image.alt}
+        <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
+          <div className="relative h-[240px] overflow-hidden sm:h-[320px] lg:h-[390px]">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.img
+                key={currentSlide.src}
+                src={currentSlide.src}
+                alt={currentSlide.alt}
                 loading="lazy"
                 decoding="async"
-                className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                style={{ objectPosition: post.image.objectPosition || 'center center' }}
+                className="absolute inset-0 size-full object-cover"
+                style={{ objectPosition: currentSlide.objectPosition || 'center center' }}
+                initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.01 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-[background-color,opacity] duration-200 group-hover:bg-black/55 group-hover:opacity-100">
-                <div className="flex items-center gap-5 text-sm font-black text-white">
-                  <span className="inline-flex items-center gap-2">
-                    <Heart className="size-5 fill-white" aria-hidden="true" />
-                    View
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <MessageCircle className="size-5" aria-hidden="true" />
-                    DM
-                  </span>
+            </AnimatePresence>
+
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5 md:p-7">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.35em] text-[#D4AF37]">
+                    Showroom Preview
+                  </p>
+                  <p className="text-xl font-black text-white md:text-3xl">
+                    {currentSlide.caption}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {showroomSlides.map((slide, index) => (
+                    <button
+                      key={slide.src}
+                      type="button"
+                      onClick={() => setActiveSlide(index)}
+                      aria-label={`Show ${slide.caption}`}
+                      className={cn(
+                        'h-2 rounded-full transition-[background-color,width] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]',
+                        activeSlide === index ? 'w-8 bg-[#D4AF37]' : 'w-2 bg-white/35 hover:bg-white/70',
+                      )}
+                    />
+                  ))}
                 </div>
               </div>
-              <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-[10px] font-black uppercase text-white/85">
-                {post.type}
-              </div>
-            </a>
-          ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-5 gap-1 border-t border-white/10 bg-black/20 p-2">
+            {showroomSlides.map((slide, index) => (
+              <button
+                key={`${slide.src}-thumb`}
+                type="button"
+                onClick={() => setActiveSlide(index)}
+                aria-label={`Preview ${slide.caption}`}
+                className={cn(
+                  'relative aspect-[4/3] overflow-hidden rounded-xl border transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]',
+                  activeSlide === index ? 'border-[#D4AF37]' : 'border-white/10 hover:border-white/30',
+                )}
+              >
+                <img
+                  src={slide.src}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  className="size-full object-cover"
+                  style={{ objectPosition: slide.objectPosition || 'center center' }}
+                />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
