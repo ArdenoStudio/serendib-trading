@@ -35,7 +35,7 @@ import { isSupabaseConfigured, supabase, signOut } from '../../lib/supabase';
 import Loader from '../../components/Loader';
 import { Lead } from '../../data/types';
 import VehicleModal, { VehicleFormData } from './VehicleModal';
-import { BrandMark } from '../../components/brand/BrandMark';
+import { BrandMark, getBrandLabel, getDisplayModel } from '../../components/brand/BrandMark';
 
 interface Vehicle {
   id: string;
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
     const totalValue = vehicles.reduce((sum, v) => sum + Number(v.price || 0), 0);
     const avgPrice = total > 0 ? totalValue / total : 0;
     const makes = vehicles.reduce<Record<string, number>>((acc, v) => {
-      const make = v.make || 'Unknown';
+      const make = getBrandLabel(v.make) || 'Unknown';
       acc[make] = (acc[make] || 0) + 1;
       return acc;
     }, {});
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
     if (!query) return result;
 
     return result.filter((v) =>
-      [v.make, v.model, String(v.year), v.bodyType, v.condition, v.color]
+      [getBrandLabel(v.make), v.model, getDisplayModel(v.make, v.model), String(v.year), v.bodyType, v.condition, v.color]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
@@ -274,13 +274,14 @@ export default function AdminDashboard() {
       setNotice({ type: 'error', message: 'Supabase is not configured for admin actions.' });
       return;
     }
-    if (!window.confirm(`Remove ${v.year} ${v.make} ${v.model} permanently? This cannot be undone.`)) return;
+    const vehicleName = `${v.year} ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)}`;
+    if (!window.confirm(`Remove ${vehicleName} permanently? This cannot be undone.`)) return;
     const { error } = await supabase.from('cars').delete().eq('id', v.id);
     if (error) {
       setNotice({ type: 'error', message: `Delete failed: ${error.message}` });
       return;
     }
-    setNotice({ type: 'success', message: `${v.make} ${v.model} removed from inventory.` });
+    setNotice({ type: 'success', message: `${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)} removed from inventory.` });
     fetchVehicles();
   };
 
@@ -819,7 +820,7 @@ export default function AdminDashboard() {
                       <div className="relative aspect-[4/3] overflow-hidden bg-black/40">
                         <img
                           src={vehicle.image}
-                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          alt={`${vehicle.year} ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
                           className={`h-full w-full object-cover transition-transform duration-700 ${
                             sold ? 'grayscale opacity-45' : 'group-hover:scale-105'
                           }`}
@@ -843,7 +844,7 @@ export default function AdminDashboard() {
                               tone="mono"
                               className="size-4 shrink-0 text-[#D4AF37]"
                             />
-                            {vehicle.make}
+                            {getBrandLabel(vehicle.make)}
                           </span>
                           <span className="border border-white/10 bg-white/[0.035] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-white/45">
                             {vehicle.year}
@@ -855,7 +856,7 @@ export default function AdminDashboard() {
                           )}
                         </div>
                         <h3 className="truncate text-2xl font-black uppercase leading-none tracking-tight text-white md:text-3xl">
-                          {vehicle.model}
+                          {getDisplayModel(vehicle.make, vehicle.model)}
                         </h3>
                         <div className="mt-4 grid gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40 sm:grid-cols-2 xl:grid-cols-4">
                           <span className="flex items-center gap-2 text-white">
@@ -892,7 +893,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => openEdit(vehicle)}
-                          aria-label={`Edit ${vehicle.make} ${vehicle.model}`}
+                          aria-label={`Edit ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
                           className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
                         >
                           <Edit2 className="h-4 w-4" />
@@ -900,7 +901,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => handleDelete(vehicle)}
-                          aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
+                          aria-label={`Delete ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
                           className="flex h-11 w-11 items-center justify-center rounded-full border border-red-400/15 bg-red-500/10 text-red-200 transition-all hover:bg-red-500/20"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1128,7 +1129,7 @@ export default function AdminDashboard() {
                     stats.topViewed.map((vehicle, index) => (
                       <div key={vehicle.id} className="grid grid-cols-[74px_1fr_auto] items-center gap-4 border border-white/10 bg-black/25 p-3">
                         <div className="relative aspect-square overflow-hidden bg-black/40">
-                          <img src={vehicle.image} alt={`${vehicle.make} ${vehicle.model}`} className="h-full w-full object-cover" />
+                          <img src={vehicle.image} alt={`${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`} className="h-full w-full object-cover" />
                           <span className="absolute left-2 top-2 bg-[#D4AF37] px-1.5 py-0.5 text-[9px] font-black text-black">
                             {index + 1}
                           </span>
@@ -1141,7 +1142,7 @@ export default function AdminDashboard() {
                               className="size-6 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-white/50"
                             />
                             <h4 className="truncate text-sm font-black uppercase tracking-tight text-white">
-                              {vehicle.make} {vehicle.model}
+                              {getBrandLabel(vehicle.make)} {getDisplayModel(vehicle.make, vehicle.model)}
                             </h4>
                           </div>
                           <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
+import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
 
 const CustomSelect = ({
   value,
@@ -164,12 +165,12 @@ export default function HeroSearch() {
       ? availableCars 
       : availableCars.filter(car => car.condition === condition);
 
-    const makes = Array.from(new Set(filteredByCondition.map(car => car.make))).sort();
+    const makes = Array.from(new Set(filteredByCondition.map(car => getBrandLabel(car.make)))).sort();
     
     const models = Array.from(new Set(
       filteredByCondition
-        .filter(car => !make || car.make === make)
-        .map(car => car.model)
+        .filter(car => !make || getBrandLabel(car.make) === make)
+        .map(car => getDisplayModel(car.make, car.model))
     )).sort();
 
     const bodyTypes = Array.from(new Set(filteredByCondition.map(car => car.bodyType))).sort();

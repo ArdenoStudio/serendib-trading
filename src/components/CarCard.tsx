@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
 import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
 import { readStringList, writeStringList } from '../lib/storage';
-import { BrandMark } from './brand/BrandMark';
+import { BrandMark, getBrandLabel, getDisplayModel } from './brand/BrandMark';
 
 interface CarCardProps {
   car: {
@@ -27,6 +27,8 @@ interface CarCardProps {
 
 export default function CarCard({ car, className = '' }: CarCardProps) {
   const formattedPrice = `LKR ${car.price.toLocaleString()}`;
+  const displayMake = getBrandLabel(car.make);
+  const displayModel = getDisplayModel(car.make, car.model);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [compareToast, setCompareToast] = useState(false);
@@ -95,7 +97,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
         {/* Lightbox */}
         <ImageLightbox
           src={car.image}
-          alt={`${car.year} ${car.make} ${car.model}`}
+          alt={`${car.year} ${displayMake} ${displayModel}`}
           isOpen={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
         />
@@ -106,7 +108,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image}
-            alt={`${car.make} ${car.model}`}
+            alt={`${displayMake} ${displayModel}`}
             width={384}
             height={240}
             className={`w-full h-full object-contain md:object-cover transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
@@ -182,11 +184,11 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
                 className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover:border-[#D4AF37]/35 group-hover:text-[#D4AF37]"
               />
               <h3 className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#D4AF37]">
-                {car.make}
+                {displayMake}
               </h3>
             </div>
             <h2 className="text-2xl font-extrabold uppercase tracking-[-0.04em] text-white leading-none mb-6 transition-colors duration-500 group-hover:text-[#F3D67E] text-wrap-balance">
-              {car.model}
+              {displayModel}
             </h2>
             
             {/* Minimal Specs */}

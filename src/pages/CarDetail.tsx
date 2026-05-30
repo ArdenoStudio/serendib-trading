@@ -12,17 +12,19 @@ import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
 import { createVehicleSchema } from '../lib/seo';
 import { submitLead } from '../lib/leads';
-import { BrandMark } from '../components/brand/BrandMark';
-
-const fallbackCars = carsData as Car[];
+import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 
 const normalizeVehicle = (vehicle: any): Car => ({
   ...vehicle,
+  make: getBrandLabel(vehicle.make),
+  model: getDisplayModel(vehicle.make, vehicle.model),
   bodyType: vehicle.bodyType || vehicle.body_type || '',
   fuel: vehicle.fuel || vehicle.fuel_type || '',
   transmission: vehicle.transmission || vehicle.transmission_type || '',
   key_features: vehicle.key_features || vehicle.keyFeatures || [],
 });
+
+const fallbackCars = (carsData as Car[]).map(normalizeVehicle);
 
 const isSoldExpired = (vehicle: Car): boolean => {
   if (!vehicle.is_sold || !vehicle.sold_at) return false;

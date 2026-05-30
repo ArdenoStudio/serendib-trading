@@ -24,7 +24,7 @@ import carsData from '../data/cars.json';
 import Loader from '../components/Loader';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createInventoryItemListSchema } from '../lib/seo';
-import { BrandMark } from '../components/brand/BrandMark';
+import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 export default function Inventory() {
   const [searchParams] = useSearchParams();
   const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
@@ -36,7 +36,7 @@ export default function Inventory() {
   
   const [filters, setFilters] = useState({
     condition: searchParams.get('condition') || 'all',
-    make: searchParams.get('make') || '',
+    make: searchParams.get('make') ? getBrandLabel(searchParams.get('make')) : '',
     model: searchParams.get('model') || '',
     bodyType: searchParams.get('bodyType') || '',
     fuel: searchParams.get('fuel') || '',
@@ -56,7 +56,7 @@ export default function Inventory() {
     // Merge all possible options from both sources to ensure filters are always populated with baseline categories
     const allSources = [...(carsData as Car[]), ...cars];
     
-    const makes = Array.from(new Set(allSources.map(c => c.make).filter(Boolean))).sort();
+    const makes = Array.from(new Set(allSources.map(c => getBrandLabel(c.make)).filter(Boolean))).sort();
     const bodyTypes = Array.from(new Set(allSources.map(c => c.bodyType).filter(Boolean))).sort();
     const fuels = Array.from(new Set(allSources.map(c => c.fuel).filter(Boolean))).sort();
     const transmissions = Array.from(new Set(allSources.map(c => c.transmission).filter(Boolean))).sort();
@@ -117,7 +117,7 @@ export default function Inventory() {
   useEffect(() => {
     setFilters({
       condition: searchParams.get('condition') || 'all',
-      make: searchParams.get('make') || '',
+      make: searchParams.get('make') ? getBrandLabel(searchParams.get('make')) : '',
       model: searchParams.get('model') || '',
       bodyType: searchParams.get('bodyType') || '',
       fuel: searchParams.get('fuel') || '',
@@ -135,8 +135,9 @@ export default function Inventory() {
     if (searchQuery) {
         const query = searchQuery.toLowerCase();
         result = result.filter(v => 
-            v.make.toLowerCase().includes(query) || 
+            getBrandLabel(v.make).toLowerCase().includes(query) ||
             v.model.toLowerCase().includes(query) ||
+            getDisplayModel(v.make, v.model).toLowerCase().includes(query) ||
             v.year.toString().includes(query)
         );
     }
@@ -146,10 +147,10 @@ export default function Inventory() {
       result = result.filter(v => v.condition.toLowerCase() === filters.condition.toLowerCase());
     }
     if (filters.make) {
-      result = result.filter(v => v.make.toLowerCase() === filters.make.toLowerCase());
+      result = result.filter(v => getBrandLabel(v.make).toLowerCase() === filters.make.toLowerCase());
     }
     if (filters.model) {
-      result = result.filter(v => v.model.toLowerCase() === filters.model.toLowerCase());
+      result = result.filter(v => getDisplayModel(v.make, v.model).toLowerCase() === filters.model.toLowerCase());
     }
     if (filters.bodyType) {
       const bt = (v: any) => (v.bodyType || v.body_type || '').toLowerCase();

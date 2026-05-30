@@ -6,6 +6,7 @@ import Nissan from '@thesvg/react/nissan';
 import Mitsubishi from '@thesvg/react/mitsubishi';
 import MercedesBenz from '@thesvg/react/mercedes-benz';
 import Bmw from '@thesvg/react/bmw';
+import Kia from '@thesvg/react/kia';
 import Mazda from '@thesvg/react/mazda';
 import Hyundai from '@thesvg/react/hyundai';
 import { clsx } from 'clsx';
@@ -26,21 +27,32 @@ const LandRover = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const normalizeMake = (make?: string | null) =>
+export const normalizeMakeKey = (make?: string | null) =>
   (make || '')
     .toLowerCase()
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
+const makeAliases: Record<string, string> = {
+  benz: 'mercedes-benz',
+  mercedes: 'mercedes-benz',
+  'mercedes-benz': 'mercedes-benz',
+};
+
+const getBrandKey = (make?: string | null) => {
+  const key = normalizeMakeKey(make);
+  return makeAliases[key] || key;
+};
+
 const brandIcons: Record<string, BrandIconComponent> = {
   toyota: Toyota,
   honda: Honda,
+  kia: Kia,
   suzuki: Suzuki,
   nissan: Nissan,
   mitsubishi: Mitsubishi,
   'mitsubishi-motors': Mitsubishi,
-  mercedes: MercedesBenz,
   'mercedes-benz': MercedesBenz,
   bmw: Bmw,
   mazda: Mazda,
@@ -51,11 +63,11 @@ const brandIcons: Record<string, BrandIconComponent> = {
 const brandLabels: Record<string, string> = {
   toyota: 'Toyota',
   honda: 'Honda',
+  kia: 'Kia',
   suzuki: 'Suzuki',
   nissan: 'Nissan',
   mitsubishi: 'Mitsubishi',
   'mitsubishi-motors': 'Mitsubishi',
-  mercedes: 'Mercedes-Benz',
   'mercedes-benz': 'Mercedes-Benz',
   bmw: 'BMW',
   mazda: 'Mazda',
@@ -63,11 +75,40 @@ const brandLabels: Record<string, string> = {
   'land-rover': 'Land Rover',
 };
 
-export const hasBrandMark = (make?: string | null) => Boolean(brandIcons[normalizeMake(make)]);
+export const hasBrandMark = (make?: string | null) => Boolean(brandIcons[getBrandKey(make)]);
 
 export const getBrandLabel = (make?: string | null) => {
-  const key = normalizeMake(make);
+  const key = getBrandKey(make);
   return brandLabels[key] || make || 'Vehicle make';
+};
+
+export const getDisplayModel = (make?: string | null, model?: string | null) => {
+  const rawModel = (model || '').trim();
+  if (!rawModel) return '';
+
+  const brandLabel = getBrandLabel(make);
+  const prefixes = [make || '', brandLabel];
+
+  if (getBrandKey(make) === 'mercedes-benz') {
+    prefixes.push('Mercedes Benz', 'Mercedes-Benz', 'Mercedes', 'Benz');
+  }
+
+  const prefixPattern = prefixes
+    .map((prefix) => prefix.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map((prefix) =>
+      prefix
+        .split(/[\s-]+/)
+        .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('[-\\s]+')
+    )
+    .join('|');
+
+  if (!prefixPattern) return rawModel;
+
+  const cleaned = rawModel.replace(new RegExp(`^(${prefixPattern})\\s+`, 'i'), '').trim();
+  return cleaned || rawModel;
 };
 
 const getInitials = (label: string) =>
@@ -87,7 +128,7 @@ export function BrandMark({
   decorative = true,
   ...props
 }: BrandMarkProps) {
-  const key = normalizeMake(make);
+  const key = getBrandKey(make);
   const Icon = brandIcons[key];
   const label = getBrandLabel(make);
 

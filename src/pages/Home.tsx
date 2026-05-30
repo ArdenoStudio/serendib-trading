@@ -11,7 +11,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
-import { BrandMark } from '../components/brand/BrandMark';
+import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 import { LocationTag } from '../components/ui/location-tag';
 import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
@@ -511,7 +511,7 @@ export default function Home() {
                   
                   <motion.img 
                     src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image} 
-                    alt={`${car.year} ${car.make} ${car.model}`} 
+                    alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
                     width={420}
                     height={288}
                     loading="lazy"
@@ -531,11 +531,11 @@ export default function Home() {
                         tone="mono"
                         className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover/card:border-[#D4AF37]/35 group-hover/card:text-[#D4AF37]"
                       />
-                      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{car.make}</span>
+                      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{getBrandLabel(car.make)}</span>
                    </div>
                    
                    <h3 className="text-xl md:text-2xl font-extrabold uppercase tracking-tight text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
-                    {car.model}
+                    {getDisplayModel(car.make, car.model)}
                   </h3>
                   
                   <div className="flex items-center justify-between pt-8 border-t border-white/10">

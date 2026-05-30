@@ -6,6 +6,7 @@ import { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { LiquidButton } from './ui/liquid-glass-button';
 import { readStringList, writeStringList } from '../lib/storage';
+import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
 
 export default function ComparisonTray() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -161,7 +162,7 @@ export default function ComparisonTray() {
                         {/* Remove Action */}
                         <button 
                            onClick={() => removeVehicle(v.id)} 
-                           aria-label={`Remove ${v.make} ${v.model} from comparison`}
+                           aria-label={`Remove ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)} from comparison`}
                            className="absolute top-6 right-6 z-10 size-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center text-red-500/50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                         >
                           <X className="w-4 h-4" />
@@ -170,7 +171,7 @@ export default function ComparisonTray() {
                         <div className="bg-white/[0.03] border border-white/10 rounded-[32px] p-6 space-y-8 group-hover:bg-white/[0.05] group-hover:border-[#D4AF37]/20 transition-all duration-500">
                            {/* Vehicle Image Container */}
                            <div className="aspect-[16/10] rounded-2xl overflow-hidden relative shadow-2xl">
-                              <img src={v.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={v.model} />
+                              <img src={v.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={getDisplayModel(v.make, v.model)} />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                               <div className="absolute bottom-6 left-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
                                  <Cpu className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -183,8 +184,8 @@ export default function ComparisonTray() {
                               <div className="space-y-1">
                                  <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-none flex gap-3 flex-wrap">
                                     <span className="text-[#D4AF37]">{v.year}</span>
-                                    <span className="text-white/90">{v.make}</span>
-                                    <span className="text-white">{v.model}</span>
+                                    <span className="text-white/90">{getBrandLabel(v.make)}</span>
+                                    <span className="text-white">{getDisplayModel(v.make, v.model)}</span>
                                  </h3>
                                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]/70">Stock ID: SR{v.id?.slice(0, 6)}</p>
                               </div>
