@@ -203,7 +203,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.2 }}
             style={{ opacity: textOpacity }}
-            className="flex w-full max-w-[calc(100vw-3rem)] flex-col relative z-10 md:max-w-[800px]"
+            className="flex w-full max-w-[calc(100vw-3rem)] flex-col relative z-10 md:max-w-[920px]"
           >
             {/* Top Status Bar: Eyebrow */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -213,13 +213,13 @@ export default function Home() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="inline-flex max-w-full items-center gap-3 px-3 py-2 border border-[#D4AF37]/30 bg-[#D4AF37]/10 rounded-full backdrop-blur-md sm:px-4"
+                className="inline-flex max-w-full items-center gap-3 px-4 py-2.5 border border-[#D4AF37]/30 bg-[#D4AF37]/10 rounded-full backdrop-blur-md sm:px-5"
               >
                 <span className="relative flex size-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
                   <span className="relative inline-flex rounded-full size-2 bg-[#D4AF37]"></span>
                 </span>
-                <p className="text-center uppercase tracking-[0.14em] font-black text-[#D4AF37] text-[10px] sm:tracking-[0.2em]">
+                <p className="text-center uppercase tracking-[0.14em] font-black text-[#D4AF37] text-[11px] sm:tracking-[0.2em]">
                   Welcome to Serendib Trading
                 </p>
               </motion.div>
@@ -247,7 +247,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.85] tracking-[-0.04em] text-white font-black font-serif italic text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+                  className="block text-5xl sm:text-7xl md:text-8xl lg:text-9xl leading-[0.84] tracking-[-0.04em] text-white font-black font-serif italic text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
                 >
                   Drive
                 </motion.span>
@@ -259,7 +259,7 @@ export default function Home() {
                     visible: { y: 0, opacity: 1 }
                   }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.85] tracking-[-0.04em] text-white ml-1 sm:ml-8 md:ml-16 font-black font-sans text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] md:text-transparent md:bg-clip-text md:bg-gradient-to-r md:from-[#D4AF37] md:via-[#F7E7CE] md:to-[#D4AF37]"
+                  className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.84] tracking-[-0.04em] text-white ml-1 sm:ml-8 md:ml-16 font-black font-sans text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] md:text-transparent md:bg-clip-text md:bg-gradient-to-r md:from-[#D4AF37] md:via-[#F7E7CE] md:to-[#D4AF37]"
                 >
                   Your Way.
                 </motion.span>
@@ -271,7 +271,7 @@ export default function Home() {
                initial={{ opacity: 0, y: 15 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ duration: 0.8, delay: 0.5 }}
-              className="relative z-10 mb-10 w-full max-w-[21.5rem] whitespace-normal break-words text-[15px] font-medium leading-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:max-w-[30rem] md:max-w-[500px] md:text-lg md:leading-relaxed md:text-white/80 md:drop-shadow-md"
+              className="relative z-10 mb-11 w-full max-w-[22rem] whitespace-normal break-words text-[16px] font-semibold leading-8 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:max-w-[34rem] md:max-w-[580px] md:text-xl md:leading-9 md:text-white/82 md:drop-shadow-md"
               style={{ overflowWrap: 'break-word', textWrap: 'wrap' }}
             >
               Inspected vehicles, clear histories, and practical guidance from inquiry to handover. Browse direct UK and Japan imports ready for Sri Lankan roads.
@@ -287,7 +287,7 @@ export default function Home() {
               <motion.div className="w-full sm:w-auto" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/inventory"
-                  className="relative overflow-hidden inline-flex w-full items-center justify-center px-10 py-4 text-[14px] font-black tracking-[0.1em] uppercase group rounded-full shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)] sm:w-auto"
+                  className="relative overflow-hidden inline-flex w-full items-center justify-center px-11 py-5 text-[15px] font-black tracking-[0.1em] uppercase group rounded-full shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)] sm:w-auto"
                   style={{ background: 'linear-gradient(135deg, #E5C158 0%, #D4AF37 100%)', color: '#000000' }}
                 >
                   <span className="relative z-10">Explore Collection</span>
@@ -299,7 +299,7 @@ export default function Home() {
                 <LiquidButton asChild size="xl" className="w-full sm:w-auto">
                   <Link
                     to="/contact"
-                    className="text-[14px] font-bold tracking-[0.1em] uppercase text-white"
+                    className="text-[15px] font-bold tracking-[0.1em] uppercase text-white"
                   >
                     Contact Us
                   </Link>
