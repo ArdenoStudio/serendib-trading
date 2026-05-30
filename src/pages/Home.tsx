@@ -273,12 +273,12 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex w-full max-w-[21.5rem] flex-col items-stretch gap-4 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-5"
+              className="flex w-full max-w-[19.5rem] flex-col items-stretch gap-3.5 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
             >
-              <motion.div className="w-full sm:w-[18rem]" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div className="w-full sm:w-[15.75rem]" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/inventory"
-                  className="relative inline-flex h-16 w-full items-center justify-center overflow-hidden rounded-full px-8 text-center text-[15px] font-black uppercase tracking-[0.1em] shadow-[0_0_40px_-10px_rgba(212,175,55,0.6)] group"
+                  className="relative inline-flex h-14 w-full items-center justify-center overflow-hidden rounded-full px-7 text-center text-[13px] font-black uppercase tracking-[0.09em] shadow-[0_0_32px_-12px_rgba(212,175,55,0.58)] group"
                   style={{ background: 'linear-gradient(135deg, #E5C158 0%, #D4AF37 100%)', color: '#000000' }}
                 >
                   <span className="relative z-10">Explore Collection</span>
@@ -286,11 +286,11 @@ export default function Home() {
                 </Link>
               </motion.div>
 
-              <motion.div className="w-full sm:w-[18rem]" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <LiquidButton asChild size="xl" className="h-16 w-full !px-0">
+              <motion.div className="w-full sm:w-[15.75rem]" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <LiquidButton asChild size="xl" className="h-14 w-full !px-0">
                   <Link
                     to="/contact"
-                    className="h-full w-full text-[15px] font-black uppercase tracking-[0.1em] text-white"
+                    className="h-full w-full text-[13px] font-black uppercase tracking-[0.09em] text-white"
                   >
                     Contact Us
                   </Link>
