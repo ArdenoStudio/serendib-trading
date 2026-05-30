@@ -353,20 +353,20 @@ export default function Home() {
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
               aria-label={`Browse ${type.name} vehicles`}
-              className="group relative flex flex-col items-center justify-center p-8 bg-white/[0.02] border border-white/5 rounded-3xl transition-colors duration-500 hover:bg-white/[0.05] hover:border-[#D4AF37]/40 h-full min-h-[220px] overflow-hidden will-change-transform"
+              className="group relative flex h-full min-h-[220px] flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-5 transition-colors duration-500 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] will-change-transform"
             >
               {/* Background Glow on Hover */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="w-full flex items-center justify-center mb-8">
+              <div className="relative z-10 flex w-full flex-col items-center">
+                <div className="mb-6 flex h-28 w-full items-center justify-center lg:h-32">
                   <img
                     src={type.image}
                     alt={`${type.name} body type`}
-                    width={160}
-                    height={80}
+                    width={220}
+                    height={132}
                     loading="lazy"
-                    className="max-h-20 w-auto object-contain opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 invert will-change-transform"
+                    className="h-full w-full max-w-[180px] object-contain opacity-45 invert transition-all duration-500 group-hover:scale-105 group-hover:opacity-100 lg:max-w-[210px]"
                   />
                 </div>
                 
@@ -423,11 +423,11 @@ export default function Home() {
               whileHover={{ y: -8 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(`/inventory?make=${brand.name}`)}
-              className="group relative flex h-[154px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[164px]"
+              className="group relative flex h-[166px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[176px]"
             >
               <div className="relative z-10 flex flex-col items-center w-full">
-                <div className="mb-5 flex w-full items-center justify-center text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]">
-                  <brand.icon className="size-10 object-contain transition-transform duration-300 group-hover:scale-105" />
+                <div className="mb-5 flex h-20 w-full items-center justify-center text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]">
+                  <brand.icon className="size-16 object-contain transition-transform duration-300 group-hover:scale-105 lg:size-20" />
                 </div>
                 <span className="w-full truncate text-center text-[9px] font-black tracking-[0.22em] uppercase text-white/50 transition-colors group-hover:text-white">
                   {brand.name}
