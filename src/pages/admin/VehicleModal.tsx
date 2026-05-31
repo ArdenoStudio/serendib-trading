@@ -35,8 +35,8 @@ const EMPTY: VehicleFormData = {
   image:'', gallery:[], condition:'Registered', is_sold:false, description:'', key_features:[],
 };
 
-const inp = 'w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all';
-const lbl = 'block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-1.5';
+const inp = 'w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 px-4 text-sm font-medium text-white placeholder:text-white/55 focus:outline-none focus:border-[#D4AF37] transition-all [color-scheme:dark]';
+const lbl = 'block text-[10px] font-black uppercase tracking-[0.2em] text-white/65 mb-1.5';
 
 export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   const [form, setForm] = useState<VehicleFormData>(initial ?? EMPTY);
@@ -172,7 +172,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   };
 
   const modal = (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 px-3 py-4 sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="vehicle-modal-title">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 px-3 py-4 text-white sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="vehicle-modal-title">
       <div className="flex min-h-full items-start justify-center">
       <motion.div
         initial={{ opacity:0, y:12, scale:0.98 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:12, scale:0.98 }}
@@ -208,7 +208,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
           <AnimatePresence mode="wait">
             {tab === 'paste' ? (
               <motion.div key="paste" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="space-y-4">
-                <p className="text-xs text-gray-400 leading-relaxed text-pretty">Paste any vehicle description, ad text, or spec sheet below. We'll auto-identify all details and fill the form for you.</p>
+                <p className="text-xs text-white/65 leading-relaxed text-pretty">Paste any vehicle description, ad text, or spec sheet below. We'll auto-identify all details and fill the form for you.</p>
                 <textarea
                   value={pasteText}
                   onChange={e => setPasteText(e.target.value)}
@@ -231,7 +231,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                   <div>
                     <label className={lbl}>Condition</label>
                     <select value={form.condition} onChange={e=>set('condition',e.target.value)} className={inp}>
-                      {['New','Registered','Reconditioned'].map(c=><option key={c} value={c} className="bg-black">{c}</option>)}
+                      {['New','Registered','Reconditioned'].map(c=><option key={c} value={c} className="bg-black text-white">{c}</option>)}
                     </select>
                   </div>
                 </div>
@@ -242,13 +242,13 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                    <div>
                     <label className={lbl}>Fuel</label>
                     <select value={form.fuel} onChange={e=>set('fuel',e.target.value)} className={inp}>
-                      {['Fuel','Hybrid','Petrol','Diesel','Electric'].map(f=><option key={f} value={f} className="bg-black">{f}</option>)}
+                      {['Fuel','Hybrid','Petrol','Diesel','Electric'].map(f=><option key={f} value={f} className="bg-black text-white">{f}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className={lbl}>Transmission</label>
                     <select value={form.transmission} onChange={e=>set('transmission',e.target.value)} className={inp}>
-                      {['Transmission','Automatic','Manual'].map(t=><option key={t} value={t} className="bg-black">{t}</option>)}
+                      {['Transmission','Automatic','Manual'].map(t=><option key={t} value={t} className="bg-black text-white">{t}</option>)}
                     </select>
                   </div>
                 </div>
@@ -257,7 +257,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                   <div>
                     <label className={lbl}>Body Type</label>
                     <select value={form.bodyType} onChange={e=>set('bodyType',e.target.value)} className={inp}>
-                      {['Sedan','Hatchback','SUV','Coupe','Pickup','Double Cab','Van','Wagon','Convertible'].map(b=><option key={b} value={b} className="bg-black">{b}</option>)}
+                      {['Sedan','Hatchback','SUV','Coupe','Pickup','Double Cab','Van','Wagon','Convertible'].map(b=><option key={b} value={b} className="bg-black text-white">{b}</option>)}
                     </select>
                   </div>
                   <div className="sm:col-span-1 lg:col-span-3"><label className={lbl}>Color</label><input value={form.color} onChange={e=>set('color',e.target.value)} className={inp} placeholder="Pearl White"/></div>
@@ -287,7 +287,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                     {uploading && <div className="absolute inset-0 bg-black/70 flex items-center justify-center"><span className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Uploading...</span></div>}
                   </div>
                   <input ref={heroRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleHeroUpload(e.target.files[0]); }}/>
-                  <p className="text-[10px] text-gray-600">Or paste a URL directly:</p>
+                  <p className="text-[10px] text-white/55">Or paste a URL directly:</p>
                   <input value={form.image} onChange={e=>{set('image',e.target.value);setHeroPreview(e.target.value);}} className={inp} placeholder="https://..."/>
                 </div>
 
