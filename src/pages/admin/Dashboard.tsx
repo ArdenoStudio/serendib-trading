@@ -63,12 +63,16 @@ type DashboardTab = 'overview' | 'inventory' | 'analytics' | 'leads';
 type InventoryFilter = 'All' | 'Available' | 'Sold' | 'New' | 'Registered' | 'Reconditioned';
 type LeadFilter = 'All' | Lead['status'];
 type Notice = { type: 'success' | 'error'; message: string };
+type AnalyticsSegment = { label: string; count: number; pct: number; value?: number; meta?: string };
 
 const inventoryFilters: InventoryFilter[] = ['All', 'Available', 'Sold', 'New', 'Registered', 'Reconditioned'];
 const leadFilters: LeadFilter[] = ['All', 'New', 'Contacted', 'Closed'];
 
 const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 const daysUntilRemoval = (iso: string) => Math.max(0, 14 - daysSince(iso));
+const clampPercent = (value: number) => Math.max(0, Math.min(100, value));
+const formatNumber = (value: number) => Math.round(value).toLocaleString('en-LK');
+const formatPercent = (value: number) => `${Math.round(value)}%`;
 const formatMillions = (value: number) => `LKR ${(value / 1_000_000).toFixed(1)}M`;
 const formatFullLkr = (value: number) => `LKR ${Math.round(value).toLocaleString('en-LK')}`;
 const formatDate = (value?: string | null) => {
@@ -77,6 +81,30 @@ const formatDate = (value?: string | null) => {
   if (Number.isNaN(date.getTime())) return 'Not recorded';
   return new Intl.DateTimeFormat('en-LK', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 };
+const getSafeDaysSince = (value?: string | null) => {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  if (Number.isNaN(time)) return null;
+  return Math.max(0, Math.floor((Date.now() - time) / 86_400_000));
+};
+const getVehicleName = (vehicle: Pick<Vehicle, 'year' | 'make' | 'model'>) =>
+  `${vehicle.year} ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`;
+
+function buildCountSegments<T>(items: T[], getLabel: (item: T) => string, totalCount = items.length): AnalyticsSegment[] {
+  const counts = items.reduce<Record<string, number>>((acc, item) => {
+    const label = getLabel(item) || 'Unknown';
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(counts)
+    .map(([label, count]) => ({
+      label,
+      count,
+      pct: totalCount > 0 ? (count / totalCount) * 100 : 0,
+    }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
 
 const leadStatusStyles: Record<Lead['status'], { badge: string; dot: string; active: string }> = {
   New: {
@@ -243,12 +271,136 @@ export default function AdminDashboard() {
     };
   }, [vehicles, leads, traffic]);
 
+  const analytics = useMemo(() => {
+    const liveVehicles = vehicles.filter((vehicle) => !vehicle.is_sold);
+    const soldVehicles = vehicles.filter((vehicle) => vehicle.is_sold);
+    const totalViews = vehicles.reduce((sum, vehicle) => sum + Number(vehicle.views || 0), 0);
+    const viewedVehicles = vehicles.filter((vehicle) => Number(vehicle.views || 0) > 0);
+    const trafficSeries = traffic.slice().reverse();
+    const totalVisitors = traffic.reduce((sum, item) => sum + Number(item.visitor_count || 0), 0);
+    const totalPageViews = traffic.reduce((sum, item) => sum + Number(item.page_views || 0), 0);
+    const latestTraffic = traffic[0];
+    const previousTraffic = traffic[1];
+    const visitorDelta = latestTraffic
+      ? Number(latestTraffic.visitor_count || 0) - Number(previousTraffic?.visitor_count || 0)
+      : 0;
+    const pageViewDelta = latestTraffic
+      ? Number(latestTraffic.page_views || 0) - Number(previousTraffic?.page_views || 0)
+      : 0;
+    const bestTrafficDay = traffic.length > 0
+      ? traffic.slice().sort((a, b) => Number(b.page_views || 0) - Number(a.page_views || 0))[0]
+      : null;
+
+    const leadStatusCounts = leads.reduce<Record<Lead['status'], number>>(
+      (acc, lead) => {
+        acc[lead.status] += 1;
+        return acc;
+      },
+      { New: 0, Contacted: 0, Closed: 0 },
+    );
+    const leadTypeSegments = buildCountSegments<Lead>(leads, (lead) => lead.type);
+    const closedLeadRate = leads.length > 0 ? (leadStatusCounts.Closed / leads.length) * 100 : 0;
+    const followUpRate = leads.length > 0
+      ? ((leadStatusCounts.Contacted + leadStatusCounts.Closed) / leads.length) * 100
+      : 0;
+    const leadsPerHundredVisitors = totalVisitors > 0 ? (leads.length / totalVisitors) * 100 : 0;
+
+    const brandValue = vehicles.reduce<Record<string, { label: string; count: number; value: number }>>((acc, vehicle) => {
+      const label = getBrandLabel(vehicle.make) || 'Unknown';
+      if (!acc[label]) acc[label] = { label, count: 0, value: 0 };
+      acc[label].count += 1;
+      acc[label].value += Number(vehicle.price || 0);
+      return acc;
+    }, {});
+    const brandValueSegments = (Object.values(brandValue) as Array<{ label: string; count: number; value: number }>)
+      .map((item) => ({
+        label: item.label,
+        count: item.count,
+        value: item.value,
+        pct: stats.totalValue > 0 ? (item.value / stats.totalValue) * 100 : 0,
+        meta: formatMillions(item.value),
+      }))
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+    const conditionSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.condition || 'Unknown', vehicles.length);
+    const bodyTypeSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.bodyType || 'Unknown', vehicles.length);
+    const fuelSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.fuel || 'Unknown', vehicles.length);
+    const transmissionSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.transmission || 'Unknown', vehicles.length);
+
+    const priceBands = [
+      { label: '< LKR 10M', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) < 10_000_000).length },
+      { label: 'LKR 10M-20M', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) >= 10_000_000 && Number(vehicle.price || 0) < 20_000_000).length },
+      { label: 'LKR 20M-35M', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) >= 20_000_000 && Number(vehicle.price || 0) < 35_000_000).length },
+      { label: 'LKR 35M+', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) >= 35_000_000).length },
+    ].map((band) => ({
+      ...band,
+      pct: liveVehicles.length > 0 ? (band.count / liveVehicles.length) * 100 : 0,
+    }));
+
+    const incompleteLive = liveVehicles.filter((vehicle) =>
+      !vehicle.image || !vehicle.description?.trim() || !(vehicle.key_features?.length)
+    );
+    const highValueIncomplete = incompleteLive
+      .slice()
+      .sort((a, b) => Number(b.price || 0) - Number(a.price || 0))
+      .slice(0, 4);
+    const quietStock = liveVehicles
+      .filter((vehicle) => Number(vehicle.views || 0) === 0)
+      .sort((a, b) => Number(b.price || 0) - Number(a.price || 0))
+      .slice(0, 4);
+    const vehicleAges = liveVehicles
+      .map((vehicle) => ({ vehicle, days: getSafeDaysSince(vehicle.created_at) }))
+      .filter((item): item is { vehicle: Vehicle; days: number } => item.days !== null);
+    const oldestLive = vehicleAges.slice().sort((a, b) => b.days - a.days)[0] ?? null;
+    const avgDaysLive = vehicleAges.length > 0
+      ? vehicleAges.reduce((sum, item) => sum + item.days, 0) / vehicleAges.length
+      : 0;
+
+    const availableValue = liveVehicles.reduce((sum, vehicle) => sum + Number(vehicle.price || 0), 0);
+    const soldValue = soldVehicles.reduce((sum, vehicle) => sum + Number(vehicle.price || 0), 0);
+    const demandCoverage = vehicles.length > 0 ? (viewedVehicles.length / vehicles.length) * 100 : 0;
+    const readinessValueAtRisk = incompleteLive.reduce((sum, vehicle) => sum + Number(vehicle.price || 0), 0);
+    const maxPageViews = Math.max(1, ...traffic.map((item) => Number(item.page_views || 0)));
+
+    return {
+      avgDaysLive,
+      availableValue,
+      bestTrafficDay,
+      bodyTypeSegments,
+      brandValueSegments,
+      closedLeadRate,
+      conditionSegments,
+      demandCoverage,
+      followUpRate,
+      fuelSegments,
+      highValueIncomplete,
+      incompleteLive,
+      latestTraffic,
+      leadStatusCounts,
+      leadTypeSegments,
+      leadsPerHundredVisitors,
+      maxPageViews,
+      oldestLive,
+      pageViewDelta,
+      priceBands,
+      quietStock,
+      readinessValueAtRisk,
+      soldValue,
+      totalPageViews,
+      totalViews,
+      totalVisitors,
+      trafficSeries,
+      transmissionSegments,
+      visitorDelta,
+      viewedVehicles,
+    };
+  }, [vehicles, leads, traffic, stats.totalValue]);
+
   if (loading && vehicles.length === 0) return <Loader />;
 
   const newLeadCount = leads.filter((lead) => lead.status === 'New').length;
   const contactedLeadCount = leads.filter((lead) => lead.status === 'Contacted').length;
   const closedLeadCount = leads.filter((lead) => lead.status === 'Closed').length;
-  const maxPageViews = Math.max(1, ...traffic.map((item) => item.page_views || 0));
   const attentionCount =
     newLeadCount +
     dashboardHealth.staleNewLeads.length +
@@ -1074,38 +1226,42 @@ export default function AdminDashboard() {
 
         {tab === 'analytics' && (
           <section className="mt-8">
-            <div className="mb-5">
-              <div className="mb-3 flex items-center gap-3">
-                <span className="h-px w-10 bg-white/15" />
-                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Market signal</p>
+            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="h-px w-10 bg-white/15" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Decision desk</p>
+                </div>
+                <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
+                  Analytics command center
+                </h2>
               </div>
-              <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                Analytics cockpit
-              </h2>
+              <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em]">
+                <span className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-white/45">
+                  {isSupabaseConfigured ? 'Live Supabase data' : 'Local fallback mode'}
+                </span>
+                <span className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-[#F5D66B]">
+                  Updated {formatDate(analytics.latestTraffic?.date)}
+                </span>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
               {[
-                { icon: Activity, label: 'Portfolio', value: `${stats.total} units`, meta: `${stats.available} available` },
-                { icon: DollarSign, label: 'Total value', value: formatMillions(stats.totalValue), meta: formatFullLkr(stats.totalValue) },
-                { icon: TrendingUp, label: 'Average unit', value: formatMillions(stats.avgPrice), meta: 'Across all listed stock' },
-                { icon: Car, label: 'Top brand', value: stats.topMake, meta: 'Highest inventory share' },
+                { icon: Activity, label: '7D visitors', value: formatNumber(analytics.totalVisitors), meta: analytics.visitorDelta || traffic.length > 1 ? `${analytics.visitorDelta >= 0 ? '+' : ''}${formatNumber(analytics.visitorDelta)} prior day` : 'No prior day' },
+                { icon: BarChart2, label: '7D page views', value: formatNumber(analytics.totalPageViews), meta: analytics.pageViewDelta || traffic.length > 1 ? `${analytics.pageViewDelta >= 0 ? '+' : ''}${formatNumber(analytics.pageViewDelta)} prior day` : 'No prior day' },
+                { icon: Users, label: 'Lead close rate', value: formatPercent(analytics.closedLeadRate), meta: `${closedLeadCount} closed of ${leads.length}` },
+                { icon: Eye, label: 'Demand coverage', value: formatPercent(analytics.demandCoverage), meta: `${analytics.viewedVehicles.length}/${stats.total} units viewed` },
+                { icon: CheckCircle2, label: 'Readiness', value: `${dashboardHealth.readiness}%`, meta: `${analytics.incompleteLive.length} live gaps` },
+                { icon: DollarSign, label: 'Live value', value: formatMillions(analytics.availableValue), meta: `${stats.available} available units` },
               ].map(({ icon: Icon, label, value, meta }) => (
                 <article key={label} className="border border-white/10 bg-white/[0.035] p-5">
                   <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-[#D4AF37]">
-                    {label === 'Top brand' ? (
-                      <BrandMark
-                        make={String(value)}
-                        tone="mono"
-                        className="size-6 text-[#D4AF37]"
-                      />
-                    ) : (
-                      <Icon className="h-5 w-5" />
-                    )}
+                    <Icon className="h-5 w-5" />
                   </div>
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">{label}</p>
-                  <h3 className="mt-2 truncate text-2xl font-black uppercase leading-none tracking-tight text-white tabular-nums">{value}</h3>
-                  <p className="mt-3 truncate text-[11px] font-bold uppercase tracking-[0.14em] text-white/35">{meta}</p>
+                  <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white tabular-nums">{value}</h3>
+                  <p className="mt-3 min-h-[28px] text-[10px] font-bold uppercase tracking-[0.12em] leading-4 text-white/38">{meta}</p>
                 </article>
               ))}
             </div>
@@ -1181,7 +1337,7 @@ export default function AdminDashboard() {
                             <div className="relative flex min-h-0 flex-1 items-end bg-white/[0.04]">
                               <motion.div
                                 initial={{ height: 0 }}
-                                animate={{ height: `${((item.page_views || 0) / maxPageViews) * 100}%` }}
+                                animate={{ height: `${((item.page_views || 0) / analytics.maxPageViews) * 100}%` }}
                                 className="w-full bg-[#D4AF37]/45 transition-colors hover:bg-[#D4AF37]"
                               />
                             </div>
@@ -1254,6 +1410,268 @@ export default function AdminDashboard() {
                 </section>
               </aside>
             </div>
+
+            <div className="mt-3 grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Lead pipeline</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Sales movement</h3>
+                  </div>
+                  <Users className="h-5 w-5 text-white/28" />
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+                  <div className="grid gap-4">
+                    {(['New', 'Contacted', 'Closed'] as Lead['status'][]).map((status) => {
+                      const count = analytics.leadStatusCounts[status];
+                      const pct = leads.length > 0 ? (count / leads.length) * 100 : 0;
+                      const tone = leadStatusStyles[status];
+                      return (
+                        <div key={status}>
+                          <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.16em]">
+                            <span className="inline-flex items-center gap-2 text-white/55">
+                              <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                              {status}
+                            </span>
+                            <span className="text-white">{count}</span>
+                          </div>
+                          <div className="h-2 overflow-hidden bg-white/[0.06]">
+                            <div className={`h-full ${tone.dot}`} style={{ width: `${clampPercent(pct)}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {[
+                        { label: 'Follow-up', value: formatPercent(analytics.followUpRate), meta: 'Contacted or closed' },
+                        { label: 'Close rate', value: formatPercent(analytics.closedLeadRate), meta: `${closedLeadCount} wins` },
+                        { label: 'Lead yield', value: analytics.leadsPerHundredVisitors.toFixed(1), meta: 'Per 100 visitors' },
+                      ].map((item) => (
+                        <div key={item.label} className="border border-white/10 bg-black/25 p-4">
+                          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">{item.label}</p>
+                          <p className="mt-3 text-2xl font-black leading-none text-white tabular-nums">{item.value}</p>
+                          <p className="mt-3 truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/32">{item.meta}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border border-white/10 bg-black/25 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">Lead types</p>
+                    <div className="mt-5 space-y-4">
+                      {analytics.leadTypeSegments.length === 0 ? (
+                        <p className="py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">No lead types yet</p>
+                      ) : (
+                        analytics.leadTypeSegments.map((segment) => (
+                          <div key={segment.label}>
+                            <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.14em]">
+                              <span className="truncate text-white/48">{segment.label}</span>
+                              <span className="text-white">{segment.count}</span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden bg-white/[0.06]">
+                              <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(segment.pct)}%` }} />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Listing quality</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Action queue</h3>
+                  </div>
+                  <AlertTriangle className="h-5 w-5 text-white/28" />
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {[
+                    { label: 'New leads', value: analytics.leadStatusCounts.New, meta: 'Need first response', icon: Users, action: () => setTab('leads') },
+                    { label: 'Stale leads', value: dashboardHealth.staleNewLeads.length, meta: 'Over 24 hours new', icon: Clock3, action: () => setTab('leads') },
+                    { label: 'Missing photos', value: dashboardHealth.missingImages.length, meta: 'Hero image gaps', icon: ImageIcon, action: () => setTab('inventory') },
+                    { label: 'Incomplete live', value: analytics.incompleteLive.length, meta: formatMillions(analytics.readinessValueAtRisk), icon: CheckCircle2, action: () => setTab('inventory') },
+                    { label: 'Quiet stock', value: analytics.quietStock.length, meta: 'No recorded clicks', icon: Eye, action: () => setTab('inventory') },
+                    { label: 'Archive ready', value: dashboardHealth.archiveReady.length, meta: 'Sold past 14 days', icon: Trash2, action: () => setTab('inventory') },
+                  ].map(({ label, value, meta, icon: Icon, action }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={action}
+                      className="grid grid-cols-[1fr_auto] items-center gap-3 border border-white/10 bg-black/25 px-4 py-3 text-left transition-all hover:border-[#D4AF37]/35 hover:bg-black/40"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-[11px] font-black uppercase tracking-[0.16em] text-white/58">{label}</span>
+                        <span className="mt-1 block truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/32">{meta}</span>
+                      </span>
+                      <span className="flex items-center gap-3">
+                        <span className="text-2xl font-black leading-none text-white tabular-nums">{value}</span>
+                        <Icon className="h-4 w-4 text-[#D4AF37]" />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <div className="mt-3 grid gap-3 xl:grid-cols-[1fr_1fr_0.9fr]">
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Portfolio value</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Brand concentration</h3>
+                  </div>
+                  <WalletCards className="h-5 w-5 text-white/28" />
+                </div>
+
+                <div className="space-y-4">
+                  {analytics.brandValueSegments.length === 0 ? (
+                    <p className="py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">No stock data</p>
+                  ) : (
+                    analytics.brandValueSegments.slice(0, 6).map((segment) => (
+                      <div key={segment.label}>
+                        <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.15em]">
+                          <span className="flex min-w-0 items-center gap-2 text-white/58">
+                            <BrandMark make={segment.label} tone="mono" className="size-5 shrink-0 text-[#D4AF37]" />
+                            <span className="truncate">{segment.label}</span>
+                          </span>
+                          <span className="shrink-0 text-white">{segment.meta}</span>
+                        </div>
+                        <div className="h-2 overflow-hidden bg-white/[0.06]">
+                          <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(segment.pct)}%` }} />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="border border-white/10 bg-black/25 p-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Sold value</p>
+                    <p className="mt-3 text-2xl font-black leading-none text-white tabular-nums">{formatMillions(analytics.soldValue)}</p>
+                  </div>
+                  <div className="border border-white/10 bg-black/25 p-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Avg days live</p>
+                    <p className="mt-3 text-2xl font-black leading-none text-white tabular-nums">{formatNumber(analytics.avgDaysLive)}</p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Fleet composition</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Stock mix</h3>
+                  </div>
+                  <PieChart className="h-5 w-5 text-white/28" />
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  {[
+                    { title: 'Body types', segments: analytics.bodyTypeSegments },
+                    { title: 'Fuel', segments: analytics.fuelSegments },
+                    { title: 'Condition', segments: analytics.conditionSegments },
+                    { title: 'Transmission', segments: analytics.transmissionSegments },
+                  ].map((group) => (
+                    <div key={group.title}>
+                      <p className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-white/35">{group.title}</p>
+                      <div className="space-y-3">
+                        {group.segments.length === 0 ? (
+                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/28">No data</p>
+                        ) : (
+                          group.segments.slice(0, 4).map((segment) => (
+                            <div key={segment.label}>
+                              <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.12em]">
+                                <span className="truncate text-white/48">{segment.label}</span>
+                                <span className="text-white">{segment.count}</span>
+                              </div>
+                              <div className="h-1.5 overflow-hidden bg-white/[0.06]">
+                                <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(segment.pct)}%` }} />
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Pricing lanes</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Available bands</h3>
+                  </div>
+                  <TrendingUp className="h-5 w-5 text-white/28" />
+                </div>
+
+                <div className="space-y-4">
+                  {analytics.priceBands.map((band) => (
+                    <div key={band.label}>
+                      <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.14em]">
+                        <span className="truncate text-white/48">{band.label}</span>
+                        <span className="text-white">{band.count} units</span>
+                      </div>
+                      <div className="h-2 overflow-hidden bg-white/[0.06]">
+                        <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(band.pct)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 grid gap-3">
+                  <div className="border border-white/10 bg-black/25 p-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Oldest live unit</p>
+                    <p className="mt-3 truncate text-2xl font-black uppercase leading-none text-white">
+                      {analytics.oldestLive ? `${analytics.oldestLive.days} days` : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="border border-white/10 bg-black/25 p-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Total click pool</p>
+                    <p className="mt-3 text-2xl font-black uppercase leading-none text-white tabular-nums">{formatNumber(analytics.totalViews)}</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <section className="mt-3 border border-white/10 bg-white/[0.035] p-5 md:p-6">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">High-value gaps</p>
+                  <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Listings to fix first</h3>
+                </div>
+                <Edit2 className="h-5 w-5 text-white/28" />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {analytics.highValueIncomplete.length === 0 ? (
+                  <p className="col-span-full py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">No live quality gaps</p>
+                ) : (
+                  analytics.highValueIncomplete.map((vehicle) => (
+                    <button
+                      key={vehicle.id}
+                      type="button"
+                      onClick={() => openEdit(vehicle)}
+                      className="grid grid-cols-[1fr_auto] items-center gap-3 border border-white/10 bg-black/25 px-4 py-4 text-left transition-all hover:border-[#D4AF37]/35"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-black uppercase tracking-tight text-white">{getVehicleName(vehicle)}</span>
+                        <span className="mt-1 block text-[9px] font-black uppercase tracking-[0.14em] text-white/35">
+                          {!vehicle.image ? 'Missing image' : !vehicle.description?.trim() ? 'Missing description' : 'Missing features'}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-[#D4AF37]">{formatMillions(vehicle.price)}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </section>
           </section>
         )}
       </main>
