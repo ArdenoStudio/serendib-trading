@@ -7,49 +7,49 @@ export type ShowroomImage = {
 
 export const SHOWROOM_IMAGES: ShowroomImage[] = [
   {
-    src: '/images/showroom/serendib-showroom-floor-01.jpg',
+    src: '/images/showroom/serendib-showroom-floor-01.webp',
     alt: 'Serendib Trading showroom with vehicles displayed between blue pillars',
     caption: 'Showroom arrival lane',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-showroom-floor-02.jpg',
+    src: '/images/showroom/serendib-showroom-floor-02.webp',
     alt: 'Serendib Trading showroom floor with premium vehicles under ceiling lights',
     caption: 'Curated showroom floor',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-showroom-floor-03.jpg',
+    src: '/images/showroom/serendib-showroom-floor-03.webp',
     alt: 'Mini Cooper displayed inside the Serendib Trading showroom',
     caption: 'Feature display bay',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-showroom-floor-04.jpg',
+    src: '/images/showroom/serendib-showroom-floor-04.webp',
     alt: 'Serendib Trading showroom with a Mini Cooper and van on display',
     caption: 'Indoor viewing area',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-showroom-floor-05.jpg',
+    src: '/images/showroom/serendib-showroom-floor-05.webp',
     alt: 'Black vehicle displayed inside Serendib Trading showroom',
     caption: 'Private inspection space',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-logo-wall.jpg',
+    src: '/images/showroom/serendib-logo-wall.webp',
     alt: 'Illuminated Serendib Trading logo wall inside the showroom',
     caption: 'Serendib identity wall',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-showroom-art-wall.jpg',
+    src: '/images/showroom/serendib-showroom-art-wall.webp',
     alt: 'Serendib Trading showroom art wall and vehicle display area',
     caption: 'Showroom detail wall',
     objectPosition: 'center center',
   },
   {
-    src: '/images/showroom/serendib-showroom-floor-06.jpg',
+    src: '/images/showroom/serendib-showroom-floor-06.webp',
     alt: 'Serendib Trading showroom with SUV and van displays',
     caption: 'Collection display',
     objectPosition: 'center center',
