@@ -115,13 +115,12 @@ const bodyTypes = [
 ];
 
 const brandLogos = [
-  { name: 'Toyota', image: '/brand-logos/toyota.png' },
-  { name: 'Honda', image: '/brand-logos/honda.jpg' },
-  { name: 'Suzuki', image: '/brand-logos/suzuki.jpg' },
-  { name: 'Nissan', image: '/brand-logos/nissan.jpg' },
-  { name: 'Mitsubishi', image: '/brand-logos/mitsubishi.png' },
-  { name: 'Mercedes', image: '/brand-logos/mercedes.jpg' },
-  { name: 'BMW', image: '/brand-logos/bmw.jpg' },
+  { name: 'Toyota', image: '/brand-logos/toyota.svg' },
+  { name: 'Honda', image: '/brand-logos/honda.svg' },
+  { name: 'Suzuki', image: '/brand-logos/suzuki.svg' },
+  { name: 'Nissan', image: '/brand-logos/nissan.svg' },
+  { name: 'Mitsubishi', image: '/brand-logos/mitsubishi.svg' },
+  { name: 'Mercedes', image: '/brand-logos/mercedes.svg' },
   { name: 'Land Rover', image: '/brand-logos/land-rover.png' },
 ];
 

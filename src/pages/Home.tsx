@@ -332,7 +332,7 @@ export default function Home() {
             { name: 'Hatchback',path: '/inventory?bodyType=Hatchback',image: '/car-types/hatchback.png' },
             { name: 'Luxury',   path: '/inventory?bodyType=Luxury',   image: '/car-types/rolls-royce.png' },
             { name: 'MPV',      path: '/inventory?bodyType=MPV',      image: '/car-types/car.png' },
-            { name: 'Crossover',path: '/inventory?bodyType=Crossover',image: '/car-types/suv.png' },
+            { name: 'Crossover',path: '/inventory?bodyType=Crossover',image: '/car-types/crossover.png' },
           ].map((type, idx) => (
             <motion.button
               key={type.name}
@@ -350,14 +350,14 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <div className="relative z-10 flex w-full flex-col items-center">
-                <div className="mb-6 flex h-28 w-full items-center justify-center lg:h-32">
+                <div className="mb-5 flex h-24 w-full items-center justify-center px-1 lg:h-28">
                   <img
                     src={type.image}
                     alt={`${type.name} body type`}
                     width={220}
-                    height={132}
+                    height={90}
                     loading="lazy"
-                    className="h-full w-full max-w-[180px] object-contain opacity-45 invert transition-all duration-500 group-hover:scale-105 group-hover:opacity-100 lg:max-w-[210px]"
+                    className="h-full w-full max-w-[190px] object-contain object-center mix-blend-normal transition-transform duration-500 group-hover:scale-[1.06] lg:max-w-[220px]"
                   />
                 </div>
                 
@@ -398,12 +398,12 @@ export default function Home() {
         
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: 'Toyota', make: 'Toyota' },
-            { label: 'Honda', make: 'Honda' },
-            { label: 'Suzuki', make: 'Suzuki' },
-            { label: 'Nissan', make: 'Nissan' },
-            { label: 'Mitsubishi', make: 'Mitsubishi' },
-            { label: 'Mercedes', make: 'Mercedes-Benz' },
+            { label: 'Toyota', make: 'Toyota', logo: '/brand-logos/toyota.svg' },
+            { label: 'Honda', make: 'Honda', logo: '/brand-logos/honda.svg' },
+            { label: 'Suzuki', make: 'Suzuki', logo: '/brand-logos/suzuki.svg' },
+            { label: 'Nissan', make: 'Nissan', logo: '/brand-logos/nissan.svg' },
+            { label: 'Mitsubishi', make: 'Mitsubishi', logo: '/brand-logos/mitsubishi.svg' },
+            { label: 'Mercedes', make: 'Mercedes-Benz', logo: '/brand-logos/mercedes.svg' },
           ].map((brand, i) => (
             <motion.button 
               key={brand.make}
@@ -416,13 +416,17 @@ export default function Home() {
               onClick={() => navigate(`/inventory?make=${encodeURIComponent(brand.make)}`)}
               className="group relative flex h-[166px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-300 hover:border-[#D4AF37]/40 hover:bg-white/[0.05] lg:h-[176px]"
             >
-              <div className="relative z-10 flex flex-col items-center w-full">
-                <BrandMark
-                  make={brand.make}
-                  tone="mono"
-                  className="mb-5 h-20 w-full text-white/40 transition-colors duration-300 group-hover:text-[#D4AF37]"
-                  iconClassName="mx-auto size-16 transition-transform duration-300 group-hover:scale-105 lg:size-20"
-                />
+              <div className="relative z-10 flex w-full flex-col items-center">
+                <div className="mb-4 flex h-[92px] w-full items-center justify-center px-2 lg:h-[100px]">
+                  <img
+                    src={brand.logo}
+                    alt={`${brand.label} logo`}
+                    width={180}
+                    height={96}
+                    loading="lazy"
+                    className="max-h-[68px] w-auto max-w-[126px] object-contain transition-transform duration-300 group-hover:scale-105 sm:max-h-[74px] sm:max-w-[138px] lg:max-h-[80px] lg:max-w-[150px]"
+                  />
+                </div>
                 <span className="w-full truncate text-center text-[9px] font-black tracking-[0.22em] uppercase text-white/50 transition-colors group-hover:text-white">
                   {brand.label}
                 </span>
