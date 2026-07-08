@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
 import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
 import { readStringList, writeStringList } from '../lib/storage';
+import { cleanSpec } from '../lib/utils';
 import { BrandMark, getBrandLabel, getDisplayModel } from './brand/BrandMark';
 
 interface CarCardProps {
@@ -197,10 +198,12 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
                 <Gauge className="w-3 h-3 text-[#D4AF37]" />
                 <span>{car.mileage.toLocaleString()} KM</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Settings2 className="w-3 h-3 text-[#D4AF37]" />
-                <span>{car.transmission}</span>
-              </div>
+              {cleanSpec(car.transmission) && (
+                <div className="flex items-center gap-2">
+                  <Settings2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>{cleanSpec(car.transmission)}</span>
+                </div>
+              )}
             </div>
           </div>
           

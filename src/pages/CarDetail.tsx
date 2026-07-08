@@ -11,6 +11,7 @@ import Loader from '../components/Loader';
 import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
 import { createVehicleSchema } from '../lib/seo';
+import { cleanSpec } from '../lib/utils';
 import { submitLead } from '../lib/leads';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 
@@ -343,8 +344,8 @@ export default function CarDetail() {
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { label: 'Odometer', value: `${car.mileage.toLocaleString()} KM`, icon: Gauge },
-                  { label: 'Fuel Type', value: car.fuel, icon: Fuel },
-                  { label: 'Transmission', value: car.transmission, icon: Settings },
+                  { label: 'Fuel Type', value: cleanSpec(car.fuel) ?? 'Not specified', icon: Fuel },
+                  { label: 'Transmission', value: cleanSpec(car.transmission) ?? 'Not specified', icon: Settings },
                   { label: 'Location', value: 'Dehiwala Showroom', icon: MapPin },
                 ].map((spec, i) => (
                   <div key={i} className="group p-6 bg-white/[0.03] border border-white/5 rounded-[32px] hover:bg-white/[0.05] transition-all duration-500 tabular-nums">
