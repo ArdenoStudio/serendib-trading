@@ -50,7 +50,7 @@ const cars: CarInfo[] = [
     price: 48500000,
     mileage: 32000,
     bodyType: 'SUV',
-    image: '/images/gallery/vehicle-1.jpg',
+    image: '/images/gallery/vehicle-1.webp',
     condition: 'Registered',
   },
   {
@@ -60,7 +60,7 @@ const cars: CarInfo[] = [
     price: 29500000,
     mileage: 58000,
     bodyType: 'Sedan',
-    image: '/images/gallery/vehicle-4.jpg',
+    image: '/images/gallery/vehicle-4.webp',
     condition: 'Registered',
   },
   {
@@ -70,7 +70,7 @@ const cars: CarInfo[] = [
     price: 18500000,
     mileage: 41000,
     bodyType: 'Crossover',
-    image: '/images/gallery/vehicle-7.jpg',
+    image: '/images/gallery/vehicle-7.webp',
     condition: 'Registered',
   },
   {
@@ -80,7 +80,7 @@ const cars: CarInfo[] = [
     price: 72500000,
     mileage: 36000,
     bodyType: 'SUV',
-    image: '/images/gallery/vehicle-10.jpg',
+    image: '/images/gallery/vehicle-10.webp',
     condition: 'Reconditioned',
   },
   {
@@ -90,7 +90,7 @@ const cars: CarInfo[] = [
     price: 16200000,
     mileage: 19000,
     bodyType: 'Hatchback',
-    image: '/images/gallery/vehicle-13.jpg',
+    image: '/images/gallery/vehicle-13.webp',
     condition: 'Reconditioned',
   },
   {
@@ -100,7 +100,7 @@ const cars: CarInfo[] = [
     price: 34500000,
     mileage: 27000,
     bodyType: 'Sedan',
-    image: '/images/gallery/vehicle-16.jpg',
+    image: '/images/gallery/vehicle-16.webp',
     condition: 'Registered',
   },
 ];
@@ -674,7 +674,7 @@ export const SerendibTeaser = () => {
       />
       <TeaserImageLayer
         frame={frame}
-        src="/images/gallery/vehicle-10.jpg"
+        src="/images/gallery/vehicle-10.webp"
         start={92}
         end={272}
         objectPosition="center center"
