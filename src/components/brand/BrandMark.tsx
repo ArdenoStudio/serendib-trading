@@ -105,10 +105,17 @@ export const getDisplayModel = (make?: string | null, model?: string | null) => 
     )
     .join('|');
 
-  if (!prefixPattern) return rawModel;
+  const withoutPrefix = prefixPattern
+    ? rawModel.replace(new RegExp(`^(${prefixPattern})\\s+`, 'i'), '').trim() || rawModel
+    : rawModel;
 
-  const cleaned = rawModel.replace(new RegExp(`^(${prefixPattern})\\s+`, 'i'), '').trim();
-  return cleaned || rawModel;
+  // The model year is shown separately, so strip a redundant 4-digit year from the
+  // model text — otherwise a mis-entered "Sorento 2017" renders as "2017 … Sorento 2017".
+  const withoutYear = withoutPrefix
+    .replace(/\b(19[89]\d|20[0-3]\d)\b/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return withoutYear || withoutPrefix;
 };
 
 const getInitials = (label: string) =>

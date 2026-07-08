@@ -63,7 +63,13 @@ const fetchCar = async (id) => {
 };
 
 export const buildMeta = (car, origin, id) => {
-  const name = [car.year, car.make, car.model].filter(Boolean).join(' ').trim() || 'Vehicle';
+  // The year is shown separately, so drop a redundant 4-digit year from the model
+  // (e.g. a mis-entered "Sorento 2017" would otherwise read "2017 Kia Sorento 2017").
+  const model = String(car.model || '')
+    .replace(/\b(19[89]\d|20[0-3]\d)\b/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  const name = [car.year, car.make, model].filter(Boolean).join(' ').trim() || 'Vehicle';
   const title = `${name} for Sale | Serendib Trading`;
 
   const parts = [`Explore the ${name} at Serendib Trading in Sri Lanka.`];
