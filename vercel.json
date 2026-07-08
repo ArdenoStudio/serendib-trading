@@ -44,7 +44,23 @@
       ]
     }
   ],
+  "functions": {
+    "api/og.js": {
+      "includeFiles": "dist/index.html"
+    }
+  },
   "rewrites": [
+    {
+      "source": "/car/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|Slack-ImgProxy|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|Google-InspectionTool|bingbot|Applebot|SkypeUriPreview|vkShare|W3C_Validator|Embedly|Iframely|DuckDuckBot|ia_archiver|Yeti).*"
+        }
+      ],
+      "destination": "/api/og?id=:id"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
