@@ -29,6 +29,13 @@ export default function Navbar() {
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
+  // Flag the open mobile menu on <body> so the floating WhatsApp button can hide
+  // instead of overlapping the full-screen navigation.
+  useEffect(() => {
+    document.body.classList.toggle('mobile-nav-open', mobileOpen);
+    return () => document.body.classList.remove('mobile-nav-open');
+  }, [mobileOpen]);
+
   const closeMobile = () => setMobileOpen(false);
 
   return (

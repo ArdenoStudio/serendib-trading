@@ -219,4 +219,11 @@ nav {
     mix-blend-mode: overlay;
     pointer-events: none;
   }
+
+  /* Hide the floating WhatsApp button while the full-screen mobile menu is open. */
+  body.mobile-nav-open .wa-float {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }

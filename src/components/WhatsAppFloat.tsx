@@ -1,6 +1,6 @@
 export default function WhatsAppFloat() {
   return (
-    <div className="fixed bottom-4 right-4 z-[80] flex items-center justify-center transition-all duration-300 md:bottom-6 md:right-6 group">
+    <div className="wa-float fixed bottom-4 right-4 z-[80] flex items-center justify-center transition-all duration-300 md:bottom-6 md:right-6 group">
       <div className="absolute right-20 px-3 py-1.5 bg-[#0d0b09] border border-white/10 text-white text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-lg hidden md:block">
         Chat with us
         <div className="absolute top-1/2 -right-1 w-2 h-2 bg-[#0d0b09] border-t border-r border-white/10 transform -translate-y-1/2 rotate-45" />
