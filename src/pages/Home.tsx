@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { motion, useScroll, useTransform, cubicBezier, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useScroll, useTransform, cubicBezier, AnimatePresence, useReducedMotion, useMotionValue, useAnimationFrame } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 
 import InstagramShowcase from '../components/InstagramShowcase';
@@ -67,6 +67,33 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, [shouldReduceMotion]);
 
+  // Featured-arrivals marquee: measure one card set so the loop wraps seamlessly
+  // at any card count / breakpoint instead of relying on a magic pixel offset.
+  const marqueeSetRef = useRef<HTMLDivElement>(null);
+  const [marqueeSetWidth, setMarqueeSetWidth] = useState(0);
+  const [marqueePaused, setMarqueePaused] = useState(false);
+  const marqueeX = useMotionValue(0);
+
+  useEffect(() => {
+    const measure = () => {
+      if (marqueeSetRef.current) {
+        setMarqueeSetWidth(marqueeSetRef.current.offsetWidth);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [cars.length]);
+
+  // Drive the marquee manually so speed stays constant and hover pauses instantly.
+  useAnimationFrame((_, delta) => {
+    if (marqueePaused || shouldReduceMotion || marqueeSetWidth === 0) return;
+    const speed = 55; // px per second
+    let next = marqueeX.get() - (speed * delta) / 1000;
+    if (next <= -marqueeSetWidth) next += marqueeSetWidth; // seamless wrap by one set
+    marqueeX.set(next);
+  });
+
   const customEase = cubicBezier(0.16, 1, 0.3, 1);
 
   const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.15], { ease: customEase });
@@ -74,6 +101,81 @@ export default function Home() {
   const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0.12, 0.84]);
 
   const currentHeroSlide = HERO_SHOWROOM_SLIDES[activeHeroSlide];
+
+  const marqueeCars = cars.length > 0 ? cars : carsData;
+
+  const renderFeaturedCard = (car: Car, key: string) => (
+    <motion.div
+      key={key}
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -10 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color,opacity,transform] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+      onClick={() => navigate(`/car/${car.id}`)}
+    >
+      {/* Image Container with Hover Zoom */}
+      <div className="w-full h-64 md:h-72 overflow-hidden relative">
+        {/* Premium Year Tag */}
+        <div className="absolute top-6 left-6 z-20 bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-4 py-2 rounded-full uppercase tracking-[0.2em]">
+          Model {car.year}
+        </div>
+
+        <motion.img
+          src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image}
+          alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
+          width={420}
+          height={288}
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+        />
+
+        {/* Cinematic Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+      </div>
+
+      {/* Card Content */}
+      <div className="p-8 md:p-10 relative">
+         <div className="flex items-center gap-3 mb-3">
+            <BrandMark
+              make={car.make}
+              tone="mono"
+              className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover/card:border-[#D4AF37]/35 group-hover/card:text-[#D4AF37]"
+            />
+            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{getBrandLabel(car.make)}</span>
+         </div>
+
+         <h3 className="text-xl md:text-2xl font-extrabold uppercase tracking-tight text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
+          {getDisplayModel(car.make, car.model)}
+        </h3>
+
+        <div className="flex items-center justify-between pt-8 border-t border-white/10">
+          <div className="flex flex-col">
+            <span className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-1">Price Guide</span>
+            <span className="text-2xl font-black text-white tracking-tighter">
+              LKR {(car.price/1000000).toFixed(1)}M
+            </span>
+          </div>
+
+          <motion.div
+            whileHover={{ x: 5 }}
+            aria-label="View car details"
+            className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]"
+          >
+            <span className="hidden md:block">Details</span>
+            <div className="w-10 h-10 rounded-full border border-[#D4AF37]/30 flex items-center justify-center group-hover/card:bg-[#D4AF37] group-hover/card:text-black transition-all duration-500">
+              &rarr;
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Corner Accent */}
+        <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen overflow-x-hidden font-sans" style={{ backgroundColor: '#0d0b09', color: '#FFFFFF' }}>
@@ -327,12 +429,12 @@ export default function Home() {
         {/* 6-item grid — perfectly centered */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
           {[
-            { name: 'SUV',      path: '/inventory?bodyType=SUV',      image: '/car-types/suv.png' },
-            { name: 'Sedan',    path: '/inventory?bodyType=Sedan',    image: '/car-types/sedan.png' },
-            { name: 'Hatchback',path: '/inventory?bodyType=Hatchback',image: '/car-types/hatchback.png' },
-            { name: 'Luxury',   path: '/inventory?bodyType=Luxury',   image: '/car-types/rolls-royce.png' },
-            { name: 'MPV',      path: '/inventory?bodyType=MPV',      image: '/car-types/car.png' },
-            { name: 'Crossover',path: '/inventory?bodyType=Crossover',image: '/car-types/crossover.png' },
+            { name: 'SUV',      path: '/inventory?bodyType=SUV',      image: '/car-types/suv.webp' },
+            { name: 'Sedan',    path: '/inventory?bodyType=Sedan',    image: '/car-types/sedan.webp' },
+            { name: 'Hatchback',path: '/inventory?bodyType=Hatchback',image: '/car-types/hatchback.webp' },
+            { name: 'Luxury',   path: '/inventory?bodyType=Luxury',   image: '/car-types/rolls-royce.webp' },
+            { name: 'MPV',      path: '/inventory?bodyType=MPV',      image: '/car-types/car.webp' },
+            { name: 'Crossover',path: '/inventory?bodyType=Crossover',image: '/car-types/crossover.webp' },
           ].map((type, idx) => (
             <motion.button
               key={type.name}
@@ -475,89 +577,19 @@ export default function Home() {
         </div>
         
         {/* Horizontal Marquee Container */}
-        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] +mr-[50vw] overflow-hidden group py-12">
-          <motion.div 
-            className="flex gap-8 whitespace-nowrap px-10"
-            animate={{ x: [0, -1800] }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 30, 
-              ease: "linear",
-            }}
-            whileHover={{ transition: { duration: 1000000 } }} // "Pause" trick
-          >
-            {((cars.length > 0 ? [...cars, ...cars] : carsData)).map((car, i) => (
-              <motion.div 
-                key={`${car.id}-${i}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color,opacity,transform] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                onClick={() => navigate(`/car/${car.id}`)}
-              >
-                {/* Image Container with Hover Zoom */}
-                <div className="w-full h-64 md:h-72 overflow-hidden relative">
-                  {/* Premium Year Tag */}
-                  <div className="absolute top-6 left-6 z-20 bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-4 py-2 rounded-full uppercase tracking-[0.2em]">
-                    Model {car.year}
-                  </div>
-                  
-                  <motion.img 
-                    src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image} 
-                    alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
-                    width={420}
-                    height={288}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
-                  />
-                  
-                  {/* Cinematic Overlays */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
-                  <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
-                </div>
-                
-                {/* Card Content */}
-                <div className="p-8 md:p-10 relative">
-                   <div className="flex items-center gap-3 mb-3">
-                      <BrandMark
-                        make={car.make}
-                        tone="mono"
-                        className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover/card:border-[#D4AF37]/35 group-hover/card:text-[#D4AF37]"
-                      />
-                      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{getBrandLabel(car.make)}</span>
-                   </div>
-                   
-                   <h3 className="text-xl md:text-2xl font-extrabold uppercase tracking-tight text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
-                    {getDisplayModel(car.make, car.model)}
-                  </h3>
-                  
-                  <div className="flex items-center justify-between pt-8 border-t border-white/10">
-                    <div className="flex flex-col">
-                      <span className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-1">Price Guide</span>
-                      <span className="text-2xl font-black text-white tracking-tighter">
-                        LKR {(car.price/1000000).toFixed(1)}M
-                      </span>
-                    </div>
-                    
-                    <motion.div 
-                      whileHover={{ x: 5 }}
-                      aria-label="View car details"
-                      className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]"
-                    >
-                      <span className="hidden md:block">Details</span>
-                      <div className="w-10 h-10 rounded-full border border-[#D4AF37]/30 flex items-center justify-center group-hover/card:bg-[#D4AF37] group-hover/card:text-black transition-all duration-500">
-                        &rarr;
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Corner Accent */}
-                  <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
-                </div>
-              </motion.div>
-            ))}
+        <div
+          className="w-screen relative left-1/2 right-1/2 -ml-[50vw] +mr-[50vw] overflow-hidden py-12"
+          onMouseEnter={() => setMarqueePaused(true)}
+          onMouseLeave={() => setMarqueePaused(false)}
+        >
+          <motion.div className="flex w-max" style={{ x: marqueeX }}>
+            {/* Two identical sets; the first is measured so we wrap by exactly one set width */}
+            <div ref={marqueeSetRef} className="flex gap-8 pr-8 shrink-0">
+              {marqueeCars.map((car, i) => renderFeaturedCard(car, `set1-${car.id}-${i}`))}
+            </div>
+            <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
+              {marqueeCars.map((car, i) => renderFeaturedCard(car, `set2-${car.id}-${i}`))}
+            </div>
           </motion.div>
         </div>
       </div>
@@ -628,8 +660,8 @@ export default function Home() {
             <div className="flex flex-col md:flex-row items-center gap-10 lg:gap-16 shrink-0 relative z-10 w-full lg:w-auto">
               <div className="flex flex-col items-center md:items-end text-center md:text-right">
                 <span className="text-[11px] uppercase tracking-[0.35em] font-bold text-[#D4AF37] mb-3 opacity-70">Expert Consultation</span>
-                <a 
-                  href="tel:0756363427" 
+                <a
+                  href="tel:+94756363427"
                   className="text-3xl md:text-5xl font-black text-white hover:text-[#F3D67E] transition-all duration-500 tracking-tighter drop-shadow-lg"
                 >
                   075 636 3427

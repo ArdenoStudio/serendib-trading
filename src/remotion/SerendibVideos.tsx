@@ -106,12 +106,12 @@ const cars: CarInfo[] = [
 ];
 
 const bodyTypes = [
-  { name: 'SUV', image: '/car-types/suv.png' },
-  { name: 'Sedan', image: '/car-types/sedan.png' },
-  { name: 'Hatchback', image: '/car-types/hatchback.png' },
-  { name: 'Luxury', image: '/car-types/rolls-royce.png' },
-  { name: 'MPV', image: '/car-types/car.png' },
-  { name: 'Crossover', image: '/car-types/crossover.png' },
+  { name: 'SUV', image: '/car-types/suv.webp' },
+  { name: 'Sedan', image: '/car-types/sedan.webp' },
+  { name: 'Hatchback', image: '/car-types/hatchback.webp' },
+  { name: 'Luxury', image: '/car-types/rolls-royce.webp' },
+  { name: 'MPV', image: '/car-types/car.webp' },
+  { name: 'Crossover', image: '/car-types/crossover.webp' },
 ];
 
 const brandLogos = [
