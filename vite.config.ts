@@ -11,6 +11,9 @@ export default defineConfig(() => ({
     },
   },
   build: {
+    // esbuild 0.28+ cannot down-level some modern destructuring to older
+    // browser targets; ship es2022 which all current browsers support.
+    target: 'es2022',
     rollupOptions: {
       output: {
         manualChunks: {
