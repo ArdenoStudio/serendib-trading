@@ -21,8 +21,11 @@ export function isBlobUrl(url?: string | null): boolean {
 }
 
 /**
- * Rewrite a Supabase public object URL to the image renderer with width/quality.
- * Falls back to the original URL for non-Supabase sources or when size is full.
+ * Optionally rewrite a Supabase public object URL to the image renderer.
+ *
+ * Image Transformations are a paid/Pro Supabase feature. When disabled the
+ * /render/image endpoint returns 403, which blanked out featured marquee
+ * images. Only rewrite when explicitly enabled via env.
  */
 export function optimizeImageUrl(
   url?: string | null,
@@ -31,11 +34,20 @@ export function optimizeImageUrl(
 ): string {
   if (!url) return '';
   if (isBlobUrl(url) || url.startsWith('data:')) return url;
+
+  // Always prefer the stable public object URL unless transforms are enabled.
+  const transformsEnabled = import.meta.env.VITE_SUPABASE_IMAGE_TRANSFORM === 'true';
+  if (!transformsEnabled) {
+    if (url.includes(SUPABASE_RENDER)) {
+      return url.replace(SUPABASE_RENDER, SUPABASE_OBJECT).split('?')[0];
+    }
+    return url;
+  }
+
   if (!url.includes(SUPABASE_OBJECT) && !url.includes(SUPABASE_RENDER)) return url;
 
   const width = WIDTH[size];
   if (!width) {
-    // Prefer object URL for full-resolution lightbox.
     return url.replace(SUPABASE_RENDER, SUPABASE_OBJECT).split('?')[0];
   }
 

@@ -126,9 +126,9 @@ export default function Home() {
 
         <motion.img
           src={
-            car.image.includes('unsplash.com')
+            car.image?.includes('unsplash.com')
               ? `${car.image}&w=600&q=70`
-              : optimizeImageUrl(car.image, 'card')
+              : optimizeImageUrl(car.image, 'card') || car.image
           }
           alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
           width={420}
@@ -136,6 +136,11 @@ export default function Home() {
           loading="lazy"
           decoding="async"
           className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+          onError={(e) => {
+            // Fall back to the raw storage URL if a transform URL ever 403s.
+            const el = e.currentTarget;
+            if (car.image && el.src !== car.image) el.src = car.image;
+          }}
         />
 
         {/* Cinematic Overlays */}
