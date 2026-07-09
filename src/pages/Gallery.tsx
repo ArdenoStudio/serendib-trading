@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Camera, Car, Building2 } from 'lucide-react';
 import Footer from '../components/Footer';
 import ImageLightbox from '../components/ImageLightbox';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
+
+const PAGE_SIZE = 12;
 
 type GalleryCategory = 'vehicles' | 'showroom';
 type GalleryImage = {
@@ -74,10 +76,22 @@ const GALLERY_IMAGES: GalleryImage[] = [
 export default function Gallery() {
   const [filter, setFilter] = useState<'all' | 'vehicles' | 'showroom'>('all');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const filteredImages = filter === 'all' 
-    ? GALLERY_IMAGES 
-    : GALLERY_IMAGES.filter(img => img.category === filter);
+  const filteredImages = useMemo(
+    () =>
+      filter === 'all'
+        ? GALLERY_IMAGES
+        : GALLERY_IMAGES.filter((img) => img.category === filter),
+    [filter],
+  );
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [filter]);
+
+  const visibleImages = filteredImages.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredImages.length;
 
   return (
     <div className="min-h-screen bg-[#0d0b09] text-white overflow-x-hidden">
@@ -143,6 +157,7 @@ export default function Gallery() {
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
+                type="button"
                 onClick={() => setFilter(id as typeof filter)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${
                   filter === id
@@ -157,27 +172,34 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Gallery Grid */}
+        {/* Gallery Grid — paginated so first paint doesn't load every image */}
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
           {filteredImages.length > 0 ? (
+            <>
             <motion.div 
               layout
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
             >
-              {filteredImages.map((image, i) => (
+              {visibleImages.map((image, i) => (
                 <motion.button
                   type="button"
                   key={image.src}
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.05 }}
+                  transition={{ delay: Math.min(i, 8) * 0.04 }}
                   onClick={() => setLightboxImage(image.src)}
                   aria-label={`Open ${image.alt}`}
                   className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/5 bg-cover bg-center text-left cursor-pointer"
-                  style={{ backgroundImage: `url(${image.src})` }}
+                  style={{ backgroundImage: i < 4 ? `url(${image.src})` : undefined }}
                 >
-                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${image.src})` }} />
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    loading={i < 4 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">
@@ -188,6 +210,18 @@ export default function Gallery() {
                 </motion.button>
               ))}
             </motion.div>
+            {hasMore && (
+              <div className="mt-12 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                  className="rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-8 py-4 text-[11px] font-black uppercase tracking-[0.25em] text-[#D4AF37] transition-colors hover:bg-[#D4AF37] hover:text-black"
+                >
+                  Load more ({filteredImages.length - visibleCount} left)
+                </button>
+              </div>
+            )}
+            </>
           ) : (
             <div className="text-center py-20 px-6">
               <div className="max-w-md mx-auto space-y-6">
