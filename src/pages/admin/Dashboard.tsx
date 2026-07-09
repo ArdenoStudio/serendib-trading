@@ -174,8 +174,9 @@ export default function AdminDashboard() {
 
     if (isSupabaseConfigured) {
       const channel = supabase
-        .channel('dashboard-cars')
+        .channel('dashboard-live')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchVehicles)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, fetchLeads)
         .subscribe();
 
       return () => {
@@ -502,6 +503,9 @@ export default function AdminDashboard() {
   };
 
   const handleSaved = () => {
+    void import('../../lib/inventoryCache').then(({ invalidateInventoryCache }) => {
+      invalidateInventoryCache();
+    });
     fetchVehicles();
     setNotice({ type: 'success', message: 'Inventory saved.' });
   };

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Sparkles, ImagePlus, Trash2, Tag, Plus } from 'lucide-react';
 import { supabase, uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle, isSupabaseConfigured } from '../../lib/supabase';
+import { isBlobUrl } from '../../lib/images';
 
 export interface VehicleFormData {
   id?: string;
@@ -93,9 +94,10 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     try {
       const url = await uploadVehicleImage(file);
       set('image', url);
+      setHeroPreview(url);
     } catch {
-      try { set('image', preview); } catch {}
-      setFormError('Storage upload failed. The image preview is local only until Supabase Storage is available.');
+      // Keep local preview for the operator, but never persist blob: URLs.
+      setFormError('Storage upload failed. Fix Supabase Storage before saving — local previews cannot be published.');
     } finally { setUploading(false); }
   };
 
@@ -104,6 +106,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     setFormError('');
     const newPreviews: string[] = [];
     const newUrls: string[] = [];
+    let failed = 0;
     for (const file of Array.from(files)) {
       const preview = URL.createObjectURL(file);
       newPreviews.push(preview);
@@ -111,11 +114,18 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
         const url = await uploadVehicleImage(file);
         newUrls.push(url);
       } catch {
-        newUrls.push(preview);
+        failed += 1;
       }
     }
-    setGalleryPreviews(p => [...p, ...newPreviews]);
-    set('gallery', [...(form.gallery ?? []), ...newUrls]);
+    setGalleryPreviews((p) => [...p, ...newPreviews]);
+    if (newUrls.length > 0) {
+      set('gallery', [...(form.gallery ?? []), ...newUrls]);
+    }
+    if (failed > 0) {
+      setFormError(
+        `${failed} image${failed === 1 ? '' : 's'} failed to upload. Local previews are not saved to inventory.`,
+      );
+    }
     setUploading(false);
   };
 
@@ -163,6 +173,16 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
       return;
     }
     const { id, ...data } = form;
+    if (isBlobUrl(data.image) || (data.gallery || []).some(isBlobUrl)) {
+      setFormError('Remove local-only image previews and re-upload so vehicle photos get real public URLs.');
+      setSaving(false);
+      return;
+    }
+    if (!data.image?.trim()) {
+      setFormError('Add a hero image before saving this vehicle.');
+      setSaving(false);
+      return;
+    }
     try {
       if (id) {
         const { error } = await supabase.from('cars').update(data).eq('id', id);
