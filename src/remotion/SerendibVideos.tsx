@@ -21,6 +21,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+// Heavy Remotion-only JPG plates live outside public/ so the website deploy stays light.
+import showroomFloor01 from './assets/showroom/serendib-showroom-floor-01.jpg';
+import showroomFloor02 from './assets/showroom/serendib-showroom-floor-02.jpg';
+import showroomFloor03 from './assets/showroom/serendib-showroom-floor-03.jpg';
+import showroomFloor06 from './assets/showroom/serendib-showroom-floor-06.jpg';
+import showroomLogoWall from './assets/showroom/serendib-logo-wall.jpg';
+
 const BG = '#0d0b09';
 const GOLD = '#D4AF37';
 const GOLD_LIGHT = '#F3D67E';
@@ -147,7 +154,16 @@ const values = [
   },
 ];
 
-const pathFor = (path: string) => staticFile(path.replace(/^\/+/, ''));
+const REMOTION_LOCAL_ASSETS: Record<string, string> = {
+  '/images/showroom/serendib-showroom-floor-01.jpg': showroomFloor01,
+  '/images/showroom/serendib-showroom-floor-02.jpg': showroomFloor02,
+  '/images/showroom/serendib-showroom-floor-03.jpg': showroomFloor03,
+  '/images/showroom/serendib-showroom-floor-06.jpg': showroomFloor06,
+  '/images/showroom/serendib-logo-wall.jpg': showroomLogoWall,
+};
+
+const pathFor = (path: string) =>
+  REMOTION_LOCAL_ASSETS[path] || staticFile(path.replace(/^\/+/, ''));
 
 const clamp = {
   extrapolateLeft: 'clamp',
