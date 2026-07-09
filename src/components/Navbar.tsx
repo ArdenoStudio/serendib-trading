@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Instagram, Menu, X } from 'lucide-react';
+import { Heart, Instagram, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedUserIcon } from './ui/animated-user-icon';
 import { INSTAGRAM_URL } from '../lib/socialLinks';
+import { readStringList } from '../lib/storage';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -19,6 +20,18 @@ export default function Navbar() {
   const pathname = location.pathname;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  useEffect(() => {
+    const syncWishlist = () => setWishlistCount(readStringList('wishlist').length);
+    syncWishlist();
+    window.addEventListener('wishlistchange', syncWishlist);
+    window.addEventListener('storage', syncWishlist);
+    return () => {
+      window.removeEventListener('wishlistchange', syncWishlist);
+      window.removeEventListener('storage', syncWishlist);
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -121,6 +134,18 @@ export default function Navbar() {
 
           {/* ── Right CTAs ── */}
           <div className="hidden md:flex items-center gap-3">
+            <Link
+              to="/wishlist"
+              className="relative flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-white/5 text-[#D4AF37] transition-all duration-300 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 active:scale-95"
+              aria-label={wishlistCount > 0 ? `Wishlist, ${wishlistCount} saved` : 'Wishlist'}
+            >
+              <Heart className={`size-4 ${wishlistCount > 0 ? 'fill-current' : ''}`} aria-hidden="true" />
+              {wishlistCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D4AF37] px-1 text-[9px] font-black text-black">
+                  {wishlistCount > 9 ? '9+' : wishlistCount}
+                </span>
+              )}
+            </Link>
             <a
               href={INSTAGRAM_URL}
               target="_blank"
@@ -191,8 +216,8 @@ export default function Navbar() {
 
               <nav aria-label="Mobile navigation">
                 <ul className="flex flex-col gap-1">
-                  {navLinks.map((link, i) => {
-                    const isActive = pathname === link.to;
+                  {[...navLinks, { to: '/wishlist', label: wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist' }].map((link, i) => {
+                    const isActive = pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to));
                     return (
                       <motion.li
                         key={link.to}

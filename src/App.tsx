@@ -22,6 +22,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
 
 export default function App() {
   const location = useLocation();
@@ -97,6 +98,7 @@ export default function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/calculator" element={<Calculator />} />
+            <Route path="/wishlist" element={<Wishlist />} />
 
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />

@@ -56,6 +56,7 @@ export default function Footer() {
               {[
                 { name: 'Home', path: '/' },
                 { name: 'Inventory', path: '/inventory' },
+                { name: 'Wishlist', path: '/wishlist' },
                 { name: 'Financing', path: '/calculator' },
                 { name: 'About Us', path: '/about' },
                 { name: 'Contact', path: '/contact' }
