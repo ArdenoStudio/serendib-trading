@@ -77,7 +77,7 @@ export default function Calculator() {
             </h1>
 
             <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-medium leading-relaxed">
-                Adjust price, down payment, rate, and term to understand a realistic monthly range before you visit the showroom.
+                Adjust price, down payment, and term for an indicative monthly range. Final finance offers require bank approval — confirm numbers with the showroom before deciding.
             </p>
           </motion.div>
         </div>

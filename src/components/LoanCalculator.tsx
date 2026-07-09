@@ -164,6 +164,9 @@ export default function LoanCalculator() {
                         <span className="text-[9px] font-black uppercase text-[#D4AF37]">12.5% Sample APR</span>
                     </div>
                 </div>
+                <p className="max-w-md text-[11px] leading-relaxed text-gray-500 font-medium pt-3">
+                  Indicative estimate only. Final rates, fees, and monthly payments depend on bank approval, vehicle, and your profile. Confirm with Serendib Trading and your lender.
+                </p>
             </div>
 
             {/* Breakdown Mini-Stats */}

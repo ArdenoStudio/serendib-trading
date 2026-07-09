@@ -211,7 +211,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-[0.15em] text-white/40 mb-8 pb-8 border-b border-white/5 tabular-nums">
               <div className="flex items-center gap-2">
                 <Gauge className="w-3 h-3 text-[#D4AF37]" />
-                <span>{car.mileage.toLocaleString()} KM</span>
+                <span>{car.mileage > 0 ? `${car.mileage.toLocaleString()} KM` : 'Ask for KM'}</span>
               </div>
               {cleanSpec(car.transmission) && (
                 <div className="flex items-center gap-2">

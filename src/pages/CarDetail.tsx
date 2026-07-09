@@ -210,7 +210,7 @@ export default function CarDetail() {
     <div className="min-h-screen font-sans bg-[#0d0b09] text-white overflow-x-hidden">
       <SEO 
         title={`${car.year} ${car.make} ${car.model} for Sale`}
-        description={`Explore the ${car.year} ${car.make} ${car.model} at Serendib Trading in Sri Lanka. LKR ${car.price.toLocaleString()}. ${car.condition} condition, ${car.mileage.toLocaleString()} KM.`}
+        description={`Explore the ${car.year} ${car.make} ${car.model} at Serendib Trading in Sri Lanka. LKR ${car.price.toLocaleString()}. ${car.condition} condition${car.mileage > 0 ? `, ${car.mileage.toLocaleString()} KM` : ''}.`}
         ogImage={car.image}
         ogImageAlt={`${car.year} ${car.make} ${car.model} listed by Serendib Trading`}
         canonical={`/car/${car.id}`}
@@ -389,7 +389,7 @@ export default function CarDetail() {
               {/* Technical Specifications Matrix */}
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: 'Odometer', value: `${car.mileage.toLocaleString()} KM`, icon: Gauge },
+                  { label: 'Odometer', value: car.mileage > 0 ? `${car.mileage.toLocaleString()} KM` : 'Ask showroom', icon: Gauge },
                   { label: 'Fuel Type', value: cleanSpec(car.fuel) ?? 'Not specified', icon: Fuel },
                   { label: 'Transmission', value: cleanSpec(car.transmission) ?? 'Not specified', icon: Settings },
                   { label: 'Location', value: 'Dehiwala Showroom', icon: MapPin },
