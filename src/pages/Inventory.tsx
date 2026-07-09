@@ -20,7 +20,7 @@ import CarCard from '../components/CarCard';
 import SEO from '../components/SEO';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import carsData from '../data/cars.json';
+import { getInitialInventory, mapLiveVehicles } from '../lib/inventory';
 import Loader from '../components/Loader';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createInventoryItemListSchema } from '../lib/seo';
@@ -29,7 +29,7 @@ export default function Inventory() {
   const [searchParams] = useSearchParams();
   const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [cars, setCars] = useState<Car[]>(carsData);
+  const [cars, setCars] = useState<Car[]>(getInitialInventory);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
@@ -50,27 +50,19 @@ export default function Inventory() {
   const [isBodyTypeOpen, setIsBodyTypeOpen] = useState(false);
   const [isFuelOpen, setIsFuelOpen] = useState(false);
 
-  const FUEL_OPTIONS = ['Petrol', 'Diesel', 'Hybrid'];
+  const FUEL_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
 
   const filterOptions = useMemo(() => {
-    // Merge all possible options from both sources to ensure filters are always populated with baseline categories
-    const allSources = [...(carsData as Car[]), ...cars];
-    
-    const makes = Array.from(new Set(allSources.map(c => getBrandLabel(c.make)).filter(Boolean))).sort();
-    const bodyTypes = Array.from(new Set(allSources.map(c => c.bodyType).filter(Boolean))).sort();
-    const fuels = Array.from(new Set(allSources.map(c => c.fuel).filter(Boolean))).sort();
-    const transmissions = Array.from(new Set(allSources.map(c => c.transmission).filter(Boolean))).sort();
+    const makes = Array.from(new Set(cars.map(c => getBrandLabel(c.make)).filter(Boolean))).sort();
+    const bodyTypes = Array.from(new Set(cars.map(c => c.bodyType).filter(Boolean))).sort();
+    const fuels = Array.from(new Set([
+      ...FUEL_OPTIONS,
+      ...cars.map(c => c.fuel).filter(Boolean),
+    ])).sort();
+    const transmissions = Array.from(new Set(cars.map(c => c.transmission).filter(Boolean))).sort();
     
     return { makes, bodyTypes, fuels, transmissions };
   }, [cars]);
-
-  // Returns true if vehicle should be hidden from public site
-  const isSoldExpired = (v: Car): boolean => {
-    if (!v.is_sold) return false;
-    if (!v.sold_at) return false; // no timestamp → keep visible
-    const soldMs = new Date(v.sold_at).getTime();
-    return Date.now() - soldMs > 14 * 24 * 60 * 60 * 1000; // > 14 days
-  };
 
   const fetchLiveVehicles = async () => {
     if (!isSupabaseConfigured) {
@@ -79,16 +71,8 @@ export default function Inventory() {
     }
     try {
       const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        const mappedData = data.map((v: any) => ({
-          ...v,
-          bodyType: v.bodyType || v.body_type || '',
-          fuel: v.fuel || v.fuel_type || '',
-          transmission: v.transmission || v.transmission_type || '',
-          key_features: v.key_features || v.keyFeatures || [],
-        }));
-        // Remove vehicles sold more than 14 days ago
-        setCars(mappedData.filter((v: Car) => !isSoldExpired(v)));
+      if (!error) {
+        setCars(mapLiveVehicles(data));
       }
     } catch (err) {
       console.error('Failed to fetch from Supabase:', err);

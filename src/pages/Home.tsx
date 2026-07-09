@@ -6,7 +6,7 @@ import InstagramShowcase from '../components/InstagramShowcase';
 import Footer from '../components/Footer';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import carsData from '../data/cars.json';
+import { getInitialInventory, mapLiveVehicles } from '../lib/inventory';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 import { LocationTag } from '../components/ui/location-tag';
@@ -15,7 +15,7 @@ import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 
 export default function Home() {
-  const [cars, setCars] = useState<Car[]>(carsData);
+  const [cars, setCars] = useState<Car[]>(getInitialInventory);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const navigate = useNavigate();
 
@@ -23,8 +23,8 @@ export default function Home() {
     if (!isSupabaseConfigured) return;
     try {
       const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-      if (!error && data) {
-        setCars(data);
+      if (!error) {
+        setCars(mapLiveVehicles(data));
       }
     } catch (err) {
       console.error('Failed to fetch from Supabase:', err);
@@ -102,7 +102,7 @@ export default function Home() {
 
   const currentHeroSlide = HERO_SHOWROOM_SLIDES[activeHeroSlide];
 
-  const marqueeCars = cars.length > 0 ? cars : carsData;
+  const marqueeCars = cars;
 
   const renderFeaturedCard = (car: Car, key: string) => (
     <motion.div

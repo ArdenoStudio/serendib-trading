@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, BarChart2, Plus, Info, ShieldCheck, TrendingUp, Cpu } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import carsData from '../data/cars.json';
+import { allowDemoInventory, getDemoInventory, mapLiveVehicles } from '../lib/inventory';
 import { LiquidButton } from './ui/liquid-glass-button';
 import { readStringList, writeStringList } from '../lib/storage';
 import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
@@ -46,12 +46,15 @@ export default function ComparisonTray() {
         if (isSupabaseConfigured) {
           const { data } = await supabase.from('cars').select('*').in('id', compareIds);
           if (data && data.length > 0) {
-            setVehicles(data);
+            setVehicles(mapLiveVehicles(data));
             return;
           }
         }
-        const fallbacks = (carsData as Car[]).filter(c => compareIds.includes(c.id));
-        setVehicles(fallbacks);
+        if (allowDemoInventory) {
+          setVehicles(getDemoInventory().filter((c) => compareIds.includes(c.id)));
+          return;
+        }
+        setVehicles([]);
       };
       fetchInfo();
     } else {

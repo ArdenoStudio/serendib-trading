@@ -5,28 +5,68 @@ import Footer from '../components/Footer';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
-import { createOrganizationSchema } from '../lib/seo';
+import { BUSINESS, SHOWROOM_MAPS_URL, createOrganizationSchema } from '../lib/seo';
 import { submitLead } from '../lib/leads';
+
+const sanitizePhone = (value: string) => value.replace(/[^\d+() \-]/g, '').slice(0, 20);
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const text = `Hi, I'm ${formData.name}. My phone number is ${formData.phone}. ${formData.message}`;
+    const name = formData.name.trim().replace(/\s+/g, ' ');
+    const phone = formData.phone.trim();
+    const message = formData.message.trim();
+    const phonePattern = /^[0-9+() -]{7,20}$/;
+
+    if (name.length < 2) {
+      setFormError('Enter a valid full name.');
+      setFormSuccess('');
+      return;
+    }
+    if (!phonePattern.test(phone)) {
+      setFormError('Enter a valid contact number.');
+      setFormSuccess('');
+      return;
+    }
+    if (message.length < 2) {
+      setFormError('Tell us a little about what you need.');
+      setFormSuccess('');
+      return;
+    }
+
+    const text = `Hi, I'm ${name}. My phone number is ${phone}. ${message}`;
+    const whatsappUrl = `https://wa.me/94756363427?text=${encodeURIComponent(text)}`;
+
+    setSubmitting(true);
+    setFormError('');
+    setFormSuccess('');
 
     try {
       await submitLead({
         type: 'General Inquiry',
-        name: formData.name,
-        phone: formData.phone,
-        message: formData.message,
+        name,
+        phone,
+        message,
       });
+      setFormSuccess('Inquiry received. Opening WhatsApp so you can finish the conversation…');
+      setFormData({ name: '', phone: '', message: '' });
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Lead capture failed:', error);
+      setFormError(
+        error instanceof Error
+          ? `${error.message} You can still continue on WhatsApp.`
+          : 'Could not save your inquiry. You can still continue on WhatsApp.'
+      );
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    } finally {
+      setSubmitting(false);
     }
-
-    window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -116,9 +156,9 @@ export default function Contact() {
 
               <div className="space-y-10">
                 {[
-                  { icon: Phone, label: "Direct Support", val: "075 636 3427", sub: "077 779 7421", href: "tel:+94756363427" },
-                  { icon: Mail, label: "Inquiries", val: "bilalikras1@gmail.com", href: "mailto:bilalikras1@gmail.com" },
-                  { icon: MapPin, label: "Visit Showroom", val: "Dehiwala HQ, Colombo", href: "https://maps.google.com/?q=Dehiwala-Mount+Lavinia" },
+                  { icon: Phone, label: "Direct Support", val: "075 636 3427", sub: "077 779 7421", href: `tel:${BUSINESS.phone}` },
+                  { icon: Mail, label: "Inquiries", val: BUSINESS.email, href: `mailto:${BUSINESS.email}` },
+                  { icon: MapPin, label: "Visit Showroom", val: "Dehiwala HQ, Colombo", href: SHOWROOM_MAPS_URL },
                 ].map((item, i) => (
                   <motion.a 
                     key={i}
@@ -182,10 +222,12 @@ export default function Contact() {
                       type="tel" 
                       required 
                       value={formData.phone} 
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} 
+                      onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })} 
                       className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
                       id="phone"
                       placeholder="Contact No"
+                      maxLength={20}
+                      pattern="[0-9+() \-]{7,20}"
                     />
                     <label 
                       htmlFor="phone" 
@@ -214,10 +256,25 @@ export default function Contact() {
                   </label>
                 </div>
 
+                {formError && (
+                  <p className="text-sm font-bold text-red-300" role="alert">
+                    {formError}
+                  </p>
+                )}
+                {formSuccess && (
+                  <p className="text-sm font-bold text-emerald-300" role="status">
+                    {formSuccess}
+                  </p>
+                )}
+
                 <div className="pt-6">
                   <LiquidButton asChild size="xxl" className="w-full md:w-auto">
-                    <button type="submit" className="w-full md:w-auto px-16 flex items-center justify-center gap-6 text-[11px] font-black tracking-[0.4em] uppercase">
-                      Send via WhatsApp <ArrowRight className="size-5" />
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full md:w-auto px-16 flex items-center justify-center gap-6 text-[11px] font-black tracking-[0.4em] uppercase disabled:opacity-60"
+                    >
+                      {submitting ? 'Sending…' : 'Send via WhatsApp'} <ArrowRight className="size-5" />
                     </button>
                   </LiquidButton>
                 </div>

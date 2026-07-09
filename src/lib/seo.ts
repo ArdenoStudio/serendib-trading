@@ -33,6 +33,9 @@ export const BUSINESS = {
   priceRange: 'LKR',
 };
 
+/** Exact showroom pin for map links (not a city-level search). */
+export const SHOWROOM_MAPS_URL = `https://www.google.com/maps?q=${BUSINESS.latitude},${BUSINESS.longitude}`;
+
 export const CORE_KEYWORDS = [
   'imported vehicles Sri Lanka',
   'cars for sale Sri Lanka',

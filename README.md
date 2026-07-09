@@ -37,4 +37,6 @@ SUPABASE_SERVICE_ROLE_KEY=...
 LEAD_RATE_LIMIT_SALT=...
 ```
 
+`/sitemap.xml` is generated dynamically from live inventory (`api/sitemap.js`). Production never serves demo cars from `src/data/cars.json` — that JSON is local-dev fallback only when Supabase env vars are missing.
+
 Keep leaked-password protection enabled in Supabase Auth, or disable password login entirely if Google OAuth is the only admin sign-in method.

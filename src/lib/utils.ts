@@ -10,6 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 const SPEC_PLACEHOLDERS = new Set([
   '', 'n/a', 'na', '-', '–', '—', 'unknown', 'undefined', 'null', 'none',
   'transmission', 'fuel', 'fuel type', 'body type', 'bodytype', 'condition', 'make', 'model',
+  // Admin form once listed "Fuel" as a selectable value — treat as empty.
 ])
 
 // Returns a spec value only if it carries real information, otherwise null so the

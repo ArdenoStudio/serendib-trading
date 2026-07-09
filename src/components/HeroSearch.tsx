@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import carsData from '../data/cars.json';
+import { getInitialInventory, mapLiveVehicles } from '../lib/inventory';
 import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
 
 const CustomSelect = ({
@@ -143,7 +143,7 @@ export default function HeroSearch() {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [bodyType, setBodyType] = useState('');
-  const [cars, setCars] = useState<Car[]>(carsData);
+  const [cars, setCars] = useState<Car[]>(getInitialInventory);
   const navigate = useNavigate();
   const [isSearchHovered, setIsSearchHovered] = useState(false);
 
@@ -151,15 +151,15 @@ export default function HeroSearch() {
     const fetchLiveVehicles = async () => {
       if (!isSupabaseConfigured) return;
       const { data, error } = await supabase.from('cars').select('*');
-      if (!error && data) {
-        setCars(data);
+      if (!error) {
+        setCars(mapLiveVehicles(data));
       }
     };
     fetchLiveVehicles();
   }, []);
 
   const options = useMemo(() => {
-    const availableCars = (cars.length > 0 ? cars : carsData as Car[]).filter(car => !car.is_sold);
+    const availableCars = cars.filter(car => !car.is_sold);
 
     const filteredByCondition = condition === 'all' 
       ? availableCars 

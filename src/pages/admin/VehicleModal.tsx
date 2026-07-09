@@ -29,17 +29,28 @@ interface Props {
   onSaved: () => void;
 }
 
+const FUEL_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'] as const;
+const TRANSMISSION_OPTIONS = ['Automatic', 'Manual'] as const;
+const BODY_TYPE_OPTIONS = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Coupe', 'Pickup', 'Double Cab', 'Van', 'Wagon', 'Convertible'] as const;
+
 const EMPTY: VehicleFormData = {
   make:'', model:'', year: new Date().getFullYear(), price:0, mileage:0,
   fuel:'Hybrid', transmission:'Automatic', bodyType:'Sedan', color:'',
   image:'', gallery:[], condition:'Registered', is_sold:false, description:'', key_features:[],
 };
 
+const sanitizeForm = (data: VehicleFormData): VehicleFormData => ({
+  ...data,
+  fuel: (FUEL_OPTIONS as readonly string[]).includes(data.fuel) ? data.fuel : 'Petrol',
+  transmission: (TRANSMISSION_OPTIONS as readonly string[]).includes(data.transmission) ? data.transmission : 'Automatic',
+  bodyType: (BODY_TYPE_OPTIONS as readonly string[]).includes(data.bodyType) ? data.bodyType : data.bodyType || 'Sedan',
+});
+
 const inp = 'w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 px-4 text-sm font-medium text-white placeholder:text-white/55 focus:outline-none focus:border-[#D4AF37] transition-all [color-scheme:dark]';
 const lbl = 'block text-[10px] font-black uppercase tracking-[0.2em] text-white/65 mb-1.5';
 
 export default function VehicleModal({ initial, onClose, onSaved }: Props) {
-  const [form, setForm] = useState<VehicleFormData>(initial ?? EMPTY);
+  const [form, setForm] = useState<VehicleFormData>(sanitizeForm(initial ?? EMPTY));
   const [tab, setTab] = useState<'form'|'paste'>('form');
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
@@ -242,13 +253,13 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                    <div>
                     <label className={lbl}>Fuel</label>
                     <select value={form.fuel} onChange={e=>set('fuel',e.target.value)} className={inp}>
-                      {['Fuel','Hybrid','Petrol','Diesel','Electric'].map(f=><option key={f} value={f} className="bg-black text-white">{f}</option>)}
+                      {FUEL_OPTIONS.map(f=><option key={f} value={f} className="bg-black text-white">{f}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className={lbl}>Transmission</label>
                     <select value={form.transmission} onChange={e=>set('transmission',e.target.value)} className={inp}>
-                      {['Transmission','Automatic','Manual'].map(t=><option key={t} value={t} className="bg-black text-white">{t}</option>)}
+                      {TRANSMISSION_OPTIONS.map(t=><option key={t} value={t} className="bg-black text-white">{t}</option>)}
                     </select>
                   </div>
                 </div>
@@ -257,7 +268,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                   <div>
                     <label className={lbl}>Body Type</label>
                     <select value={form.bodyType} onChange={e=>set('bodyType',e.target.value)} className={inp}>
-                      {['Sedan','Hatchback','SUV','Coupe','Pickup','Double Cab','Van','Wagon','Convertible'].map(b=><option key={b} value={b} className="bg-black text-white">{b}</option>)}
+                      {BODY_TYPE_OPTIONS.map(b=><option key={b} value={b} className="bg-black text-white">{b}</option>)}
                     </select>
                   </div>
                   <div className="sm:col-span-1 lg:col-span-3"><label className={lbl}>Color</label><input value={form.color} onChange={e=>set('color',e.target.value)} className={inp} placeholder="Pearl White"/></div>

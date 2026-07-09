@@ -6,7 +6,14 @@ import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
 import { isSupabaseConfigured, logCarView, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import carsData from '../data/cars.json';
+import {
+  allowDemoInventory,
+  getDemoInventory,
+  getInitialInventory,
+  isSoldExpired,
+  mapLiveVehicles,
+  normalizeVehicle,
+} from '../lib/inventory';
 import Loader from '../components/Loader';
 import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
@@ -15,52 +22,44 @@ import { cleanSpec } from '../lib/utils';
 import { submitLead } from '../lib/leads';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 
-const normalizeVehicle = (vehicle: any): Car => ({
-  ...vehicle,
-  make: getBrandLabel(vehicle.make),
-  model: getDisplayModel(vehicle.make, vehicle.model),
-  bodyType: vehicle.bodyType || vehicle.body_type || '',
-  fuel: vehicle.fuel || vehicle.fuel_type || '',
-  transmission: vehicle.transmission || vehicle.transmission_type || '',
-  key_features: vehicle.key_features || vehicle.keyFeatures || [],
-});
-
-const fallbackCars = (carsData as Car[]).map(normalizeVehicle);
-
-const isSoldExpired = (vehicle: Car): boolean => {
-  if (!vehicle.is_sold || !vehicle.sold_at) return false;
-  const soldMs = new Date(vehicle.sold_at).getTime();
-  if (Number.isNaN(soldMs)) return false;
-  return Date.now() - soldMs > 14 * 24 * 60 * 60 * 1000;
-};
-
 export default function CarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [car, setCar] = useState<Car | null>(null);
-  const [inventoryCars, setInventoryCars] = useState<Car[]>(fallbackCars);
+  const [inventoryCars, setInventoryCars] = useState<Car[]>(getInitialInventory);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCar = async () => {
       if (isSupabaseConfigured) {
         const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          const liveCars = data.map(normalizeVehicle);
-          setInventoryCars(liveCars.filter((vehicle) => !isSoldExpired(vehicle)));
+        if (!error && data) {
+          const liveCars = mapLiveVehicles(data);
+          setInventoryCars(liveCars);
 
-          const liveCar = liveCars.find((vehicle) => vehicle.id === id);
-          if (liveCar) {
+          const liveCar = liveCars.find((vehicle) => vehicle.id === id)
+            ?? data.map(normalizeVehicle).find((vehicle) => vehicle.id === id);
+          if (liveCar && !isSoldExpired(liveCar)) {
             setCar(liveCar);
             setLoading(false);
             return;
           }
+
+          // Production: never fall back to demo JSON stock.
+          setCar(null);
+          setLoading(false);
+          return;
         }
       }
 
-      setInventoryCars(fallbackCars);
-      const fallback = fallbackCars.find(c => c.id === id);
-      setCar(fallback || null);
+      if (allowDemoInventory) {
+        const demoCars = getDemoInventory();
+        setInventoryCars(demoCars);
+        setCar(demoCars.find((c) => c.id === id) || null);
+      } else {
+        setInventoryCars([]);
+        setCar(null);
+      }
       setLoading(false);
     };
     fetchCar();
@@ -68,6 +67,7 @@ export default function CarDetail() {
 
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
   const [leadError, setLeadError] = useState('');
+  const [leadSuccess, setLeadSuccess] = useState('');
   const [submittingLead, setSubmittingLead] = useState(false);
   const [activeImage, setActiveImage] = useState(car?.image || '');
   const [copyToast, setCopyToast] = useState(false);
@@ -135,7 +135,11 @@ export default function CarDetail() {
     }
 
     setLeadError('');
+    setLeadSuccess('');
     setSubmittingLead(true);
+
+    const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${phone}`;
+    const whatsappUrl = `https://wa.me/94756363427?text=${encodeURIComponent(text)}`;
 
     try {
       await submitLead({
@@ -147,13 +151,19 @@ export default function CarDetail() {
         date: testDriveForm.date,
         time: testDriveForm.time,
       });
+      setLeadSuccess('Request received. Opening WhatsApp to confirm with our team…');
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Lead capture failed:', error);
+      setLeadError(
+        error instanceof Error
+          ? `${error.message} You can still continue on WhatsApp.`
+          : 'Could not save your request. You can still continue on WhatsApp.'
+      );
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    } finally {
+      setSubmittingLead(false);
     }
-
-    const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${phone}`;
-    window.open(`https://wa.me/94756363427?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-    setSubmittingLead(false);
   };
 
   const handleShare = async () => {
@@ -430,6 +440,11 @@ export default function CarDetail() {
                   {leadError && (
                     <p className="text-xs font-bold text-red-300" role="alert">
                       {leadError}
+                    </p>
+                  )}
+                  {leadSuccess && (
+                    <p className="text-xs font-bold text-emerald-300" role="status">
+                      {leadSuccess}
                     </p>
                   )}
                   <button type="submit" disabled={submittingLead} className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
