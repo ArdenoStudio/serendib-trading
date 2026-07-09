@@ -21,56 +21,55 @@ const SHOWROOM_GALLERY_IMAGES: GalleryImage[] = SHOWROOM_IMAGES.map((image) => (
   alt: image.alt,
 }));
 
+// Labels follow the original gallery asset sets (not brand-guessed from file order alone).
 const GALLERY_IMAGES: GalleryImage[] = [
   ...SHOWROOM_GALLERY_IMAGES,
-  // Mercedes-Benz (6 images)
-  { src: '/images/gallery/vehicle-1.webp', category: 'vehicles', alt: 'Mercedes-Benz showcase' },
-  { src: '/images/gallery/vehicle-2.webp', category: 'vehicles', alt: 'Mercedes-Benz exterior' },
-  { src: '/images/gallery/vehicle-3.webp', category: 'vehicles', alt: 'Mercedes-Benz interior' },
-  { src: '/images/gallery/vehicle-4.webp', category: 'vehicles', alt: 'Mercedes-Benz detail' },
-  { src: '/images/gallery/vehicle-5.webp', category: 'vehicles', alt: 'Mercedes-Benz luxury' },
-  { src: '/images/gallery/vehicle-6.webp', category: 'vehicles', alt: 'Mercedes-Benz premium' },
-  
-  // Toyota Camry (7 images)
-  { src: '/images/gallery/vehicle-7.webp', category: 'vehicles', alt: 'Toyota Camry showcase' },
-  { src: '/images/gallery/vehicle-8.webp', category: 'vehicles', alt: 'Toyota Camry interior' },
-  { src: '/images/gallery/vehicle-9.webp', category: 'vehicles', alt: 'Toyota Camry detail' },
-  { src: '/images/gallery/vehicle-10.webp', category: 'vehicles', alt: 'Toyota Camry exterior' },
-  { src: '/images/gallery/vehicle-11.webp', category: 'vehicles', alt: 'Toyota Camry luxury' },
-  { src: '/images/gallery/vehicle-12.webp', category: 'vehicles', alt: 'Toyota Camry premium' },
-  { src: '/images/gallery/vehicle-13.webp', category: 'vehicles', alt: 'Toyota Camry elegance' },
-  
-  // Mini Cooper (5 images)
-  { src: '/images/gallery/vehicle-14.webp', category: 'vehicles', alt: 'Mini Cooper showcase' },
-  { src: '/images/gallery/vehicle-15.webp', category: 'vehicles', alt: 'Mini Cooper interior' },
-  { src: '/images/gallery/vehicle-16.webp', category: 'vehicles', alt: 'Mini Cooper detail' },
-  { src: '/images/gallery/vehicle-17.webp', category: 'vehicles', alt: 'Mini Cooper exterior' },
-  { src: '/images/gallery/vehicle-18.webp', category: 'vehicles', alt: 'Mini Cooper classic' },
-  
-  // Toyota Premio (7 images)
-  { src: '/images/gallery/vehicle-19.webp', category: 'vehicles', alt: 'Toyota Premio showcase' },
-  { src: '/images/gallery/vehicle-20.webp', category: 'vehicles', alt: 'Toyota Premio interior' },
-  { src: '/images/gallery/vehicle-21.webp', category: 'vehicles', alt: 'Toyota Premio detail' },
-  { src: '/images/gallery/vehicle-22.webp', category: 'vehicles', alt: 'Toyota Premio exterior' },
-  { src: '/images/gallery/vehicle-23.webp', category: 'vehicles', alt: 'Toyota Premio luxury' },
-  { src: '/images/gallery/vehicle-24.webp', category: 'vehicles', alt: 'Toyota Premio premium' },
-  { src: '/images/gallery/vehicle-25.webp', category: 'vehicles', alt: 'Toyota Premio elegance' },
-  
-  // Kia Sorento (10 images) - treating as showroom/vehicles mix for variety
-  { src: '/images/gallery/vehicle-26.webp', category: 'vehicles', alt: 'Kia Sorento showcase' },
-  { src: '/images/gallery/vehicle-27.webp', category: 'vehicles', alt: 'Kia Sorento interior' },
-  { src: '/images/gallery/vehicle-28.webp', category: 'vehicles', alt: 'Kia Sorento detail' },
-  { src: '/images/gallery/vehicle-29.webp', category: 'showroom', alt: 'Showroom presentation' },
-  { src: '/images/gallery/vehicle-30.webp', category: 'showroom', alt: 'Vehicle display' },
-  { src: '/images/gallery/vehicle-31.webp', category: 'showroom', alt: 'Showroom interior' },
-  { src: '/images/gallery/vehicle-32.webp', category: 'showroom', alt: 'Luxury showcase' },
-  { src: '/images/gallery/vehicle-33.webp', category: 'showroom', alt: 'Premium display' },
-  { src: '/images/gallery/vehicle-34.webp', category: 'vehicles', alt: 'Kia Sorento exterior' },
-  { src: '/images/gallery/vehicle-35.webp', category: 'vehicles', alt: 'Kia Sorento premium' },
-  // Additional Sorento shots categorized as showroom
-  { src: '/images/gallery/vehicle-36.webp', category: 'showroom', alt: 'Showroom ambiance' },
-  { src: '/images/gallery/vehicle-37.webp', category: 'showroom', alt: 'Vehicle arrangement' },
-  { src: '/images/gallery/vehicle-38.webp', category: 'showroom', alt: 'Collection display' },
+  // Toyota Land Cruiser Prado set
+  { src: '/images/gallery/vehicle-1.webp', category: 'vehicles', alt: 'Toyota Land Cruiser Prado exterior on the Serendib floor' },
+  { src: '/images/gallery/vehicle-2.webp', category: 'vehicles', alt: 'Toyota Land Cruiser Prado three-quarter view' },
+  { src: '/images/gallery/vehicle-3.webp', category: 'vehicles', alt: 'Toyota Land Cruiser Prado cabin detail' },
+  // BMW 5 Series set
+  { src: '/images/gallery/vehicle-4.webp', category: 'vehicles', alt: 'BMW 5 Series M Sport front exterior' },
+  { src: '/images/gallery/vehicle-5.webp', category: 'vehicles', alt: 'BMW 5 Series side profile' },
+  { src: '/images/gallery/vehicle-6.webp', category: 'vehicles', alt: 'BMW 5 Series interior and trim' },
+  // Honda Vezel / crossover set
+  { src: '/images/gallery/vehicle-7.webp', category: 'vehicles', alt: 'Honda Vezel Hybrid crossover exterior' },
+  { src: '/images/gallery/vehicle-8.webp', category: 'vehicles', alt: 'Honda Vezel Hybrid cabin and dash' },
+  { src: '/images/gallery/vehicle-9.webp', category: 'vehicles', alt: 'Honda Vezel Hybrid rear and boot detail' },
+  // Land Rover Range Rover set
+  { src: '/images/gallery/vehicle-10.webp', category: 'vehicles', alt: 'Range Rover Vogue luxury SUV exterior' },
+  { src: '/images/gallery/vehicle-11.webp', category: 'vehicles', alt: 'Range Rover Vogue side and wheels' },
+  { src: '/images/gallery/vehicle-12.webp', category: 'vehicles', alt: 'Range Rover Vogue interior seating' },
+  // Toyota Aqua hybrid set
+  { src: '/images/gallery/vehicle-13.webp', category: 'vehicles', alt: 'Toyota Aqua Hybrid compact hatch exterior' },
+  { src: '/images/gallery/vehicle-14.webp', category: 'vehicles', alt: 'Toyota Aqua Hybrid interior overview' },
+  { src: '/images/gallery/vehicle-15.webp', category: 'vehicles', alt: 'Toyota Aqua Hybrid detail shot' },
+  // Mercedes-Benz C-Class set
+  { src: '/images/gallery/vehicle-16.webp', category: 'vehicles', alt: 'Mercedes-Benz C-Class AMG Line exterior' },
+  { src: '/images/gallery/vehicle-17.webp', category: 'vehicles', alt: 'Mercedes-Benz C-Class front grille and lamps' },
+  { src: '/images/gallery/vehicle-18.webp', category: 'vehicles', alt: 'Mercedes-Benz C-Class cabin detail' },
+  // Additional inventory photography
+  { src: '/images/gallery/vehicle-19.webp', category: 'vehicles', alt: 'Imported sedan displayed at Serendib Trading' },
+  { src: '/images/gallery/vehicle-20.webp', category: 'vehicles', alt: 'Vehicle interior stitching and materials close-up' },
+  { src: '/images/gallery/vehicle-21.webp', category: 'vehicles', alt: 'Dashboard and instrument cluster detail' },
+  { src: '/images/gallery/vehicle-22.webp', category: 'vehicles', alt: 'Vehicle exterior paint and body line detail' },
+  { src: '/images/gallery/vehicle-23.webp', category: 'vehicles', alt: 'Premium alloy wheel and brake detail' },
+  { src: '/images/gallery/vehicle-24.webp', category: 'vehicles', alt: 'Rear exterior of an imported passenger car' },
+  { src: '/images/gallery/vehicle-25.webp', category: 'vehicles', alt: 'Showroom lighting on a listed vehicle' },
+  { src: '/images/gallery/vehicle-26.webp', category: 'vehicles', alt: 'SUV exterior parked for inspection' },
+  { src: '/images/gallery/vehicle-27.webp', category: 'vehicles', alt: 'SUV cabin seats and door cards' },
+  { src: '/images/gallery/vehicle-28.webp', category: 'vehicles', alt: 'SUV centre console and controls' },
+  // Floor / presentation shots mixed into gallery assets
+  { src: '/images/gallery/vehicle-29.webp', category: 'showroom', alt: 'Dehiwala showroom presentation bay' },
+  { src: '/images/gallery/vehicle-30.webp', category: 'showroom', alt: 'Vehicles arranged for customer viewing' },
+  { src: '/images/gallery/vehicle-31.webp', category: 'showroom', alt: 'Indoor showroom aisle and lighting' },
+  { src: '/images/gallery/vehicle-32.webp', category: 'showroom', alt: 'Premium display corner in the Serendib showroom' },
+  { src: '/images/gallery/vehicle-33.webp', category: 'showroom', alt: 'Floor presentation with multiple units' },
+  { src: '/images/gallery/vehicle-34.webp', category: 'vehicles', alt: 'SUV exterior three-quarter view' },
+  { src: '/images/gallery/vehicle-35.webp', category: 'vehicles', alt: 'SUV premium exterior finish' },
+  { src: '/images/gallery/vehicle-36.webp', category: 'showroom', alt: 'Showroom ambiance and ambient lighting' },
+  { src: '/images/gallery/vehicle-37.webp', category: 'showroom', alt: 'Vehicle arrangement for walk-around inspection' },
+  { src: '/images/gallery/vehicle-38.webp', category: 'showroom', alt: 'Serendib Trading collection display' },
 ];
 
 export default function Gallery() {
