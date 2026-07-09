@@ -268,7 +268,7 @@ export default function CarDetail() {
               <div className="absolute bottom-8 right-8">
                  <div className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center gap-4">
                     <Award className="w-6 h-6 text-[#D4AF37]" />
-                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Serendib <br/> Certified</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Dehiwala <br/> Showroom</span>
                  </div>
               </div>
               {/* Image Depth Outline */}
@@ -296,34 +296,42 @@ export default function CarDetail() {
               ))}
             </div>
 
-            {/* In-depth Narrative */}
-            <div className="hidden lg:block space-y-16 pt-16 border-t border-white/5">
-              <div className="space-y-6">
+            {/* Narrative + real features (visible on all breakpoints) */}
+            <div className="space-y-10 md:space-y-16 pt-10 md:pt-16 border-t border-white/5">
+              <div className="space-y-4 md:space-y-6">
                 <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">The <span className="text-[#D4AF37]">Experience</span></h3>
-                <p className="text-gray-400 text-xl leading-relaxed font-light">
+                <p className="text-gray-400 text-base md:text-xl leading-relaxed font-light">
                   "{car.description || "A carefully checked vehicle with clear photos, listed specifications, and support available for finance, viewing, and handover questions."}"
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-8">
-                 <div className="space-y-6">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Premium Features</h4>
-                    <div className="space-y-4">
-                      {((car as any).key_features || car.keyFeatures || ['Harman Kardon Audio', 'Adaptive Matrix LEDs', 'Panoramic Sunroof', 'Blind Spot Monitoring']).map((f: string, i: number) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-[#D4AF37]" />
-                          <span className="text-sm font-bold text-gray-300">{f}</span>
-                        </div>
-                      ))}
+              {(() => {
+                const features = (car.key_features || car.keyFeatures || [])
+                  .map((f) => String(f).replace(/^[-•\s]+/, '').trim())
+                  .filter(Boolean);
+                if (features.length === 0) return null;
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Key Features</h4>
+                      <div className="space-y-4">
+                        {features.map((f, i) => (
+                          <div key={`${f}-${i}`} className="flex items-center gap-3">
+                            <CheckCircle2 className="w-5 h-5 shrink-0 text-[#D4AF37]" />
+                            <span className="text-sm font-bold text-gray-300">{f}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                 </div>
-                 <div className="space-y-6 p-8 bg-white/[0.02] border border-white/5 rounded-3xl">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Our Evaluation</h4>
-                    <p className="text-xs text-gray-500 font-medium leading-relaxed">
-                      This unit has been reviewed against its available documents, visible condition, mileage, and listed specifications before being published.
-                    </p>
-                 </div>
-              </div>
+                    <div className="space-y-6 p-8 bg-white/[0.02] border border-white/5 rounded-3xl">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">Our Evaluation</h4>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                        This unit has been reviewed against its available documents, visible condition, mileage, and listed specifications before being published.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
