@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { prepareImageForUpload } from './images';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -55,12 +56,18 @@ const ALLOWED_IMAGE_TYPES = new Map([
 
 export const uploadVehicleImage = async (file: File): Promise<string> => {
   requireSupabase();
-  const ext = ALLOWED_IMAGE_TYPES.get(file.type);
-  if (!ext) {
+  if (!file.type.startsWith('image/')) {
     throw new Error('Unsupported image type. Upload a JPG, PNG, or WebP image.');
   }
   if (file.size > MAX_IMAGE_BYTES) {
     throw new Error('Image is too large. Upload images up to 5 MB.');
+  }
+
+  // Compress to WebP when possible so inventory pages ship smaller files.
+  const prepared = await prepareImageForUpload(file);
+  const ext = ALLOWED_IMAGE_TYPES.get(prepared.type) || 'webp';
+  if (!ALLOWED_IMAGE_TYPES.has(prepared.type) && prepared.type !== 'image/webp') {
+    throw new Error('Unsupported image type. Upload a JPG, PNG, or WebP image.');
   }
 
   const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -70,7 +77,12 @@ export const uploadVehicleImage = async (file: File): Promise<string> => {
 
   const { data, error } = await supabase.storage
     .from(STORAGE_BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(path, prepared, {
+      contentType: prepared.type || 'image/webp',
+      // Long-lived public cache; object path is unique per upload.
+      cacheControl: '31536000',
+      upsert: false,
+    });
 
   if (error) throw new Error(`Storage upload failed: ${error.message}`);
 

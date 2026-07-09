@@ -14,6 +14,7 @@ import { LocationTag } from '../components/ui/location-tag';
 import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
+import { optimizeImageUrl } from '../lib/images';
 
 export default function Home() {
   const [cars, setCars] = useState<Car[]>(getInitialInventory);
@@ -124,11 +125,16 @@ export default function Home() {
         </div>
 
         <motion.img
-          src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image}
+          src={
+            car.image.includes('unsplash.com')
+              ? `${car.image}&w=600&q=70`
+              : optimizeImageUrl(car.image, 'card')
+          }
           alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
           width={420}
           height={288}
           loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
         />
 

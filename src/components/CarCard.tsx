@@ -5,7 +5,13 @@ import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
 import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
 import { readStringList, writeStringList } from '../lib/storage';
 import { cleanSpec } from '../lib/utils';
+import { optimizeImageUrl } from '../lib/images';
 import { BrandMark, getBrandLabel, getDisplayModel } from './brand/BrandMark';
+
+function cardImageSrc(url: string) {
+  if (url.includes('unsplash.com')) return `${url}&w=600&q=70`;
+  return optimizeImageUrl(url, 'card');
+}
 
 interface CarCardProps {
   car: {
@@ -34,6 +40,12 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
   const [isComparing, setIsComparing] = useState(false);
   const [compareToast, setCompareToast] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const preferredSrc = cardImageSrc(car.image);
+  const [imageSrc, setImageSrc] = useState(preferredSrc);
+
+  useEffect(() => {
+    setImageSrc(cardImageSrc(car.image));
+  }, [car.image]);
 
   useEffect(() => {
     const wishlist = readStringList('wishlist');
@@ -97,7 +109,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
 
         {/* Lightbox */}
         <ImageLightbox
-          src={car.image}
+          src={optimizeImageUrl(car.image, 'detail')}
           alt={`${car.year} ${displayMake} ${displayModel}`}
           isOpen={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
@@ -108,7 +120,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           <motion.img
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            src={car.image.includes('unsplash.com') ? `${car.image}&w=600&q=70` : car.image}
+            src={imageSrc}
             alt={`${displayMake} ${displayModel}`}
             width={384}
             height={240}
@@ -116,6 +128,9 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"
+            onError={() => {
+              if (imageSrc !== car.image) setImageSrc(car.image);
+            }}
           />
           
           {/* Lightbox Trigger */}

@@ -16,6 +16,7 @@ import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
 import { createVehicleSchema } from '../lib/seo';
 import { cleanSpec } from '../lib/utils';
+import { optimizeImageUrl } from '../lib/images';
 import { submitLead } from '../lib/leads';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 
@@ -107,7 +108,7 @@ export default function CarDetail() {
   // Track active image updates and Log View
   useEffect(() => {
     if (car?.image) {
-      setActiveImage(car.image);
+      setActiveImage(optimizeImageUrl(car.image, 'detail'));
       logCarView(car.id);
     }
   }, [car]);
@@ -299,23 +300,28 @@ export default function CarDetail() {
 
             {/* Thumbnails Gallery */}
             <div className="grid grid-cols-4 gap-6">
-              {[car.image, ...(car.gallery || [])].map((img, i) => (
+              {[car.image, ...(car.gallery || [])].map((img, i) => {
+                const detailSrc = optimizeImageUrl(img, 'detail');
+                const thumbSrc = optimizeImageUrl(img, 'thumb');
+                const isActive = activeImage === detailSrc || activeImage === img;
+                return (
                 <button 
                   key={i}
-                  onClick={() => setActiveImage(img)}
-                  onDoubleClick={() => setLightboxImage(img)}
+                  onClick={() => setActiveImage(detailSrc)}
+                  onDoubleClick={() => setLightboxImage(detailSrc)}
                   className={`aspect-[4/3] rounded-[24px] overflow-hidden border transition-all duration-500 relative group cursor-zoom-in ${
-                    activeImage === img ? 'border-[#D4AF37] p-1' : 'border-white/5 opacity-50 hover:opacity-100'
+                    isActive ? 'border-[#D4AF37] p-1' : 'border-white/5 opacity-50 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover rounded-[20px] group-hover:scale-110 transition-transform duration-700" />
-                  {activeImage === img && <div className="absolute inset-0 bg-[#D4AF37]/10" />}
+                  <img src={thumbSrc} alt={`Gallery ${i+1}`} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-[20px] group-hover:scale-110 transition-transform duration-700" />
+                  {isActive && <div className="absolute inset-0 bg-[#D4AF37]/10" />}
                   {/* Zoom hint on hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/40">
                     <span className="text-white text-[10px] font-bold uppercase tracking-wider">Double-click to zoom</span>
                   </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
 
             {/* Narrative + real features (visible on all breakpoints) */}
