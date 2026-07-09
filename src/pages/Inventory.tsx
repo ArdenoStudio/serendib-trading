@@ -20,7 +20,8 @@ import CarCard from '../components/CarCard';
 import SEO from '../components/SEO';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import { getInitialInventory, mapLiveVehicles } from '../lib/inventory';
+import { getInitialInventory } from '../lib/inventory';
+import { fetchInventoryList, invalidateInventoryCache } from '../lib/inventoryCache';
 import Loader from '../components/Loader';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createInventoryItemListSchema } from '../lib/seo';
@@ -64,16 +65,14 @@ export default function Inventory() {
     return { makes, bodyTypes, fuels, transmissions };
   }, [cars]);
 
-  const fetchLiveVehicles = async () => {
+  const fetchLiveVehicles = async (force = false) => {
     if (!isSupabaseConfigured) {
       setLoading(false);
       return;
     }
     try {
-      const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-      if (!error) {
-        setCars(mapLiveVehicles(data));
-      }
+      if (force) invalidateInventoryCache();
+      setCars(await fetchInventoryList({ force }));
     } catch (err) {
       console.error('Failed to fetch from Supabase:', err);
     } finally {
@@ -86,12 +85,14 @@ export default function Inventory() {
       setLoading(false);
       return;
     }
-    fetchLiveVehicles();
+    void fetchLiveVehicles(false);
 
     // Realtime: re-fetch whenever anything changes in 'cars'
     const channel = supabase
       .channel('inventory-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchLiveVehicles)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, () => {
+        void fetchLiveVehicles(true);
+      })
       .subscribe();
 
     return () => { void channel.unsubscribe(); };

@@ -6,7 +6,8 @@ import InstagramShowcase from '../components/InstagramShowcase';
 import Footer from '../components/Footer';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
-import { getInitialInventory, mapLiveVehicles } from '../lib/inventory';
+import { getInitialInventory } from '../lib/inventory';
+import { fetchInventoryList, invalidateInventoryCache } from '../lib/inventoryCache';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 import { LocationTag } from '../components/ui/location-tag';
@@ -19,13 +20,11 @@ export default function Home() {
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const navigate = useNavigate();
 
-  const fetchLiveVehicles = async () => {
+  const fetchLiveVehicles = async (force = false) => {
     if (!isSupabaseConfigured) return;
     try {
-      const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-      if (!error) {
-        setCars(mapLiveVehicles(data));
-      }
+      if (force) invalidateInventoryCache();
+      setCars(await fetchInventoryList({ force }));
     } catch (err) {
       console.error('Failed to fetch from Supabase:', err);
     }
@@ -33,12 +32,14 @@ export default function Home() {
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
-    fetchLiveVehicles();
+    void fetchLiveVehicles(false);
 
     // Realtime: re-fetch whenever anything changes
     const channel = supabase
       .channel('home-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchLiveVehicles)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, () => {
+        void fetchLiveVehicles(true);
+      })
       .subscribe();
 
     return () => { void channel.unsubscribe(); };

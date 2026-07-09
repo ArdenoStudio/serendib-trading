@@ -2,9 +2,10 @@ import React, { useId, useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { Car } from '../data/types';
-import { getInitialInventory, mapLiveVehicles } from '../lib/inventory';
+import { getInitialInventory } from '../lib/inventory';
+import { fetchInventoryList } from '../lib/inventoryCache';
 import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
 
 const CustomSelect = ({
@@ -150,12 +151,13 @@ export default function HeroSearch() {
   useEffect(() => {
     const fetchLiveVehicles = async () => {
       if (!isSupabaseConfigured) return;
-      const { data, error } = await supabase.from('cars').select('*');
-      if (!error) {
-        setCars(mapLiveVehicles(data));
+      try {
+        setCars(await fetchInventoryList());
+      } catch {
+        // Keep initial inventory (demo or empty) on failure.
       }
     };
-    fetchLiveVehicles();
+    void fetchLiveVehicles();
   }, []);
 
   const options = useMemo(() => {

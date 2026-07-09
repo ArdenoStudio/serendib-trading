@@ -1,19 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settings, ShieldCheck, MapPin, Share2, Award, CheckCircle2 } from 'lucide-react';
 import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
-import { isSupabaseConfigured, logCarView, supabase } from '../lib/supabase';
+import { isSupabaseConfigured, logCarView } from '../lib/supabase';
 import { Car } from '../data/types';
 import {
   allowDemoInventory,
   getDemoInventory,
-  getInitialInventory,
-  isSoldExpired,
-  mapLiveVehicles,
-  normalizeVehicle,
 } from '../lib/inventory';
+import { fetchSimilarVehicles, fetchVehicleById } from '../lib/inventoryCache';
 import Loader from '../components/Loader';
 import SEO from '../components/SEO';
 import ImageLightbox from '../components/ImageLightbox';
@@ -26,43 +23,77 @@ export default function CarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [car, setCar] = useState<Car | null>(null);
-  const [inventoryCars, setInventoryCars] = useState<Car[]>(getInitialInventory);
+  const [similarVehicles, setSimilarVehicles] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCar = async () => {
-      if (isSupabaseConfigured) {
-        const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-        if (!error && data) {
-          const liveCars = mapLiveVehicles(data);
-          setInventoryCars(liveCars);
+    let cancelled = false;
 
-          const liveCar = liveCars.find((vehicle) => vehicle.id === id)
-            ?? data.map(normalizeVehicle).find((vehicle) => vehicle.id === id);
-          if (liveCar && !isSoldExpired(liveCar)) {
+    const fetchCar = async () => {
+      setLoading(true);
+      if (isSupabaseConfigured && id) {
+        try {
+          const liveCar = await fetchVehicleById(id);
+          if (cancelled) return;
+          if (liveCar) {
             setCar(liveCar);
             setLoading(false);
+            try {
+              const similar = await fetchSimilarVehicles(liveCar, 3);
+              if (!cancelled) setSimilarVehicles(similar);
+            } catch {
+              if (!cancelled) setSimilarVehicles([]);
+            }
             return;
           }
-
-          // Production: never fall back to demo JSON stock.
           setCar(null);
+          setSimilarVehicles([]);
           setLoading(false);
+          return;
+        } catch (err) {
+          console.error('Failed to fetch vehicle:', err);
+          if (!cancelled) {
+            setCar(null);
+            setSimilarVehicles([]);
+            setLoading(false);
+          }
           return;
         }
       }
 
       if (allowDemoInventory) {
         const demoCars = getDemoInventory();
-        setInventoryCars(demoCars);
-        setCar(demoCars.find((c) => c.id === id) || null);
-      } else {
-        setInventoryCars([]);
-        setCar(null);
+        const found = demoCars.find((c) => c.id === id) || null;
+        if (!cancelled) {
+          setCar(found);
+          setSimilarVehicles(
+            found
+              ? demoCars
+                  .filter(
+                    (c) =>
+                      c.id !== found.id &&
+                      !c.is_sold &&
+                      (c.make === found.make || c.bodyType === found.bodyType),
+                  )
+                  .slice(0, 3)
+              : [],
+          );
+          setLoading(false);
+        }
+        return;
       }
-      setLoading(false);
+
+      if (!cancelled) {
+        setCar(null);
+        setSimilarVehicles([]);
+        setLoading(false);
+      }
     };
+
     fetchCar();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
@@ -80,15 +111,6 @@ export default function CarDetail() {
       logCarView(car.id);
     }
   }, [car]);
-
-  // Similar Vehicles Logic - use the same inventory source as home/inventory.
-  const similarVehicles = useMemo(() => {
-    if (!car) return [];
-    return inventoryCars
-      .filter(c => c.id !== car.id && (c.make === car.make || c.bodyType === car.bodyType) && !c.is_sold && !isSoldExpired(c))
-      .slice(0, 3);
-  }, [car, inventoryCars]);
-
 
   if (loading) return <Loader />;
 
