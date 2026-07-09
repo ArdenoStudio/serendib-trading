@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, Send, MessageSquare, Compass, ShieldCheck, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
@@ -10,11 +10,32 @@ import { submitLead } from '../lib/leads';
 
 const sanitizePhone = (value: string) => value.replace(/[^\d+() \-]/g, '').slice(0, 20);
 
+const MAP_EMBED_SRC =
+  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.346850239077!2d79.86608731477255!3d6.849007995050114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25b201a0a5555%3A0x7d2862e3d3e21376!2s47%2FA%20S.%20De%20S.%20Jayasinghe%20Mawatha%2C%20Dehiwala-Mount%20Lavinia%2C%20Sri%20Lanka!5e0!3m2!1sen!2sus!4v1620000000000!5m2!1sen!2sus';
+
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [mapVisible, setMapVisible] = useState(false);
+  const mapSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const node = mapSectionRef.current;
+    if (!node || mapVisible) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setMapVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px 0px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [mapVisible]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,8 +303,8 @@ export default function Contact() {
             </div>
           </motion.div>
 
-          {/* --- MAP SECTION --- */}
-          <section className="space-y-12 pt-10">
+          {/* --- MAP SECTION (iframe loads only when near viewport) --- */}
+          <section ref={mapSectionRef} className="space-y-12 pt-10">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-[#D4AF37]">Showroom Location</p>
@@ -291,21 +312,39 @@ export default function Contact() {
               </div>
               <div className="h-px bg-white/5 flex-1 mx-16 hidden md:block" />
             </div>
-            <div className="h-[600px] w-full relative rounded-[48px] overflow-hidden border border-white/10 shadow-2xl group">
+            <div className="h-[600px] w-full relative rounded-[48px] overflow-hidden border border-white/10 shadow-2xl group bg-white/[0.02]">
                <motion.div 
                  initial={{ opacity: 0 }}
                  whileInView={{ opacity: 1 }}
                  className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-t from-black via-transparent to-black/40 mix-blend-multiply" 
                />
+              {mapVisible ? (
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.346850239077!2d79.86608731477255!3d6.849007995050114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25b201a0a5555%3A0x7d2862e3d3e21376!2s47%2FA%20S.%20De%20S.%20Jayasinghe%20Mawatha%2C%20Dehiwala-Mount%20Lavinia%2C%20Sri%20Lanka!5e0!3m2!1sen!2sus!4v1620000000000!5m2!1sen!2sus"
+                src={MAP_EMBED_SRC}
                 width="100%" 
                 height="100%" 
                 style={{ border: 0, filter: 'grayscale(100%) invert(95%) contrast(110%) hue-rotate(180deg) brightness(0.6)' }} 
                 allowFullScreen 
-                loading="lazy" 
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
                 title="Serendib Showroom"
               />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
+                  <MapPin className="size-8 text-[#D4AF37]" />
+                  <p className="text-sm font-bold text-white/60 max-w-sm">
+                    Map loads when you scroll here to keep the page light.
+                  </p>
+                  <a
+                    href={SHOWROOM_MAPS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-black uppercase tracking-[0.25em] text-[#D4AF37] hover:text-white transition-colors"
+                  >
+                    Open in Google Maps
+                  </a>
+                </div>
+              )}
             </div>
           </section>
 
