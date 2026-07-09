@@ -190,7 +190,7 @@ export default function Home() {
         title="Imported Vehicles in Sri Lanka"
         description="Serendib Trading in Dehiwala offers inspected UK and Japan vehicle imports, clear histories, finance support, trade-in help, and showroom viewing for Sri Lankan buyers."
         canonical="/"
-        ogImage="/images/showroom/serendib-showroom-floor-02.jpg"
+        ogImage="/images/showroom/serendib-showroom-floor-02.webp"
         ogImageAlt="Serendib Trading Dehiwala showroom with imported vehicles"
         breadcrumbs={[{ name: 'Home', path: '/' }]}
         keywords={[

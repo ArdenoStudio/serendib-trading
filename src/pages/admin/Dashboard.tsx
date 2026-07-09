@@ -614,7 +614,7 @@ export default function AdminDashboard() {
             className="absolute inset-0 opacity-[0.18]"
             style={{
               backgroundImage:
-                "linear-gradient(90deg, rgba(13,11,9,0.82), rgba(13,11,9,0.55)), url('/images/showroom/serendib-showroom-floor-02.jpg')",
+                "linear-gradient(90deg, rgba(13,11,9,0.82), rgba(13,11,9,0.55)), url('/images/showroom/serendib-showroom-floor-02.webp')",
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}

@@ -17,7 +17,7 @@ export const SITE_NAME = 'Serendib Trading';
 export const SITE_URL = (import.meta.env.VITE_SITE_URL || 'https://serendib-trading.vercel.app').replace(/\/$/, '');
 export const SITE_DESCRIPTION =
   'Serendib Trading lists inspected UK and Japan vehicle imports in Sri Lanka with clear histories, finance guidance, and showroom viewing.';
-export const DEFAULT_OG_IMAGE = '/images/showroom/serendib-showroom-floor-02.jpg';
+export const DEFAULT_OG_IMAGE = '/images/showroom/serendib-showroom-floor-02.webp';
 
 export const BUSINESS = {
   name: SITE_NAME,
