@@ -148,7 +148,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
         setParseStatus('Inferring missing specifications...');
         setTimeout(() => {
           const parsed = parseVehicleText(pasteText, dynamicKB);
-          setForm(f => ({ ...f, ...parsed }));
+          setForm(f => sanitizeForm({ ...f, ...parsed }));
           setParsing(false);
           setParseStatus('');
           setTab('form');

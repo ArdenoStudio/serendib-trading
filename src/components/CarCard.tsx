@@ -116,15 +116,15 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
         />
 
         {/* Image Container - taller aspect on mobile to show more vehicle */}
-        <div className="relative aspect-[4/3] md:aspect-[16/11] overflow-hidden">
+        <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden bg-[#0d0b09]">
           <motion.img
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.05 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             src={imageSrc}
             alt={`${displayMake} ${displayModel}`}
             width={384}
             height={240}
-            className={`w-full h-full object-contain md:object-cover transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
+            className={`w-full h-full object-contain object-center transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"

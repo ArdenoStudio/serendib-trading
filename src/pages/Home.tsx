@@ -118,7 +118,7 @@ export default function Home() {
       onClick={() => navigate(`/car/${car.id}`)}
     >
       {/* Image Container with Hover Zoom */}
-      <div className="w-full h-64 md:h-72 overflow-hidden relative">
+      <div className="w-full h-64 md:h-72 overflow-hidden relative bg-[#0d0b09]">
         {/* Premium Year Tag */}
         <div className="absolute top-6 left-6 z-20 bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-4 py-2 rounded-full uppercase tracking-[0.2em]">
           Model {car.year}
@@ -135,7 +135,7 @@ export default function Home() {
           height={288}
           loading="lazy"
           decoding="async"
-          className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+          className="w-full h-full object-contain object-center transition-transform duration-1000 group-hover/card:scale-105"
           onError={(e) => {
             // Fall back to the raw storage URL if a transform URL ever 403s.
             const el = e.currentTarget;

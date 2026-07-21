@@ -181,6 +181,39 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
   const result: Record<string, any> = {};
   const lower = text.toLowerCase();
 
+  const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+
+  // Labeled fields (e.g. "Fuel: Petrol", "Mileage: 161,000") take priority over inference.
+  const fuelLabel = text.match(/(?:fuel(?:\s*type)?|engine)\s*[:\-]\s*(petrol|diesel|hybrid|electric)/i);
+  if (fuelLabel) result.fuel = cap(fuelLabel[1]);
+
+  const transmissionLabel = text.match(/transmission\s*[:\-]\s*(automatic|manual|cvt|dct)/i);
+  if (transmissionLabel) result.transmission = cap(transmissionLabel[1]);
+
+  const mileageLabel = text.match(/(?:mileage|odometer|odo)\s*[:\-]\s*([\d,]+)/i);
+  if (mileageLabel) result.mileage = parseInt(mileageLabel[1].replace(/,/g, ''), 10);
+
+  const priceLabel = text.match(/(?:price|asking)\s*[:\-]\s*(?:LKR|Rs\.?)?\s*([\d,]+(?:\.\d+)?)\s*(million|m|lakhs?|lkh)?/i);
+  if (priceLabel) {
+    let price = parseFloat(priceLabel[1].replace(/,/g, ''));
+    const unit = (priceLabel[2] || '').toLowerCase();
+    if (unit.startsWith('million') || unit === 'm') price *= 1_000_000;
+    else if (unit.startsWith('lakh') || unit === 'lkh') price *= 100_000;
+    else if (price < 1000) price *= 1_000_000;
+    result.price = Math.round(price);
+  }
+
+  const colorLabel = text.match(/(?:color|colour)\s*[:\-]\s*([A-Za-z][A-Za-z\s-]+)/i);
+  if (colorLabel) result.color = colorLabel[1].trim();
+
+  const conditionLabel = text.match(/condition\s*[:\-]\s*(new|registered|reconditioned)/i);
+  if (conditionLabel) result.condition = cap(conditionLabel[1]);
+
+  // Common Sri Lankan listing shorthand for Mercedes.
+  if (/\bmercedes[\s-]?benz\b/i.test(text) || /\bmerc(?:edes)?\b/i.test(text) || /\bbenz\b/i.test(text)) {
+    result.make = 'Mercedes-Benz';
+  }
+
   // 1. KNOWLEDGE BASE (The "Thinking" Part)
   // Maps common models to their typical specs in the Sri Lankan market
   const KNOWLEDGE_BASE: Record<string, any> = {
@@ -220,6 +253,18 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
     'c-class': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
     'cla': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
     'gla': { make: 'Mercedes-Benz', bodyType: 'SUV', fuel: 'Petrol', transmission: 'Automatic' },
+    'c180': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'c200': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'c250': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'c300': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'e200': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'e250': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'e300': { make: 'Mercedes-Benz', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
+    'glc': { make: 'Mercedes-Benz', bodyType: 'SUV', fuel: 'Petrol', transmission: 'Automatic' },
+    'gle': { make: 'Mercedes-Benz', bodyType: 'SUV', fuel: 'Petrol', transmission: 'Automatic' },
+    'sonet': { make: 'Kia', bodyType: 'Crossover', fuel: 'Petrol', transmission: 'Automatic' },
+    'sportage': { make: 'Kia', bodyType: 'SUV', fuel: 'Petrol', transmission: 'Automatic' },
+    'seltos': { make: 'Kia', bodyType: 'SUV', fuel: 'Petrol', transmission: 'Automatic' },
     '520d': { make: 'BMW', bodyType: 'Sedan', fuel: 'Diesel', transmission: 'Automatic' },
     '318i': { make: 'BMW', bodyType: 'Sedan', fuel: 'Petrol', transmission: 'Automatic' },
     'x5': { make: 'BMW', bodyType: 'SUV', fuel: 'Diesel', transmission: 'Automatic' },
@@ -246,12 +291,20 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
     'Rolls-Royce','Ferrari','Lamborghini','Maserati','Aston Martin','Tesla'
   ];
 
-  let detectedMake = '';
+  let detectedMake = result.make || '';
   for (const m of makes) {
     if (lower.includes(m.toLowerCase())) {
       detectedMake = m;
       result.make = m;
       break;
+    }
+  }
+
+  // Mercedes/BMW-style model codes (C180, E200, X5, etc.)
+  if (!result.model) {
+    const modelCodeMatch = text.match(/\b([ABCEGSMVX]{1,2}[-\s]?\d{2,3}[a-z]?)\b/i);
+    if (modelCodeMatch) {
+      result.model = modelCodeMatch[1].toUpperCase().replace(/[\s-]+/g, '');
     }
   }
 
@@ -261,9 +314,9 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
       result.model = modelKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       // Inference: Fill missing fields from Knowledge Base if they weren't found in text
       if (!result.make) result.make = specs.make;
-      result.bodyType = specs.bodyType;
-      result.fuel = specs.fuel;
-      result.transmission = specs.transmission;
+      if (!result.bodyType) result.bodyType = specs.bodyType;
+      if (!result.fuel) result.fuel = specs.fuel;
+      if (!result.transmission) result.transmission = specs.transmission;
       break;
     }
   }
@@ -277,6 +330,7 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
   }
 
   // 4. Price Logic (Enhanced for LKR / Million / M / Lakhs)
+  if (!result.price) {
   const pricePatterns = [
     /(?:LKR|Rs\.?)\s*([\d,]+(?:\.\d+)?)\s*(?:million|M)?/i,
     /([\d,]+(?:\.\d+)?)\s*(?:million|M)\b/i,
@@ -299,19 +353,27 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
       break;
     }
   }
+  }
 
   // 5. Mileage
-  const mileageMatch = text.match(/([\d,]+)\s*(?:km|kms|kilometers?|mileage|odo)\b/i);
-  if (mileageMatch) result.mileage = parseInt(mileageMatch[1].replace(/,/g, ''));
+  if (!result.mileage) {
+  const mileageMatch = text.match(/([\d,]+)\s*(?:km|kms|kilometers?|mileage|odo)\b/i)
+    || text.match(/\b(\d{4,7})\s*km\b/i);
+  if (mileageMatch) result.mileage = parseInt(mileageMatch[1].replace(/,/g, ''), 10);
+  }
 
   // 6. Manual Overrides (Text beats Inference)
+  if (!result.fuel) {
   if (/\belectric\b|\bev\b/i.test(lower)) result.fuel = 'Electric';
   else if (/\bhybrid\b/i.test(lower)) result.fuel = 'Hybrid';
   else if (/\bdiesel\b/i.test(lower)) result.fuel = 'Diesel';
   else if (/\bpetrol\b|\bgasoline\b|\bgas\b/i.test(lower)) result.fuel = 'Petrol';
+  }
 
+  if (!result.transmission) {
   if (/\bautomatic\b|\bauto\b|\bCVT\b|\bDCT\b/i.test(lower)) result.transmission = 'Automatic';
   else if (/\bmanual\b|\bMT\b/i.test(lower)) result.transmission = 'Manual';
+  }
 
   const bodyTypes: [RegExp, string][] = [
     [/\bsuv\b|\bcrossover\b/i, 'SUV'],
@@ -328,15 +390,21 @@ export const parseVehicleText = (text: string, dynamicKnowledge?: Record<string,
   }
 
   // 7. Condition
+  if (!result.condition) {
   if (/\brecondition/i.test(lower)) result.condition = 'Reconditioned';
   else if (/\bregistered\b/i.test(lower)) result.condition = 'Registered';
   else if (/\bbrand[\s-]?new\b|\bunregistered\b/i.test(lower)) result.condition = 'New';
+  }
 
   // 8. Color
+  if (!result.color) {
   const colors = ['Pearl White','White','Black','Silver','Grey','Gray','Red','Blue','Green','Brown','Beige','Gold','Maroon','Orange','Yellow','Champagne'];
   for (const c of colors) {
     if (lower.includes(c.toLowerCase())) { result.color = c; break; }
   }
+  }
+
+  if (result.make === 'Mercedes') result.make = 'Mercedes-Benz';
 
   // 9. Key Features (Automatic Extraction from Text)
   const featuresList = [

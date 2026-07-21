@@ -261,18 +261,18 @@ export default function CarDetail() {
             <motion.div 
               layoutId={`car-image-${car.id}`}
               onClick={() => setLightboxImage(activeImage)}
-              className="aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl cursor-zoom-in"
+              className="aspect-[4/3] md:aspect-[16/10] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl cursor-zoom-in"
             >
               <AnimatePresence mode="wait">
                   <motion.img 
                     key={activeImage}
-                    initial={{ opacity: 0, scale: 1.05 }}
+                    initial={{ opacity: 0, scale: 1.02 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.6 }}
                     src={activeImage} 
                     alt={car.model} 
-                    className="w-full h-full object-cover will-change-transform"
+                    className="w-full h-full object-contain object-center will-change-transform"
                   />
               </AnimatePresence>
               {/* Zoom indicator on hover */}
@@ -313,7 +313,7 @@ export default function CarDetail() {
                     isActive ? 'border-[#D4AF37] p-1' : 'border-white/5 opacity-50 hover:opacity-100'
                   }`}
                 >
-                  <img src={thumbSrc} alt={`Gallery ${i+1}`} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-[20px] group-hover:scale-110 transition-transform duration-700" />
+                  <img src={thumbSrc} alt={`Gallery ${i+1}`} loading="lazy" decoding="async" className="w-full h-full object-contain object-center bg-[#0d0b09] rounded-[20px] group-hover:scale-105 transition-transform duration-700" />
                   {isActive && <div className="absolute inset-0 bg-[#D4AF37]/10" />}
                   {/* Zoom hint on hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/40">
