@@ -175,7 +175,7 @@ export default function ComparisonTray() {
                         <div className="bg-white/[0.03] border border-white/10 rounded-[32px] p-6 space-y-8 group-hover:bg-white/[0.05] group-hover:border-[#D4AF37]/20 transition-all duration-500">
                            {/* Vehicle Image Container */}
                            <div className="aspect-[16/10] rounded-2xl overflow-hidden relative shadow-2xl">
-                              <img src={v.image} className="w-full h-full object-contain object-center bg-[#0d0b09] transition-transform duration-700 group-hover:scale-105" alt={getDisplayModel(v.make, v.model)} />
+                              <img src={v.image} className="w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-700 group-hover:scale-[1.02]" alt={getDisplayModel(v.make, v.model)} />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                               <div className="absolute bottom-6 left-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
                                  <Cpu className="w-3.5 h-3.5 text-[#D4AF37]" />

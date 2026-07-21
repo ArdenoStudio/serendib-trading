@@ -135,7 +135,7 @@ export default function Home() {
           height={288}
           loading="lazy"
           decoding="async"
-          className="w-full h-full object-contain object-center transition-transform duration-1000 group-hover/card:scale-105"
+          className="w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-1000 group-hover/card:scale-[1.02]"
           onError={(e) => {
             // Fall back to the raw storage URL if a transform URL ever 403s.
             const el = e.currentTarget;
