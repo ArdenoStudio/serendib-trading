@@ -47,7 +47,9 @@ export const markAsSold = async (id: string) => {
 
 // ── Image Upload ─────────────────────────────────────────────
 const STORAGE_BUCKET = 'vehicle-images';
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Phone camera originals are often >5 MB; compress first, then enforce the bucket cap. */
+const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
@@ -59,15 +61,18 @@ export const uploadVehicleImage = async (file: File): Promise<string> => {
   if (!file.type.startsWith('image/')) {
     throw new Error('Unsupported image type. Upload a JPG, PNG, or WebP image.');
   }
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error('Image is too large. Upload images up to 5 MB.');
+  if (file.size > MAX_SOURCE_BYTES) {
+    throw new Error('Image is too large. Choose a photo under 25 MB.');
   }
 
   // Compress to WebP when possible so inventory pages ship smaller files.
   const prepared = await prepareImageForUpload(file);
   const ext = ALLOWED_IMAGE_TYPES.get(prepared.type) || 'webp';
-  if (!ALLOWED_IMAGE_TYPES.has(prepared.type) && prepared.type !== 'image/webp') {
-    throw new Error('Unsupported image type. Upload a JPG, PNG, or WebP image.');
+  if (!ALLOWED_IMAGE_TYPES.has(prepared.type)) {
+    throw new Error('Unsupported image type. Upload a JPG, PNG, or WebP image (HEIC/HEIF is not supported).');
+  }
+  if (prepared.size > MAX_UPLOAD_BYTES) {
+    throw new Error('Image is still too large after compression. Try a smaller or lower-resolution photo.');
   }
 
   const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto

@@ -95,35 +95,36 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
       const url = await uploadVehicleImage(file);
       set('image', url);
       setHeroPreview(url);
-    } catch {
+      URL.revokeObjectURL(preview);
+    } catch (err) {
       // Keep local preview for the operator, but never persist blob: URLs.
-      setFormError('Storage upload failed. Fix Supabase Storage before saving — local previews cannot be published.');
+      const detail = err instanceof Error ? err.message : 'Unknown storage error';
+      setFormError(`Storage upload failed: ${detail} Local previews cannot be published.`);
     } finally { setUploading(false); }
   };
 
   const handleGalleryUpload = async (files: FileList) => {
     setUploading(true);
     setFormError('');
-    const newPreviews: string[] = [];
-    const newUrls: string[] = [];
-    let failed = 0;
+    const uploadedUrls: string[] = [];
+    const failures: string[] = [];
     for (const file of Array.from(files)) {
-      const preview = URL.createObjectURL(file);
-      newPreviews.push(preview);
       try {
         const url = await uploadVehicleImage(file);
-        newUrls.push(url);
-      } catch {
-        failed += 1;
+        uploadedUrls.push(url);
+      } catch (err) {
+        failures.push(err instanceof Error ? err.message : 'Upload failed');
       }
     }
-    setGalleryPreviews((p) => [...p, ...newPreviews]);
-    if (newUrls.length > 0) {
-      set('gallery', [...(form.gallery ?? []), ...newUrls]);
+    // Only keep successfully uploaded public URLs — never show blob previews that won't save.
+    if (uploadedUrls.length > 0) {
+      setGalleryPreviews((p) => [...p, ...uploadedUrls]);
+      setForm((f) => ({ ...f, gallery: [...(f.gallery ?? []), ...uploadedUrls] }));
     }
-    if (failed > 0) {
+    if (failures.length > 0) {
+      const uniqueReasons = [...new Set(failures)];
       setFormError(
-        `${failed} image${failed === 1 ? '' : 's'} failed to upload. Local previews are not saved to inventory.`,
+        `${failures.length} of ${files.length} image${files.length === 1 ? '' : 's'} failed to upload. ${uniqueReasons.join(' ')}`,
       );
     }
     setUploading(false);
