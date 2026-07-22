@@ -34,22 +34,29 @@ test.describe('public route smoke', () => {
 
 test('homepage hero CTAs stay equal-sized and aligned', async ({ page }, testInfo) => {
   await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(async () => {
+    if (document.fonts?.ready) await document.fonts.ready;
+  });
 
   const hero = page.locator('section').first();
-  const explore = await hero.locator('a[href="/inventory"]').first().boundingBox();
-  const contact = await hero.locator('a[href="/contact"]').first().boundingBox();
+  const explore = hero.locator('a[href="/inventory"]').first();
+  const contact = hero.locator('a[href="/contact"]').first();
 
-  expect(explore).not.toBeNull();
-  expect(contact).not.toBeNull();
+  await expect(explore).toBeVisible();
+  await expect(contact).toBeVisible();
 
-  const exploreBox = explore!;
-  const contactBox = contact!;
+  const exploreBox = (await explore.boundingBox())!;
+  const contactBox = (await contact.boundingBox())!;
+
+  expect(exploreBox).not.toBeNull();
+  expect(contactBox).not.toBeNull();
 
   expect(Math.abs(exploreBox.width - contactBox.width)).toBeLessThan(2);
   expect(Math.abs(exploreBox.height - contactBox.height)).toBeLessThan(2);
 
   if (testInfo.project.name === 'desktop') {
-    expect(Math.abs(exploreBox.y - contactBox.y)).toBeLessThan(8);
+    expect(Math.abs(exploreBox.y - contactBox.y)).toBeLessThan(4);
   } else {
     expect(Math.abs(exploreBox.x - contactBox.x)).toBeLessThan(2);
   }
