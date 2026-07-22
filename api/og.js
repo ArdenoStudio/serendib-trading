@@ -118,7 +118,9 @@ export const injectMeta = (html, meta) => {
     .replace(/\s*<meta\s+(?:name|property)=["'](?:title|description|robots|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
     .replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, '');
 
-  out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(meta.title)}</title>`);
+  // Use replacement functions so `$` in titles/models is never treated as a
+  // String.replace substitution pattern (`$&`, `$1`, etc.).
+  out = out.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${esc(meta.title)}</title>`);
 
   const tags = [
     `<meta name="title" content="${esc(meta.title)}" />`,
@@ -139,7 +141,7 @@ export const injectMeta = (html, meta) => {
     `<meta name="twitter:image" content="${esc(meta.image)}" />`,
   ].join('\n    ');
 
-  return out.replace(/<\/head>/i, `    ${tags}\n  </head>`);
+  return out.replace(/<\/head>/i, () => `    ${tags}\n  </head>`);
 };
 
 export default async function handler(req, res) {

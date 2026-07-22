@@ -383,7 +383,9 @@ export default function CarDetail() {
                 <div className="flex items-end gap-3 pt-4 border-t border-white/5 mt-6 pt-6">
                   <div className="space-y-1 tabular-nums">
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Listed Price</span>
-                    <p className="text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tighter leading-none">LKR {car.price.toLocaleString()}</p>
+                    <p className="text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tighter leading-none">
+                      {car.price ? `LKR ${car.price.toLocaleString()}` : 'Price on request'}
+                    </p>
                   </div>
                 </div>
               </div>
