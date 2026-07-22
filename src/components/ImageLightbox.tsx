@@ -109,7 +109,7 @@ export function LightboxTrigger({ onClick }: { onClick: (e: React.MouseEvent) =>
     <button
       onClick={onClick}
       aria-label="View full image"
-      className="absolute inset-0 z-10 flex items-end justify-end p-4 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300"
+      className="absolute inset-0 z-10 flex items-end justify-end p-4 opacity-0 pointer-events-none [@media(hover:hover)]:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity duration-300"
     >
       <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white text-[11px] font-bold uppercase tracking-[0.15em]">
         <ZoomIn className="w-3.5 h-3.5" />

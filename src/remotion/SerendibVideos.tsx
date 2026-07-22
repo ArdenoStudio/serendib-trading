@@ -308,24 +308,27 @@ const CornerFrame = ({ opacity = 1 }: { opacity?: number }) => (
       { top: 62, right: 70, borderTop: true, borderRight: true },
       { bottom: 62, left: 70, borderBottom: true, borderLeft: true },
       { bottom: 62, right: 70, borderBottom: true, borderRight: true },
-    ].map((item, index) => (
-      <div
-        key={index}
-        style={{
-          position: 'absolute',
-          width: 110,
-          height: 110,
-          borderColor: 'rgba(212,175,55,0.44)',
-          borderStyle: 'solid',
-          borderWidth: 0,
-          ...(item.borderTop ? { borderTopWidth: 2 } : {}),
-          ...(item.borderBottom ? { borderBottomWidth: 2 } : {}),
-          ...(item.borderLeft ? { borderLeftWidth: 2 } : {}),
-          ...(item.borderRight ? { borderRightWidth: 2 } : {}),
-          ...item,
-        }}
-      />
-    ))}
+    ].map((item, index) => {
+      const { borderTop, borderBottom, borderLeft, borderRight, ...position } = item;
+      return (
+        <div
+          key={index}
+          style={{
+            position: 'absolute',
+            width: 110,
+            height: 110,
+            borderColor: 'rgba(212,175,55,0.44)',
+            borderStyle: 'solid',
+            borderWidth: 0,
+            ...(borderTop ? { borderTopWidth: 2 } : {}),
+            ...(borderBottom ? { borderBottomWidth: 2 } : {}),
+            ...(borderLeft ? { borderLeftWidth: 2 } : {}),
+            ...(borderRight ? { borderRightWidth: 2 } : {}),
+            ...position,
+          }}
+        />
+      );
+    })}
   </AbsoluteFill>
 );
 

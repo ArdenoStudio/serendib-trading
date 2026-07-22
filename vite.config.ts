@@ -10,9 +10,15 @@ export default defineConfig(() => ({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // esbuild 0.28+ cannot down-level some modern destructuring to older
+  // browser targets; pin es2022 for both production builds and the
+  // dependency optimizer so `npm run dev` matches `npm run build`.
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2022',
+    },
+  },
   build: {
-    // esbuild 0.28+ cannot down-level some modern destructuring to older
-    // browser targets; ship es2022 which all current browsers support.
     target: 'es2022',
     rollupOptions: {
       output: {

@@ -42,11 +42,24 @@ export default function Navbar() {
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
-  // Flag the open mobile menu on <body> so the floating WhatsApp button can hide
-  // instead of overlapping the full-screen navigation.
+  // Flag the open mobile menu on <body> so floating overlays can hide,
+  // and lock background scroll while the full-screen nav is open.
   useEffect(() => {
     document.body.classList.toggle('mobile-nav-open', mobileOpen);
-    return () => document.body.classList.remove('mobile-nav-open');
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
+      document.body.classList.remove('mobile-nav-open');
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [mobileOpen]);
 
   const closeMobile = () => setMobileOpen(false);
@@ -175,7 +188,7 @@ export default function Navbar() {
 
           {/* ── Mobile hamburger ── */}
           <button
-            className="md:hidden w-10 h-10 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-lg"
+            className="md:hidden w-11 h-11 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-lg"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}

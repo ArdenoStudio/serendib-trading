@@ -18,6 +18,7 @@ export default function Contact() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [whatsappContinueUrl, setWhatsappContinueUrl] = useState('');
   const [mapVisible, setMapVisible] = useState(false);
   const mapSectionRef = useRef<HTMLElement | null>(null);
 
@@ -66,6 +67,7 @@ export default function Contact() {
     setSubmitting(true);
     setFormError('');
     setFormSuccess('');
+    setWhatsappContinueUrl('');
 
     try {
       await submitLead({
@@ -74,9 +76,9 @@ export default function Contact() {
         phone,
         message,
       });
-      setFormSuccess('Inquiry received. Opening WhatsApp so you can finish the conversation…');
+      setFormSuccess('Inquiry received. Continue on WhatsApp to finish the conversation.');
+      setWhatsappContinueUrl(whatsappUrl);
       setFormData({ name: '', phone: '', message: '' });
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Lead capture failed:', error);
       setFormError(
@@ -84,7 +86,7 @@ export default function Contact() {
           ? `${error.message} You can still continue on WhatsApp.`
           : 'Could not save your inquiry. You can still continue on WhatsApp.'
       );
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      setWhatsappContinueUrl(whatsappUrl);
     } finally {
       setSubmitting(false);
     }
@@ -287,6 +289,17 @@ export default function Contact() {
                     {formSuccess}
                   </p>
                 )}
+                {whatsappContinueUrl && (
+                  <a
+                    href={whatsappContinueUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-3 w-full md:w-auto px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-black"
+                    style={{ background: 'linear-gradient(135deg,#E5C158 0%,#D4AF37 100%)' }}
+                  >
+                    Continue on WhatsApp <ArrowRight className="size-4" />
+                  </a>
+                )}
 
                 <div className="pt-6">
                   <LiquidButton asChild size="xxl" className="w-full md:w-auto">
@@ -295,7 +308,7 @@ export default function Contact() {
                       disabled={submitting}
                       className="w-full md:w-auto px-16 flex items-center justify-center gap-6 text-[11px] font-black tracking-[0.4em] uppercase disabled:opacity-60"
                     >
-                      {submitting ? 'Sending…' : 'Send via WhatsApp'} <ArrowRight className="size-5" />
+                      {submitting ? 'Sending…' : 'Send Inquiry'} <ArrowRight className="size-5" />
                     </button>
                   </LiquidButton>
                 </div>

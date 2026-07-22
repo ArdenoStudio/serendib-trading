@@ -9,6 +9,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
 import WhatsAppFloat from './components/WhatsAppFloat';
 import Loader from './components/Loader';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Home = lazy(() => import('./pages/Home'));
 const Inventory = lazy(() => import('./pages/Inventory'));
@@ -89,33 +90,35 @@ export default function App() {
         }}
         style={{ willChange: shouldReduceMotion ? 'auto' : 'transform, opacity' }}
       >
-        <Suspense fallback={<Loader />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/car/:id" element={<CarDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/calculator" element={<Calculator />} />
-            <Route path="/wishlist" element={<Wishlist />} />
+        <ErrorBoundary>
+          <Suspense fallback={<Loader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/car/:id" element={<CarDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/calculator" element={<Calculator />} />
+              <Route path="/wishlist" element={<Wishlist />} />
 
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
 
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </motion.div>
       {!isAdmin && <WhatsAppFloat />}
     </>

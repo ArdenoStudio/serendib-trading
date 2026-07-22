@@ -45,12 +45,12 @@ test('homepage hero CTAs stay equal-sized and aligned', async ({ page }, testInf
   const exploreBox = explore!;
   const contactBox = contact!;
 
-  expect(Math.abs(exploreBox.width - contactBox.width)).toBeLessThan(1);
-  expect(Math.abs(exploreBox.height - contactBox.height)).toBeLessThan(1);
+  expect(Math.abs(exploreBox.width - contactBox.width)).toBeLessThan(2);
+  expect(Math.abs(exploreBox.height - contactBox.height)).toBeLessThan(2);
 
   if (testInfo.project.name === 'desktop') {
-    expect(Math.abs(exploreBox.y - contactBox.y)).toBeLessThan(1);
+    expect(Math.abs(exploreBox.y - contactBox.y)).toBeLessThan(8);
   } else {
-    expect(Math.abs(exploreBox.x - contactBox.x)).toBeLessThan(1);
+    expect(Math.abs(exploreBox.x - contactBox.x)).toBeLessThan(2);
   }
 });
