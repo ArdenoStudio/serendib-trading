@@ -382,12 +382,12 @@ export default function Home() {
               Inspected vehicles, clear histories, and practical guidance from inquiry to handover. Browse direct UK and Japan imports ready for Sri Lankan roads.
             </motion.p>
 
-            {/* Dual CTA Buttons */}
+            {/* Dual CTA Buttons — matched width/height so desktop alignment stays stable */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex w-full max-w-[19.5rem] flex-col items-stretch gap-3.5 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
+              className="flex w-full max-w-[19.5rem] flex-col items-stretch gap-3.5 sm:w-auto sm:max-w-none sm:flex-row sm:items-center sm:gap-4"
             >
               <motion.div className="w-full sm:w-[15.75rem]" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
@@ -401,10 +401,10 @@ export default function Home() {
               </motion.div>
 
               <motion.div className="w-full sm:w-[15.75rem]" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <LiquidButton asChild size="xl" className="h-14 w-full !px-0">
+                <LiquidButton asChild size="xxl" className="h-14 w-full !px-0 !min-h-14">
                   <Link
                     to="/contact"
-                    className="h-full w-full text-[13px] font-black uppercase tracking-[0.09em] text-white"
+                    className="h-14 w-full text-[13px] font-black uppercase tracking-[0.09em] text-white"
                   >
                     Contact Us
                   </Link>

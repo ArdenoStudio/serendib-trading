@@ -255,11 +255,11 @@ export default function Inventory() {
                 <span className="block sm:inline">Sri Lankan buyers actually compare cars.</span>
               </p>
               
-              {/* Stats Row */}
+              {/* Stats Row — derived from live inventory, never hardcoded claims */}
               <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 pt-4 tabular-nums">
                 {[
-                  { label: "Vehicles", val: "40+" },
-                  { label: "Makes Listed", val: "12" },
+                  { label: "Vehicles", val: String(cars.filter((car) => !car.is_sold).length) },
+                  { label: "Makes Listed", val: String(new Set(cars.map((car) => car.make).filter(Boolean)).size) },
                   { label: "Record Checks", val: "100%" }
                 ].map((s, idx) => (
                   <div key={idx} className="flex flex-col items-center gap-1">

@@ -20,26 +20,44 @@ export const escapeHtml = (value) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const originFor = (req) => {
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  return `${proto}://${host}`;
+const DEFAULT_SITE_ORIGIN = 'https://serendib-trading.vercel.app';
+const DEFAULT_OG_IMAGE = '/images/showroom/serendib-showroom-floor-02.webp';
+
+const configuredOrigin = () => {
+  const raw = process.env.SITE_URL || process.env.VITE_SITE_URL || DEFAULT_SITE_ORIGIN;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return DEFAULT_SITE_ORIGIN;
+  }
 };
 
-const readShell = async (req) => {
+const originFor = (req) => {
+  const configured = configuredOrigin();
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
+  const host = typeof hostHeader === 'string' ? hostHeader.split(',')[0].trim().toLowerCase() : '';
+  if (!host) return configured;
+
+  try {
+    const configuredHost = new URL(configured).host.toLowerCase();
+    if (host === configuredHost || host.endsWith('.vercel.app')) {
+      const proto = req.headers['x-forwarded-proto'] || 'https';
+      return `${proto}://${host}`;
+    }
+  } catch {
+    // fall through
+  }
+
+  return configured;
+};
+
+const readShell = async () => {
   for (const candidate of SHELL_CANDIDATES) {
     try {
       return fs.readFileSync(candidate, 'utf8');
     } catch {
       // Try the next candidate path.
     }
-  }
-  // Fallback: fetch this deployment's own static shell.
-  try {
-    const res = await fetch(`${originFor(req)}/index.html`);
-    if (res.ok) return await res.text();
-  } catch {
-    // Ignore; handled by the caller.
   }
   return null;
 };
@@ -84,7 +102,7 @@ export const buildMeta = (car, origin, id) => {
   if (image && !/^https?:\/\//i.test(image)) {
     image = origin + (image.startsWith('/') ? image : `/${image}`);
   }
-  if (!image) image = `${origin}/images/showroom/serendib-showroom-floor-02.jpg`;
+  if (!image) image = `${origin}${DEFAULT_OG_IMAGE}`;
 
   return { title, description, image, name, url: `${origin}/car/${id}` };
 };
@@ -92,12 +110,17 @@ export const buildMeta = (car, origin, id) => {
 export const injectMeta = (html, meta) => {
   const esc = escapeHtml;
 
-  // Drop the static SSR fallback tags so we don't emit duplicates.
+  // Drop existing SEO tags (static fallbacks and any prerendered home tags)
+  // so bot responses never emit duplicate canonical / OG metadata.
   let out = html
-    .replace(/\s*<meta\s+data-seo-fallback="true"[^>]*>/g, '')
-    .replace(/\s*<link\s+data-seo-fallback="true"[^>]*>/g, '');
+    .replace(/\s*<meta\s+data-seo-fallback="true"[^>]*>/gi, '')
+    .replace(/\s*<link\s+data-seo-fallback="true"[^>]*>/gi, '')
+    .replace(/\s*<meta\s+(?:name|property)=["'](?:title|description|robots|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
+    .replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, '');
 
-  out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(meta.title)}</title>`);
+  // Use replacement functions so `$` in titles/models is never treated as a
+  // String.replace substitution pattern (`$&`, `$1`, etc.).
+  out = out.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${esc(meta.title)}</title>`);
 
   const tags = [
     `<meta name="title" content="${esc(meta.title)}" />`,
@@ -118,14 +141,14 @@ export const injectMeta = (html, meta) => {
     `<meta name="twitter:image" content="${esc(meta.image)}" />`,
   ].join('\n    ');
 
-  return out.replace('</head>', `    ${tags}\n  </head>`);
+  return out.replace(/<\/head>/i, () => `    ${tags}\n  </head>`);
 };
 
 export default async function handler(req, res) {
   const id = (req.query && req.query.id) || '';
   const origin = originFor(req);
 
-  const html = await readShell(req);
+  const html = await readShell();
 
   // If the shell is somehow unavailable, send the bot to the real page rather
   // than erroring — worst case it falls back to the static default preview.
