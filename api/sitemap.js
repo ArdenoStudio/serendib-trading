@@ -13,6 +13,7 @@ const STATIC_PATHS = [
 ];
 
 const DEFAULT_OG = '/images/showroom/serendib-showroom-floor-02.webp';
+const DEFAULT_SITE_ORIGIN = 'https://serendib-trading.vercel.app';
 
 const escapeXml = (value) =>
   String(value ?? '')
@@ -22,10 +23,32 @@ const escapeXml = (value) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 
+const configuredOrigin = () => {
+  const raw = process.env.SITE_URL || process.env.VITE_SITE_URL || DEFAULT_SITE_ORIGIN;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return DEFAULT_SITE_ORIGIN;
+  }
+};
+
 const originFor = (req) => {
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'serendib-trading.vercel.app';
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  return `${proto}://${host}`.replace(/\/$/, '');
+  const configured = configuredOrigin();
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
+  const host = typeof hostHeader === 'string' ? hostHeader.split(',')[0].trim().toLowerCase() : '';
+  if (!host) return configured;
+
+  try {
+    const configuredHost = new URL(configured).host.toLowerCase();
+    if (host === configuredHost || host.endsWith('.vercel.app')) {
+      const proto = req.headers['x-forwarded-proto'] || 'https';
+      return `${proto}://${host}`.replace(/\/$/, '');
+    }
+  } catch {
+    // fall through
+  }
+
+  return configured;
 };
 
 const absoluteUrl = (origin, pathOrUrl) => {
@@ -42,10 +65,18 @@ const fetchLiveCars = async () => {
   if (!url || !key) return [];
 
   try {
-    const res = await fetch(
+    // Prefer updated_at when present; fall back if the column is missing so
+    // the sitemap still includes live vehicle URLs.
+    let res = await fetch(
       `${url}/rest/v1/cars?select=id,make,model,year,image,is_sold,sold_at,updated_at,created_at&order=created_at.desc`,
       { headers: { apikey: key, Authorization: `Bearer ${key}` } }
     );
+    if (!res.ok) {
+      res = await fetch(
+        `${url}/rest/v1/cars?select=id,make,model,year,image,is_sold,sold_at,created_at&order=created_at.desc`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+      );
+    }
     if (!res.ok) return [];
     const rows = await res.json();
     if (!Array.isArray(rows)) return [];

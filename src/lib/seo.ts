@@ -237,7 +237,7 @@ export function createVehicleSchema(car: Car): JsonLd {
       priceCurrency: 'LKR',
       price: car.price,
       availability: car.is_sold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-      itemCondition: car.condition.toLowerCase() === 'new'
+      itemCondition: String(car.condition || '').toLowerCase() === 'new'
         ? 'https://schema.org/NewCondition'
         : 'https://schema.org/UsedCondition',
       seller: {

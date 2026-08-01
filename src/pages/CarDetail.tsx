@@ -100,6 +100,7 @@ export default function CarDetail() {
   const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
   const [leadError, setLeadError] = useState('');
   const [leadSuccess, setLeadSuccess] = useState('');
+  const [whatsappContinueUrl, setWhatsappContinueUrl] = useState('');
   const [submittingLead, setSubmittingLead] = useState(false);
   const [activeImage, setActiveImage] = useState(car?.image || '');
   const [copyToast, setCopyToast] = useState(false);
@@ -159,6 +160,7 @@ export default function CarDetail() {
 
     setLeadError('');
     setLeadSuccess('');
+    setWhatsappContinueUrl('');
     setSubmittingLead(true);
 
     const text = `Hi! I'd like to book a test drive for the ${car.year} ${car.make} ${car.model}. My name is ${name}, preferred date: ${testDriveForm.date} at ${testDriveForm.time}. My number: ${phone}`;
@@ -174,8 +176,8 @@ export default function CarDetail() {
         date: testDriveForm.date,
         time: testDriveForm.time,
       });
-      setLeadSuccess('Request received. Opening WhatsApp to confirm with our team…');
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      setLeadSuccess('Request received. Continue on WhatsApp to confirm with our team.');
+      setWhatsappContinueUrl(whatsappUrl);
     } catch (error) {
       console.error('Lead capture failed:', error);
       setLeadError(
@@ -183,7 +185,7 @@ export default function CarDetail() {
           ? `${error.message} You can still continue on WhatsApp.`
           : 'Could not save your request. You can still continue on WhatsApp.'
       );
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      setWhatsappContinueUrl(whatsappUrl);
     } finally {
       setSubmittingLead(false);
     }
@@ -381,7 +383,9 @@ export default function CarDetail() {
                 <div className="flex items-end gap-3 pt-4 border-t border-white/5 mt-6 pt-6">
                   <div className="space-y-1 tabular-nums">
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Listed Price</span>
-                    <p className="text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tighter leading-none">LKR {car.price.toLocaleString()}</p>
+                    <p className="text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tighter leading-none">
+                      {car.price ? `LKR ${car.price.toLocaleString()}` : 'Price on request'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -482,6 +486,16 @@ export default function CarDetail() {
                     <p className="text-xs font-bold text-emerald-300" role="status">
                       {leadSuccess}
                     </p>
+                  )}
+                  {whatsappContinueUrl && (
+                    <a
+                      href={whatsappContinueUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-4 mt-2 inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-[0.98]"
+                    >
+                      Continue on WhatsApp
+                    </a>
                   )}
                   <button type="submit" disabled={submittingLead} className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
                     {submittingLead ? 'Sending Request' : 'Request Appointment'}

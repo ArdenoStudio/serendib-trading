@@ -142,12 +142,12 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           {/* Image Outline for Depth */}
           <div className="absolute inset-0 border border-white/10 pointer-events-none" />
 
-          {/* Quick Actions */}
-          <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+          {/* Quick Actions — always visible on touch; hover-reveal on fine pointers */}
+          <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-100 translate-x-0 transition-all duration-500 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:translate-x-4 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 focus-within:opacity-100 focus-within:translate-x-0">
             <button
               onClick={toggleWishlist}
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
                 isWishlisted
                 ? 'bg-red-500 border-red-400 text-white shadow-lg'
                 : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
@@ -158,7 +158,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             <button
               onClick={toggleCompare}
               aria-label={isComparing ? "Remove from comparison" : "Add to comparison"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
                 isComparing
                 ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-lg'
                 : 'bg-black/60 border-white/10 text-white hover:bg-white/20'

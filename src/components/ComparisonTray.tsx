@@ -26,6 +26,15 @@ export default function ComparisonTray() {
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
     const handleStorage = () => {
       const list = readStringList('compare', 2);
       setCompareIds(list);
@@ -74,7 +83,7 @@ export default function ComparisonTray() {
   return (
     <>
       {/* Floating Tray Trigger */}
-      <div className="fixed bottom-12 left-6 md:left-12 z-[60]">
+      <div className="compare-float fixed bottom-12 left-6 md:left-12 z-[60]">
         <motion.div
            initial={{ y: 100, opacity: 0 }}
            animate={{ y: 0, opacity: 1 }}
@@ -167,7 +176,7 @@ export default function ComparisonTray() {
                         <button 
                            onClick={() => removeVehicle(v.id)} 
                            aria-label={`Remove ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)} from comparison`}
-                           className="absolute top-6 right-6 z-10 size-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center text-red-500/50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                           className="absolute top-6 right-6 z-10 size-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center text-red-500 hover:text-red-400 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -232,7 +241,7 @@ export default function ComparisonTray() {
                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-700 max-w-[200px]">Select one more vehicle from inventory to compare side by side</p>
                           </div>
                           
-                          <LiquidButton asChild variant="gold" size="sm" className="opacity-0 group-hover:opacity-100 transition-all">
+                          <LiquidButton asChild variant="gold" size="sm" className="opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-all">
                              <button onClick={() => setIsOpen(false)} className="text-[10px] font-black uppercase tracking-widest px-8">Return to Inventory</button>
                           </LiquidButton>
                        </motion.div>

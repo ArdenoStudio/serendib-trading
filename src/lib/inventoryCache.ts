@@ -4,7 +4,9 @@ import { mapLiveVehicles, normalizeVehicle, isSoldExpired } from './inventory';
 
 /** Columns needed for public list cards and filters. */
 export const INVENTORY_LIST_COLUMNS =
-  'id,make,model,year,price,mileage,fuel,transmission,bodyType,color,image,gallery,condition,description,key_features,is_sold,sold_at,created_at,views';
+  'id,make,model,year,price,mileage,fuel,transmission,bodyType,color,image,gallery,condition,description,key_features,is_sold,sold_at,created_at';
+
+const INVENTORY_LIST_COLUMNS_WITH_VIEWS = `${INVENTORY_LIST_COLUMNS},views`;
 
 const CACHE_TTL_MS = 45_000;
 
@@ -14,6 +16,10 @@ let listInflight: Promise<Car[]> | null = null;
 export function invalidateInventoryCache() {
   listCache = null;
   listInflight = null;
+}
+
+function isMissingViewsColumn(message: string | undefined) {
+  return Boolean(message && /views/i.test(message));
 }
 
 /**
@@ -31,13 +37,25 @@ export async function fetchInventoryList(options?: { force?: boolean }): Promise
   if (!force && listInflight) return listInflight;
 
   listInflight = (async () => {
-    const { data, error } = await supabase
+    const primary = await supabase
       .from('cars')
-      .select(INVENTORY_LIST_COLUMNS)
+      .select(INVENTORY_LIST_COLUMNS_WITH_VIEWS)
       .order('created_at', { ascending: false });
 
+    let rows = primary.data;
+    let error = primary.error;
+
+    if (error && isMissingViewsColumn(error.message)) {
+      const fallback = await supabase
+        .from('cars')
+        .select(INVENTORY_LIST_COLUMNS)
+        .order('created_at', { ascending: false });
+      rows = fallback.data as typeof rows;
+      error = fallback.error;
+    }
+
     if (error) throw error;
-    const cars = mapLiveVehicles(data);
+    const cars = mapLiveVehicles(rows);
     listCache = { at: Date.now(), cars };
     return cars;
   })();
@@ -53,16 +71,29 @@ export async function fetchInventoryList(options?: { force?: boolean }): Promise
 export async function fetchVehicleById(id: string): Promise<Car | null> {
   if (!isSupabaseConfigured || !id) return null;
 
-  const { data, error } = await supabase
+  const primary = await supabase
     .from('cars')
-    .select(INVENTORY_LIST_COLUMNS)
+    .select(INVENTORY_LIST_COLUMNS_WITH_VIEWS)
     .eq('id', id)
     .maybeSingle();
 
-  if (error) throw error;
-  if (!data) return null;
+  let row = primary.data;
+  let error = primary.error;
 
-  const car = normalizeVehicle(data);
+  if (error && isMissingViewsColumn(error.message)) {
+    const fallback = await supabase
+      .from('cars')
+      .select(INVENTORY_LIST_COLUMNS)
+      .eq('id', id)
+      .maybeSingle();
+    row = fallback.data as typeof row;
+    error = fallback.error;
+  }
+
+  if (error) throw error;
+  if (!row) return null;
+
+  const car = normalizeVehicle(row);
   if (isSoldExpired(car)) return null;
   return car;
 }

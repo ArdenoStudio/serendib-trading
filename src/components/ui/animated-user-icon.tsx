@@ -1,9 +1,14 @@
 'use client';
 
-import { motion, useAnimation } from 'framer-motion';
-import React from 'react';
+import { motion, useAnimation, type Variants } from 'framer-motion';
 
-export const AnimatedUserIcon = ({ size = 20, className, ...props }: React.SVGProps<SVGSVGElement> & { size?: number }) => {
+type AnimatedUserIconProps = {
+  size?: number;
+  className?: string;
+  strokeWidth?: number;
+};
+
+export const AnimatedUserIcon = ({ size = 20, className, strokeWidth = 2 }: AnimatedUserIconProps) => {
   const controls = useAnimation();
 
   const handleMouseEnter = () => {
@@ -14,7 +19,7 @@ export const AnimatedUserIcon = ({ size = 20, className, ...props }: React.SVGPr
     controls.start('initial');
   };
 
-  const variants = {
+  const variants: { path: Variants; circle: Variants } = {
     path: {
       initial: {
         pathLength: 1,
@@ -68,10 +73,9 @@ export const AnimatedUserIcon = ({ size = 20, className, ...props }: React.SVGPr
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth={2}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-        {...props}
       >
         <motion.path
           d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
