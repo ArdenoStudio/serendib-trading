@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Sparkles, ImagePlus, Trash2, Tag, Plus } from 'lucide-react';
-import { supabase, uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle, isSupabaseConfigured } from '../../lib/supabase';
+import { uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle } from '../../lib/supabase';
 import { isBlobUrl } from '../../lib/images';
 
 export interface VehicleFormData {
@@ -97,7 +97,6 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
       setHeroPreview(url);
       URL.revokeObjectURL(preview);
     } catch (err) {
-      // Keep local preview for the operator, but never persist blob: URLs.
       const detail = err instanceof Error ? err.message : 'Unknown storage error';
       setFormError(`Storage upload failed: ${detail} Local previews cannot be published.`);
     } finally { setUploading(false); }
@@ -116,7 +115,6 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
         failures.push(err instanceof Error ? err.message : 'Upload failed');
       }
     }
-    // Only keep successfully uploaded public URLs — never show blob previews that won't save.
     if (uploadedUrls.length > 0) {
       setGalleryPreviews((p) => [...p, ...uploadedUrls]);
       setForm((f) => ({ ...f, gallery: [...(f.gallery ?? []), ...uploadedUrls] }));
@@ -168,11 +166,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     e.preventDefault();
     setSaving(true);
     setFormError('');
-    if (!isSupabaseConfigured) {
-      setFormError('Supabase is not configured, so inventory changes cannot be saved from this environment.');
-      setSaving(false);
-      return;
-    }
+
     const { id, ...data } = form;
     if (isBlobUrl(data.image) || (data.gallery || []).some(isBlobUrl)) {
       setFormError('Remove local-only image previews and re-upload so vehicle photos get real public URLs.');
@@ -186,14 +180,27 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     }
     try {
       if (id) {
-        const { error } = await supabase.from('cars').update(data).eq('id', id);
-        if (error) throw error;
+        const res = await fetch('/api/db/vehicles', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...data }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to update vehicle');
+        }
       } else {
-        const { error } = await supabase.from('cars').insert([data]);
-        if (error) throw error;
+        const res = await fetch('/api/db/vehicles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to create vehicle');
+        }
       }
       
-      // Learn from this save to improve future parsing
       await learnFromVehicle(form);
 
       onSaved();

@@ -139,32 +139,41 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const fetchVehicles = async () => {
-    if (!isSupabaseConfigured) {
+    try {
+      const res = await fetch('/api/db/vehicles');
+      if (res.ok) {
+        const data = await res.json();
+        setVehicles(Array.isArray(data) ? data : []);
+      }
+    } catch {
       setVehicles([]);
+    } finally {
       setLoading(false);
-      return;
     }
-    const { data, error } = await supabase.from('cars').select('*').order('created_at', { ascending: false });
-    if (!error) setVehicles(data ?? []);
-    setLoading(false);
   };
 
   const fetchLeads = async () => {
-    if (!isSupabaseConfigured) {
+    try {
+      const res = await fetch('/api/db/leads');
+      if (res.ok) {
+        const data = await res.json();
+        setLeads(Array.isArray(data) ? data : []);
+      }
+    } catch {
       setLeads([]);
-      return;
     }
-    const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
-    if (!error) setLeads(data ?? []);
   };
 
   const fetchTraffic = async () => {
-    if (!isSupabaseConfigured) {
+    try {
+      const res = await fetch('/api/db/analytics');
+      if (res.ok) {
+        const data = await res.json();
+        setTraffic(Array.isArray(data) ? data : []);
+      }
+    } catch {
       setTraffic([]);
-      return;
     }
-    const { data, error } = await supabase.from('site_traffic').select('*').order('date', { ascending: false }).limit(7);
-    if (!error) setTraffic(data ?? []);
   };
 
   useEffect(() => {
@@ -172,17 +181,13 @@ export default function AdminDashboard() {
     fetchLeads();
     fetchTraffic();
 
-    if (isSupabaseConfigured) {
-      const channel = supabase
-        .channel('dashboard-live')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, fetchVehicles)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, fetchLeads)
-        .subscribe();
+    const interval = setInterval(() => {
+      fetchVehicles();
+      fetchLeads();
+      fetchTraffic();
+    }, 15_000);
 
-      return () => {
-        void channel.unsubscribe();
-      };
-    }
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -423,15 +428,12 @@ export default function AdminDashboard() {
   ];
 
   const handleDelete = async (v: Vehicle) => {
-    if (!isSupabaseConfigured) {
-      setNotice({ type: 'error', message: 'Supabase is not configured for admin actions.' });
-      return;
-    }
     const vehicleName = `${v.year} ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)}`;
     if (!window.confirm(`Remove ${vehicleName} permanently? This cannot be undone.`)) return;
-    const { error } = await supabase.from('cars').delete().eq('id', v.id);
-    if (error) {
-      setNotice({ type: 'error', message: `Delete failed: ${error.message}` });
+    const res = await fetch(`/api/db/vehicles?id=${encodeURIComponent(v.id)}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setNotice({ type: 'error', message: `Delete failed: ${err.error || 'Server error'}` });
       return;
     }
     setNotice({ type: 'success', message: `${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)} removed from inventory.` });
@@ -439,21 +441,16 @@ export default function AdminDashboard() {
   };
 
   const handleToggleSold = async (v: Vehicle) => {
-    if (!isSupabaseConfigured) {
-      setNotice({ type: 'error', message: 'Supabase is not configured for admin actions.' });
-      return;
-    }
     const nowSold = !v.is_sold;
-    const { error } = await supabase
-      .from('cars')
-      .update({
-        is_sold: nowSold,
-        sold_at: nowSold ? new Date().toISOString() : null,
-      })
-      .eq('id', v.id);
+    const res = await fetch('/api/db/vehicles', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: v.id, is_sold: nowSold, sold_at: nowSold ? new Date().toISOString() : null }),
+    });
 
-    if (error) {
-      setNotice({ type: 'error', message: `Status update failed: ${error.message}` });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setNotice({ type: 'error', message: `Status update failed: ${err.error || 'Server error'}` });
       return;
     }
 
@@ -462,13 +459,14 @@ export default function AdminDashboard() {
   };
 
   const handleLeadStatus = async (id: string, status: Lead['status']) => {
-    if (!isSupabaseConfigured) {
-      setNotice({ type: 'error', message: 'Supabase is not configured for admin actions.' });
-      return;
-    }
-    const { error } = await supabase.from('leads').update({ status }).eq('id', id);
-    if (error) {
-      setNotice({ type: 'error', message: `Lead update failed: ${error.message}` });
+    const res = await fetch('/api/db/leads', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setNotice({ type: 'error', message: `Lead update failed: ${err.error || 'Server error'}` });
       return;
     }
     setNotice({ type: 'success', message: `Lead marked ${status.toLowerCase()}.` });

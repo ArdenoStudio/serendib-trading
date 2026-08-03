@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
+import { query } from './_db.js';
 
 const ALLOWED_TYPES = new Set(['Test Drive', 'General Inquiry']);
 const ALLOWED_TIMES = new Set(['9:30am', '1:00pm', '4:30pm']);
@@ -65,8 +65,6 @@ const sameOriginRequest = (req) => {
     }
   }
 
-  // Browsers always send Origin on JSON POSTs. Missing Origin is treated as
-  // non-browser traffic and must present a matching Referer instead.
   const referer = req.headers.referer;
   if (typeof referer === 'string' && referer.length > 0) {
     try {
@@ -79,7 +77,6 @@ const sameOriginRequest = (req) => {
   return false;
 };
 
-/** Prefer platform-trusted IP headers; never trust the leftmost XFF hop alone. */
 const getClientIp = (req) => {
   const realIp = req.headers['x-real-ip'];
   if (typeof realIp === 'string' && realIp.trim()) return realIp.trim();
@@ -102,7 +99,7 @@ const getClientIp = (req) => {
 };
 
 const hashRateKey = (req, phone) => {
-  const salt = process.env.LEAD_RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || 'serendib-leads';
+  const salt = process.env.LEAD_RATE_LIMIT_SALT || 'serendib-leads';
   return crypto
     .createHash('sha256')
     .update(`${salt}:${getClientIp(req)}:${phone}`)
@@ -172,59 +169,26 @@ const validateLead = (body) => {
   };
 };
 
-const createSupabaseClient = () => {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceRoleKey) {
-    const error = new Error('Lead capture is not configured.');
-    error.status = 503;
-    throw error;
-  }
-
-  return createClient(url, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-};
-
-const enforceRateLimit = async (supabase, req, lead) => {
+const enforceRateLimit = async (req, lead) => {
   const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
   const keyHash = hashRateKey(req, lead.phone);
 
   const [ipLimit, phoneLimit] = await Promise.all([
-    supabase
-      .from('lead_rate_limits')
-      .select('id')
-      .eq('key_hash', keyHash)
-      .gte('created_at', since)
-      .limit(1),
-    supabase
-      .from('leads')
-      .select('id')
-      .eq('phone', lead.phone)
-      .gte('created_at', since)
-      .limit(MAX_PHONE_SUBMISSIONS_PER_WINDOW),
+    query('SELECT id FROM lead_rate_limits WHERE key_hash = $1 AND created_at >= $2 LIMIT 1', [keyHash, since]),
+    query('SELECT id FROM leads WHERE phone = $1 AND created_at >= $2 LIMIT $3', [lead.phone, since, MAX_PHONE_SUBMISSIONS_PER_WINDOW]),
   ]);
 
-  if (ipLimit.error) throw ipLimit.error;
-  if (phoneLimit.error) throw phoneLimit.error;
+  const phoneHits = Array.isArray(phoneLimit) ? phoneLimit.length : 0;
+  const ipHits = Array.isArray(ipLimit) ? ipLimit.length : 0;
 
-  const phoneHits = phoneLimit.data?.length || 0;
-  if ((ipLimit.data && ipLimit.data.length > 0) || phoneHits >= MAX_PHONE_SUBMISSIONS_PER_WINDOW) {
+  if (ipHits > 0 || phoneHits >= MAX_PHONE_SUBMISSIONS_PER_WINDOW) {
     const error = new Error('Please wait before submitting another inquiry.');
     error.status = 429;
     throw error;
   }
 
-  const { error } = await supabase.from('lead_rate_limits').insert({ key_hash: keyHash });
-  if (error) throw error;
-
-  await supabase
-    .from('lead_rate_limits')
-    .delete()
-    .lt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-    .then(() => undefined)
-    .catch(() => undefined);
+  await query('INSERT INTO lead_rate_limits (key_hash, created_at) VALUES ($1, NOW())', [keyHash]);
+  await query("DELETE FROM lead_rate_limits WHERE created_at < NOW() - INTERVAL '24 hours'").catch(() => undefined);
 };
 
 export default async function handler(req, res) {
@@ -245,12 +209,24 @@ export default async function handler(req, res) {
   try {
     const body = await readBody(req);
     const lead = validateLead(body);
-    const supabase = createSupabaseClient();
 
-    await enforceRateLimit(supabase, req, lead);
+    await enforceRateLimit(req, lead);
 
-    const { error } = await supabase.from('leads').insert(lead);
-    if (error) throw error;
+    await query(
+      `INSERT INTO leads (type, name, phone, vehicle_id, vehicle_model, message, date, time, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
+      [
+        lead.type,
+        lead.name,
+        lead.phone,
+        lead.vehicle_id,
+        lead.vehicle_model,
+        lead.message,
+        lead.date,
+        lead.time,
+        lead.status,
+      ]
+    );
 
     return send(res, 201, { ok: true });
   } catch (error) {

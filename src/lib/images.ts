@@ -6,6 +6,9 @@
 const SUPABASE_OBJECT = '/storage/v1/object/public/';
 const SUPABASE_RENDER = '/storage/v1/render/image/public/';
 
+/** When set, Supabase storage URLs are served from this CDN origin (e.g. Cloudflare R2 custom domain). */
+const CDN_BASE = (import.meta.env.VITE_IMAGE_CDN_BASE_URL as string | undefined)?.replace(/\/+$/, '');
+
 export type ImageSize = 'thumb' | 'card' | 'detail' | 'full';
 
 const WIDTH: Record<ImageSize, number | null> = {
@@ -34,6 +37,19 @@ export function optimizeImageUrl(
 ): string {
   if (!url) return '';
   if (isBlobUrl(url) || url.startsWith('data:')) return url;
+
+  // CDN mode: rewrite any Supabase storage/render URL to the CDN origin and
+  // drop query params. Applies when images are migrated to a CDN (e.g. R2).
+  if (CDN_BASE) {
+    const clean = url.split('?')[0];
+    if (clean.includes(SUPABASE_RENDER)) {
+      return `${CDN_BASE}${clean.slice(clean.indexOf(SUPABASE_RENDER)).replace(SUPABASE_RENDER, SUPABASE_OBJECT)}`;
+    }
+    if (clean.includes(SUPABASE_OBJECT)) {
+      return `${CDN_BASE}${clean.slice(clean.indexOf(SUPABASE_OBJECT))}`;
+    }
+    return clean;
+  }
 
   // Always prefer the stable public object URL unless transforms are enabled.
   const transformsEnabled = import.meta.env.VITE_SUPABASE_IMAGE_TRANSFORM === 'true';

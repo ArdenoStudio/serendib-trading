@@ -25,7 +25,6 @@ export default defineConfig(() => ({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           animation: ['framer-motion', 'lenis'],
-          supabase: ['@supabase/supabase-js'],
         },
       },
     },

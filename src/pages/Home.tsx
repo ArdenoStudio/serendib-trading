@@ -35,15 +35,11 @@ export default function Home() {
     if (!isSupabaseConfigured) return;
     void fetchLiveVehicles(false);
 
-    // Realtime: re-fetch whenever anything changes
-    const channel = supabase
-      .channel('home-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, () => {
-        void fetchLiveVehicles(true);
-      })
-      .subscribe();
+    const interval = setInterval(() => {
+      void fetchLiveVehicles(true);
+    }, 60_000);
 
-    return () => { void channel.unsubscribe(); };
+    return () => clearInterval(interval);
   }, []);
 
   

@@ -1,11 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-
-// Serves crawler requests for /car/:id with per-vehicle Open Graph / Twitter
-// meta so shared links (WhatsApp, Facebook, Twitter, LinkedIn, Slack, search)
-// preview the actual vehicle instead of the generic site fallback. Humans are
-// routed straight to the static SPA by vercel.json (this function is only hit
-// for known bot user-agents), so there is no added latency for real visitors.
+import { query } from './_db.js';
 
 const SHELL_CANDIDATES = [
   path.join(process.cwd(), 'dist', 'index.html'),
@@ -56,24 +51,16 @@ const readShell = async () => {
     try {
       return fs.readFileSync(candidate, 'utf8');
     } catch {
-      // Try the next candidate path.
+      // Try next candidate
     }
   }
   return null;
 };
 
 const fetchCar = async (id) => {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key || !id) return null;
-
+  if (!id) return null;
   try {
-    const res = await fetch(
-      `${url}/rest/v1/cars?id=eq.${encodeURIComponent(id)}&select=*&limit=1`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
-    );
-    if (!res.ok) return null;
-    const rows = await res.json();
+    const rows = await query('SELECT * FROM cars WHERE id = $1 LIMIT 1', [id]);
     return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
   } catch {
     return null;
@@ -81,8 +68,6 @@ const fetchCar = async (id) => {
 };
 
 export const buildMeta = (car, origin, id) => {
-  // The year is shown separately, so drop a redundant 4-digit year from the model
-  // (e.g. a mis-entered "Sorento 2017" would otherwise read "2017 Kia Sorento 2017").
   const model = String(car.model || '')
     .replace(/\b(19[89]\d|20[0-3]\d)\b/g, ' ')
     .replace(/\s{2,}/g, ' ')
@@ -110,16 +95,12 @@ export const buildMeta = (car, origin, id) => {
 export const injectMeta = (html, meta) => {
   const esc = escapeHtml;
 
-  // Drop existing SEO tags (static fallbacks and any prerendered home tags)
-  // so bot responses never emit duplicate canonical / OG metadata.
   let out = html
     .replace(/\s*<meta\s+data-seo-fallback="true"[^>]*>/gi, '')
     .replace(/\s*<link\s+data-seo-fallback="true"[^>]*>/gi, '')
     .replace(/\s*<meta\s+(?:name|property)=["'](?:title|description|robots|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
     .replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, '');
 
-  // Use replacement functions so `$` in titles/models is never treated as a
-  // String.replace substitution pattern (`$&`, `$1`, etc.).
   out = out.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${esc(meta.title)}</title>`);
 
   const tags = [
@@ -150,8 +131,6 @@ export default async function handler(req, res) {
 
   const html = await readShell();
 
-  // If the shell is somehow unavailable, send the bot to the real page rather
-  // than erroring — worst case it falls back to the static default preview.
   if (!html) {
     res.setHeader('Location', `${origin}/car/${encodeURIComponent(id)}`);
     return res.status(302).end();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogIn, ShieldAlert } from 'lucide-react';
 import { signInWithGoogle } from '../../lib/supabase';
@@ -7,6 +7,20 @@ import SEO from '../../components/SEO';
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errParam = params.get('error');
+    const emailParam = params.get('email');
+
+    if (errParam === 'unauthorized') {
+      setError(`Email (${emailParam || 'user'}) is not authorized for dashboard access.`);
+    } else if (errParam === 'unconfigured') {
+      setError('Google OAuth is not configured on server.');
+    } else if (errParam) {
+      setError(`Login failed: ${errParam.replace(/_/g, ' ')}`);
+    }
+  }, []);
 
   const handleLogin = async () => {
     setLoading(true);

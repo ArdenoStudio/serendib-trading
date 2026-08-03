@@ -1,5 +1,4 @@
-// Dynamic sitemap: core marketing pages + live inventory from Supabase.
-// Served at /sitemap.xml via vercel.json rewrite so crawlers never see demo car URLs.
+import { query } from './_db.js';
 
 const STATIC_PATHS = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
@@ -60,25 +59,10 @@ const absoluteUrl = (origin, pathOrUrl) => {
 const today = () => new Date().toISOString().slice(0, 10);
 
 const fetchLiveCars = async () => {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
-
   try {
-    // Prefer updated_at when present; fall back if the column is missing so
-    // the sitemap still includes live vehicle URLs.
-    let res = await fetch(
-      `${url}/rest/v1/cars?select=id,make,model,year,image,is_sold,sold_at,updated_at,created_at&order=created_at.desc`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    const rows = await query(
+      'SELECT id, make, model, year, image, is_sold, sold_at, updated_at, created_at FROM cars ORDER BY created_at DESC'
     );
-    if (!res.ok) {
-      res = await fetch(
-        `${url}/rest/v1/cars?select=id,make,model,year,image,is_sold,sold_at,created_at&order=created_at.desc`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } }
-      );
-    }
-    if (!res.ok) return [];
-    const rows = await res.json();
     if (!Array.isArray(rows)) return [];
 
     const maxSoldMs = 14 * 24 * 60 * 60 * 1000;

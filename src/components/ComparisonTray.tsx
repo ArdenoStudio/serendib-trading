@@ -4,7 +4,7 @@ import { X, BarChart2, Plus, Info, ShieldCheck, TrendingUp, Cpu } from 'lucide-r
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import { allowDemoInventory, getDemoInventory, mapLiveVehicles } from '../lib/inventory';
-import { INVENTORY_LIST_COLUMNS } from '../lib/inventoryCache';
+import { INVENTORY_LIST_COLUMNS, fetchInventoryList } from '../lib/inventoryCache';
 import { LiquidButton } from './ui/liquid-glass-button';
 import { readStringList, writeStringList } from '../lib/storage';
 import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
@@ -54,9 +54,10 @@ export default function ComparisonTray() {
     if (compareIds.length > 0) {
       const fetchInfo = async () => {
         if (isSupabaseConfigured) {
-          const { data } = await supabase.from('cars').select(INVENTORY_LIST_COLUMNS).in('id', compareIds);
-          if (data && data.length > 0) {
-            setVehicles(mapLiveVehicles(data));
+          const all = await fetchInventoryList();
+          const matched = all.filter((c) => compareIds.includes(c.id));
+          if (matched.length > 0) {
+            setVehicles(matched);
             return;
           }
         }
