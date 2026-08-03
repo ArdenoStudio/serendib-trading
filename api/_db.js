@@ -10,5 +10,5 @@ export const getDb = () => {
 
 export const query = async (text, params = []) => {
   const sql = getDb();
-  return await sql(text, params);
+  return await sql.query(text, params);
 };
