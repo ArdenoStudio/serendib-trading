@@ -9,7 +9,7 @@
   --color-text-secondary: #A1A1AA;
   --color-text-muted: rgba(161, 161, 170, 0.7);
 
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
   --font-luxury: "Cormorant Garamond", Georgia, serif;
 

@@ -71,7 +71,7 @@ export default function About() {
           >
             <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10">
               <Heart className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">New Beginnings 2025</span>
+              <span className="text-[#D4AF37] font-black tracking-[0.4em] uppercase text-[10px]">New Beginnings 2026</span>
             </div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-[-0.05em] leading-[0.95] uppercase">
@@ -97,7 +97,7 @@ export default function About() {
           >
             <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-[11px]">Our Story</p>
             <p className="text-xl md:text-2xl font-light leading-relaxed text-white/80">
-              Founded in 2025, Serendib Trading was born from a simple belief: 
+              Founded in 2026, Serendib Trading was born from a simple belief: 
               buying a premium vehicle should be an experience, not a transaction.
             </p>
             <p className="text-white/60 leading-relaxed">
