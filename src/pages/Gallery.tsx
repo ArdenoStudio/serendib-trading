@@ -189,8 +189,7 @@ export default function Gallery() {
                   transition={{ delay: Math.min(i, 8) * 0.04 }}
                   onClick={() => setLightboxImage(image.src)}
                   aria-label={`Open ${image.alt}`}
-                  className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/5 bg-cover bg-center text-left cursor-pointer"
-                  style={{ backgroundImage: i < 4 ? `url(${image.src})` : undefined }}
+                  className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/5 text-left cursor-pointer"
                 >
                   <img
                     src={image.src}

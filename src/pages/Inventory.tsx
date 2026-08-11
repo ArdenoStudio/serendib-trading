@@ -18,11 +18,10 @@ import {
 import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
 import SEO from '../components/SEO';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { Car } from '../data/types';
 import { getInitialInventory } from '../lib/inventory';
 import { fetchInventoryList, invalidateInventoryCache } from '../lib/inventoryCache';
-import Loader from '../components/Loader';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createInventoryItemListSchema } from '../lib/seo';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
@@ -32,6 +31,7 @@ export default function Inventory() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [cars, setCars] = useState<Car[]>(getInitialInventory);
   const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [fetchError, setFetchError] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   
@@ -49,7 +49,6 @@ export default function Inventory() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMakeOpen, setIsMakeOpen] = useState(false);
   const [isBodyTypeOpen, setIsBodyTypeOpen] = useState(false);
-  const [isFuelOpen, setIsFuelOpen] = useState(false);
 
   const FUEL_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
 
@@ -72,9 +71,11 @@ export default function Inventory() {
     }
     try {
       if (force) invalidateInventoryCache();
+      setFetchError(false);
       setCars(await fetchInventoryList({ force }));
     } catch (err) {
       console.error('Failed to fetch from Supabase:', err);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -87,9 +88,10 @@ export default function Inventory() {
     }
     void fetchLiveVehicles(false);
 
+    // Gentle background refresh; the shared inventory cache already dedupes.
     const interval = setInterval(() => {
-      void fetchLiveVehicles(true);
-    }, 60_000);
+      void fetchLiveVehicles(false);
+    }, 10 * 60_000);
 
     return () => clearInterval(interval);
   }, []);
@@ -108,6 +110,20 @@ export default function Inventory() {
     const nextSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
     setSearchQuery(nextSearchQuery);
   }, [searchParams]);
+
+  // Mobile filter drawer: lock background scroll + close on Escape.
+  useEffect(() => {
+    if (!isMobileFilterOpen) return undefined;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileFilterOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isMobileFilterOpen]);
 
   const filteredCars = useMemo(() => {
     let result = [...cars];
@@ -175,8 +191,6 @@ export default function Inventory() {
     });
     setSearchQuery('');
   };
-
-  if (loading) return <Loader />;
 
   return (
     <div className="min-h-screen bg-[#0d0b09] text-white overflow-x-hidden selection:bg-[#D4AF37] selection:text-black">
@@ -669,7 +683,7 @@ export default function Inventory() {
           </aside>
 
           {/* MAIN GRID */}
-          <main className="flex-1">
+          <section aria-label="Vehicle results" className="flex-1">
              <div className="mb-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                     <h2 className="text-2xl font-black uppercase tracking-tighter">Verified <span className="text-gray-500">Vehicles</span></h2>
@@ -700,10 +714,70 @@ export default function Inventory() {
 
              <motion.div 
                 layout
-                className={`grid gap-10 will-change-transform ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'}`}
+                className={`grid gap-10 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'}`}
              >
                 <AnimatePresence mode="popLayout" initial={false}>
-                    {filteredCars.length > 0 ? (
+                    {loading && cars.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="col-span-full py-40 flex flex-col items-center justify-center text-center space-y-8 bg-white/[0.02] border border-white/5 rounded-[40px] px-10"
+                        >
+                            <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37]/20 border-t-[#D4AF37] animate-spin" />
+                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/50">Loading inventory…</p>
+                        </motion.div>
+                    ) : fetchError && cars.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="col-span-full py-40 flex flex-col items-center text-center space-y-12 bg-white/[0.02] border border-white/5 rounded-[40px] px-10"
+                        >
+                            <div className="p-8 rounded-full bg-[#D4AF37]/5 border border-[#D4AF37]/10">
+                                <Database className="w-12 h-12 text-[#D4AF37] opacity-40" />
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-4xl font-black uppercase tracking-tighter">Inventory <br /> <span className="text-[#D4AF37]">Unavailable</span></h3>
+                                <p className="text-gray-400 max-w-sm mx-auto font-medium leading-relaxed">
+                                    We couldn't load our current stock. Please try again in a moment.
+                                </p>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-6">
+                                <button
+                                    onClick={() => {
+                                        setLoading(true);
+                                        void fetchLiveVehicles(true);
+                                    }}
+                                    className="px-10 py-5 bg-white text-black font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-[#D4AF37] hover:scale-105 transition-all"
+                                >
+                                    Retry
+                                </button>
+                                <a href="https://wa.me/94756363427" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
+                                    Message Us
+                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                                </a>
+                            </div>
+                        </motion.div>
+                    ) : cars.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="col-span-full py-40 flex flex-col items-center text-center space-y-12 bg-white/[0.02] border border-white/5 rounded-[40px] px-10"
+                        >
+                            <div className="p-8 rounded-full bg-[#D4AF37]/5 border border-[#D4AF37]/10">
+                                <Activity className="w-12 h-12 text-[#D4AF37] opacity-40" />
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-4xl font-black uppercase tracking-tighter">New Stock <br /> <span className="text-[#D4AF37]">Coming Soon</span></h3>
+                                <p className="text-gray-400 max-w-sm mx-auto font-medium leading-relaxed">
+                                    Our next arrivals are being prepared. Message us for early access to new listings.
+                                </p>
+                            </div>
+                            <a href="https://wa.me/94756363427" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
+                                Message Us
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                            </a>
+                        </motion.div>
+                    ) : filteredCars.length > 0 ? (
                         filteredCars.map((car, idx) => (
                             <motion.div
                                 key={car.id}
@@ -748,7 +822,7 @@ export default function Inventory() {
                     )}
                 </AnimatePresence>
              </motion.div>
-          </main>
+          </section>
         </div>
       </div>
 
@@ -768,11 +842,14 @@ export default function Inventory() {
                     animate={{ y: 0 }}
                     exit={{ y: '100%' }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Filter vehicles"
                     className="absolute bottom-0 inset-x-0 h-[85vh] bg-[#0d0b09] rounded-t-[40px] border-t border-[#D4AF37]/20 p-8 flex flex-col overflow-hidden"
                   >
                         <div className="flex items-center justify-between mb-10">
                             <h3 className="text-2xl font-black uppercase tracking-tighter text-[#D4AF37]">Vehicle <span className="text-white">Filters</span></h3>
-                            <button onClick={() => setIsMobileFilterOpen(false)} className="p-3 bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
+                            <button onClick={() => setIsMobileFilterOpen(false)} aria-label="Close filters" className="p-3 bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
                         </div>
                         
                         <div className="flex-1 overflow-y-auto space-y-12 pb-12">

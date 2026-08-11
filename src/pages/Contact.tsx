@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, Send, MessageSquare, Compass, ShieldCheck, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
@@ -14,7 +15,7 @@ const MAP_EMBED_SRC =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.346850239077!2d79.86608731477255!3d6.849007995050114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25b201a0a5555%3A0x7d2862e3d3e21376!2s47%2FA%20S.%20De%20S.%20Jayasinghe%20Mawatha%2C%20Dehiwala-Mount%20Lavinia%2C%20Sri%20Lanka!5e0!3m2!1sen!2sus!4v1620000000000!5m2!1sen!2sus';
 
 export default function Contact() {
-  const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', message: '', consent: false });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -60,6 +61,11 @@ export default function Contact() {
       setFormSuccess('');
       return;
     }
+    if (!formData.consent) {
+      setFormError('Please accept the privacy policy so we can respond to your inquiry.');
+      setFormSuccess('');
+      return;
+    }
 
     const text = `Hi, I'm ${name}. My phone number is ${phone}. ${message}`;
     const whatsappUrl = `https://wa.me/94756363427?text=${encodeURIComponent(text)}`;
@@ -78,7 +84,7 @@ export default function Contact() {
       });
       setFormSuccess('Inquiry received. Continue on WhatsApp to finish the conversation.');
       setWhatsappContinueUrl(whatsappUrl);
-      setFormData({ name: '', phone: '', message: '' });
+      setFormData({ name: '', phone: '', message: '', consent: false });
     } catch (error) {
       console.error('Lead capture failed:', error);
       setFormError(
@@ -174,7 +180,7 @@ export default function Contact() {
             <div className="lg:col-span-4 p-10 md:p-14 bg-white/[0.02] border-r border-white/10 space-y-14">
               <div className="space-y-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#D4AF37]">Contact Details</p>
-                <h3 className="text-3xl font-black uppercase tracking-tighter">Quick <br/> Response</h3>
+                <h2 className="text-3xl font-black uppercase tracking-tighter">Quick <br/> Response</h2>
               </div>
 
               <div className="space-y-10">
@@ -300,6 +306,20 @@ export default function Contact() {
                     Continue on WhatsApp <ArrowRight className="size-4" />
                   </a>
                 )}
+
+                <div className="flex items-start gap-4 pt-2">
+                  <input
+                    type="checkbox"
+                    id="contact-consent"
+                    checked={formData.consent}
+                    onChange={(e) => setFormData({ ...formData, consent: e.target.checked })}
+                    className="mt-1 size-5 shrink-0 accent-[#D4AF37] cursor-pointer"
+                  />
+                  <label htmlFor="contact-consent" className="text-[13px] leading-relaxed text-gray-400 cursor-pointer">
+                    I agree that Serendib Trading may store my name and contact details to respond to this inquiry, and that we may continue the conversation on WhatsApp. See our{' '}
+                    <Link to="/privacy" className="text-[#D4AF37] hover:underline">Privacy Policy</Link>.
+                  </label>
+                </div>
 
                 <div className="pt-6">
                   <LiquidButton asChild size="xxl" className="w-full md:w-auto">

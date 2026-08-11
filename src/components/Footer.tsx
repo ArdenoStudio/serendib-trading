@@ -120,8 +120,8 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-white/5 text-xs font-light tabular-nums">
           <p>© {new Date().getFullYear()} Serendib Trading. All rights reserved.</p>
           <div className="mt-4 md:mt-0 flex gap-6">
-            <Link to="/privacy" className="opacity-50 hover:opacity-100 transition-opacity hover:text-[#D4AF37]">Privacy Policy</Link>
-            <Link to="/terms" className="opacity-50 hover:opacity-100 transition-opacity hover:text-[#D4AF37]">Terms of Service</Link>
+            <Link to="/privacy" className="text-white/75 hover:text-[#D4AF37] transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="text-white/75 hover:text-[#D4AF37] transition-colors">Terms of Service</Link>
           </div>
         </div>
 

@@ -19,6 +19,13 @@
   --color-border: rgba(255, 255, 255, 0.1);
   --color-secondary: rgba(255, 255, 255, 0.05);
   --color-muted-foreground: #A1A1AA;
+
+  /* Dark-theme contrast pass: the stock gray scale is too dark on #0d0b09 and
+     fails WCAG AA (1.4.3). Lighten the mid grays used for secondary text. */
+  --color-gray-400: #b3b3bc;
+  --color-gray-500: #9ca3af;
+  --color-gray-600: #a1a1aa;
+  --color-gray-700: #a8a8b0;
 }
 
 @keyframes marquee {
@@ -177,15 +184,17 @@ a, button, [role="button"], input, select, textarea, label, summary {
   }
 }
 
-/* Hardware accelerate frequently-composited elements */
-nav {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
 /* Prevent paint during scroll for fixed/sticky elements */
 .sticky, [data-sticky] {
   contain: layout style;
+}
+
+/* Focus visibility helper for the skip link */
+.skip-link:focus {
+  position: fixed !important;
+  top: 1rem;
+  left: 1rem;
+  z-index: 9999;
 }
 
 @layer utilities {

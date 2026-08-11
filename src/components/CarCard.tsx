@@ -33,7 +33,7 @@ interface CarCardProps {
 }
 
 export default function CarCard({ car, className = '' }: CarCardProps) {
-  const formattedPrice = `LKR ${car.price.toLocaleString()}`;
+  const formattedPrice = car.price > 0 ? `LKR ${car.price.toLocaleString()}` : 'Price on request';
   const displayMake = getBrandLabel(car.make);
   const displayModel = getDisplayModel(car.make, car.model);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -95,7 +95,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
       <motion.div
         whileHover={{ y: -10 }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        className="overflow-hidden rounded-3xl bg-white/[0.03] border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-all duration-500 relative h-full flex flex-col focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] will-change-transform"
+        className="overflow-hidden rounded-3xl bg-white/[0.03] border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-all duration-500 relative h-full flex flex-col focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
       >
         {/* Background Glow on Hover */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
@@ -129,7 +129,14 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             loading="lazy"
             decoding="async"
             onError={() => {
-              if (imageSrc !== car.image) setImageSrc(car.image);
+              // Storage can be down (e.g. quota). Try the raw URL once, then
+              // fall back to a local showroom image so cards never show a
+              // broken-image icon.
+              if (imageSrc !== car.image) {
+                setImageSrc(car.image);
+              } else {
+                setImageSrc('/images/showroom/serendib-showroom-floor-02.webp');
+              }
             }}
           />
           
@@ -208,7 +215,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             </h2>
             
             {/* Minimal Specs */}
-            <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-[0.15em] text-white/40 mb-8 pb-8 border-b border-white/5 tabular-nums">
+            <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-[0.15em] text-white/60 mb-8 pb-8 border-b border-white/5 tabular-nums">
               <div className="flex items-center gap-2">
                 <Gauge className="w-3 h-3 text-[#D4AF37]" />
                 <span>{car.mileage > 0 ? `${car.mileage.toLocaleString()} KM` : 'Ask for KM'}</span>
@@ -224,7 +231,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col">
-              <span className="text-[11px] uppercase tracking-[0.2em] text-white/30 mb-1">Price Guide</span>
+              <span className="text-[11px] uppercase tracking-[0.2em] text-white/60 mb-1">Price Guide</span>
               <p className="text-2xl font-black text-white tracking-[-0.05em] tabular-nums">
                 {car.price ? `LKR ${(car.price/1000000).toFixed(1)}M` : 'POA'}
               </p>

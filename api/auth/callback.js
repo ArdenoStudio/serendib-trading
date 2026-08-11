@@ -1,4 +1,11 @@
-import { createSessionToken, setSessionCookie, ALLOWED_ADMIN_EMAILS } from './_session.js';
+import {
+  createSessionToken,
+  setSessionCookie,
+  clearOauthStateCookie,
+  getOauthState,
+  timingSafeEqualStr,
+  ALLOWED_ADMIN_EMAILS,
+} from './_session.js';
 import { query } from '../_db.js';
 
 const DEFAULT_SITE_ORIGIN = 'https://serendib-trading.vercel.app';
@@ -12,16 +19,23 @@ const configuredOrigin = () => {
   }
 };
 
+// Must mirror api/auth/login.js: only the configured origin (or localhost in dev)
+// may be used as the OAuth redirect_uri.
 const originFor = (req) => {
   const configured = configuredOrigin();
   const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
   const host = typeof hostHeader === 'string' ? hostHeader.split(',')[0].trim().toLowerCase() : '';
+
   if (!host) return configured;
+  if (process.env.NODE_ENV !== 'production' && (host.includes('localhost') || host.includes('127.0.0.1'))) {
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    return `${proto}://${host}`;
+  }
 
   try {
     const configuredHost = new URL(configured).host.toLowerCase();
-    if (host === configuredHost || host.endsWith('.vercel.app') || host.includes('localhost') || host.includes('127.0.0.1')) {
-      const proto = req.headers['x-forwarded-proto'] || (host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https');
+    if (host === configuredHost) {
+      const proto = req.headers['x-forwarded-proto'] || 'https';
       return `${proto}://${host}`;
     }
   } catch {
@@ -34,23 +48,36 @@ const originFor = (req) => {
 export default async function handler(req, res) {
   const origin = originFor(req);
   const code = (req.query && req.query.code) || '';
+  const stateParam = (req.query && req.query.state) || '';
 
-  if (!code) {
-    res.setHeader('Location', `${origin}/admin/login?error=missing_code`);
+  const redirect = (error) => {
+    res.setHeader('Location', `${origin}/admin/login?error=${error}`);
     return res.status(302).end();
+  };
+
+  if (!code) return redirect('missing_code');
+
+  const oauthState = getOauthState(req);
+
+  // Validate the CSRF state token BEFORE exchanging anything with Google.
+  // A mismatch (or a missing state cookie) aborts the flow.
+  if (!oauthState || !stateParam || !timingSafeEqualStr(oauthState.state, stateParam)) {
+    clearOauthStateCookie(res);
+    return redirect('state_mismatch');
   }
+
+  // One-time use: burn the state cookie immediately.
+  clearOauthStateCookie(res);
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = `${origin}/api/auth/callback`;
 
-  if (!clientId || !clientSecret) {
-    res.setHeader('Location', `${origin}/admin/login?error=unconfigured`);
-    return res.status(302).end();
-  }
+  if (!clientId || !clientSecret) return redirect('unconfigured');
 
   try {
-    // Exchange auth code for tokens
+    // Exchange auth code for tokens (PKCE verifier proves this callback belongs
+    // to the browser that started the login).
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -60,13 +87,11 @@ export default async function handler(req, res) {
         client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
+        code_verifier: oauthState.verifier,
       }),
     });
 
-    if (!tokenRes.ok) {
-      res.setHeader('Location', `${origin}/admin/login?error=token_exchange_failed`);
-      return res.status(302).end();
-    }
+    if (!tokenRes.ok) return redirect('token_exchange_failed');
 
     const tokenData = await tokenRes.json();
     const accessToken = tokenData.access_token;
@@ -76,18 +101,12 @@ export default async function handler(req, res) {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!userRes.ok) {
-      res.setHeader('Location', `${origin}/admin/login?error=userinfo_failed`);
-      return res.status(302).end();
-    }
+    if (!userRes.ok) return redirect('userinfo_failed');
 
     const profile = await userRes.json();
     const email = String(profile.email || '').toLowerCase().trim();
 
-    if (!email) {
-      res.setHeader('Location', `${origin}/admin/login?error=invalid_email`);
-      return res.status(302).end();
-    }
+    if (!email) return redirect('invalid_email');
 
     // Check whitelist or admin_users table in database
     let isAuthorized = ALLOWED_ADMIN_EMAILS.has(email);
@@ -102,10 +121,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (!isAuthorized) {
-      res.setHeader('Location', `${origin}/admin/login?error=unauthorized&email=${encodeURIComponent(email)}`);
-      return res.status(302).end();
-    }
+    if (!isAuthorized) return redirect('unauthorized');
 
     const sessionToken = await createSessionToken({
       email,
@@ -117,7 +133,6 @@ export default async function handler(req, res) {
     res.setHeader('Location', `${origin}/admin/dashboard`);
     return res.status(302).end();
   } catch {
-    res.setHeader('Location', `${origin}/admin/login?error=server_error`);
-    return res.status(302).end();
+    return redirect('server_error');
   }
 }

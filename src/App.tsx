@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
 import Lenis from 'lenis';
 import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
@@ -8,7 +8,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
 import WhatsAppFloat from './components/WhatsAppFloat';
-import Loader from './components/Loader';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -54,7 +53,8 @@ export default function App() {
 
     let rafId: number;
     function raf(time: number) {
-      lenis.raf(time);
+      // Don't waste cycles while the tab is hidden.
+      if (!document.hidden) lenis.raf(time);
       rafId = requestAnimationFrame(raf);
     }
     rafId = requestAnimationFrame(raf);
@@ -67,31 +67,30 @@ export default function App() {
   }, [pathname, shouldReduceMotion]);
 
   const isAdmin = pathname.startsWith('/admin');
-  const pageInitial = shouldReduceMotion
-    ? {}
-    : { opacity: 0, y: 8, scale: 0.995 };
 
   return (
     <>
       {enableAnalytics && <Analytics />}
       <ScrollToTop />
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-5 focus:py-3 focus:rounded-xl focus:bg-[#D4AF37] focus:text-black focus:text-sm focus:font-black focus:uppercase focus:tracking-widest"
+      >
+        Skip to content
+      </a>
       {!isAdmin && <Navbar />}
       {!isAdmin && <ComparisonTray />}
-      <motion.div
-        key={pathname}
-        initial={pageInitial}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 30,
-          mass: 0.8,
-          opacity: { duration: 0.15 },
-        }}
-        style={{ willChange: shouldReduceMotion ? 'auto' : 'transform, opacity' }}
-      >
-        <ErrorBoundary>
-          <Suspense fallback={<Loader />}>
+      {/* Plain wrapper: animating the page shell from opacity 0 delays LCP by
+          ~1s on every route. Route content keeps its own (non-LCP) entrances. */}
+      <div id="main-content" tabIndex={-1}>
+        <ErrorBoundary key={pathname}>
+          <Suspense
+            fallback={
+              <div className="min-h-[70vh] flex items-center justify-center bg-[#0d0b09]">
+                <div className="w-10 h-10 rounded-full border-2 border-[#D4AF37]/20 border-t-[#D4AF37] animate-spin" />
+              </div>
+            }
+          >
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/inventory" element={<Inventory />} />
@@ -135,7 +134,7 @@ export default function App() {
             </Routes>
           </Suspense>
         </ErrorBoundary>
-      </motion.div>
+      </div>
       {!isAdmin && <WhatsAppFloat />}
     </>
   );

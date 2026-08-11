@@ -31,7 +31,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { isSupabaseConfigured, supabase, signOut } from '../../lib/supabase';
+import { isSupabaseConfigured, signOut } from '../../lib/supabase';
 import Loader from '../../components/Loader';
 import { Lead } from '../../data/types';
 import VehicleModal, { VehicleFormData } from './VehicleModal';
@@ -1019,7 +1019,7 @@ export default function AdminDashboard() {
                           </span>
                           <span className="flex items-center gap-2">
                             <Gauge className="h-3.5 w-3.5 text-white/25" />
-                            {vehicle.mileage.toLocaleString('en-LK')} km
+                            {Number(vehicle.mileage) > 0 ? `${Number(vehicle.mileage).toLocaleString('en-LK')} km` : 'Mileage not set'}
                           </span>
                           <span>{vehicle.fuel || 'Fuel not set'}</span>
                           <span>{vehicle.bodyType || vehicle.color || 'Details pending'}</span>

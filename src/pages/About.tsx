@@ -115,7 +115,7 @@ export default function About() {
             <p className="text-[#D4AF37] font-black tracking-[0.3em] uppercase text-[11px]">Visit Us</p>
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter">The Showroom</h2>
             <p className="text-white/60 leading-relaxed">
-              Located in the heart of Colombo, our showroom is designed to showcase each vehicle 
+              Located in Dehiwala, just minutes from Colombo, our showroom is designed to showcase each vehicle 
               in the best light. No pressure, no rush—just browse at your own pace.
             </p>
             <div className="flex items-center gap-3 pt-4">

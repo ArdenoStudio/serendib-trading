@@ -39,9 +39,12 @@ async function waitForServer(url, attempts = 40) {
 function startPreview() {
   const logPath = path.join(root, 'prerender-preview.log');
   const log = createWriteStream(logPath, { flags: 'w' });
+  // Invoke vite through node so this works on Windows, macOS, and Linux
+  // without relying on npx/cmd wrappers.
+  const viteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
   const child = spawn(
-    process.platform === 'win32' ? 'npx.cmd' : 'npx',
-    ['vite', 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'],
+    process.execPath,
+    [viteBin, 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'],
     {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -57,13 +60,28 @@ function startPreview() {
 async function snapshotRoute(browser, route) {
   const page = await browser.newPage();
   await page.goto(`${BASE}${route.path}`, { waitUntil: 'networkidle', timeout: 60_000 });
-  // Let lazy chunks + inventory fetch settle when Supabase is configured.
-  await page.waitForTimeout(1200);
+  // Wait for the h1 (and its animated ancestors) to actually be visible so the
+  // snapshot never captures the hero mid-fade (opacity 0) or the loader state.
   try {
-    await page.waitForSelector('h1', { timeout: 15_000 });
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('h1');
+        if (!el) return false;
+        let node = el;
+        for (let i = 0; i < 5 && node; i += 1) {
+          const opacity = parseFloat(getComputedStyle(node).opacity);
+          if (Number.isFinite(opacity) && opacity < 0.01) return false;
+          node = node.parentElement;
+        }
+        return true;
+      },
+      { timeout: 20_000 },
+    );
   } catch {
     // Continue with whatever HTML we have.
   }
+  // Let lazy chunks + inventory fetch settle when Supabase is configured.
+  await page.waitForTimeout(800);
 
   let html = await page.content();
   // Ensure crawlers see a non-empty body snapshot and keep relative asset paths.

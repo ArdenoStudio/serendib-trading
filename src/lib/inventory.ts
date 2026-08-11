@@ -20,12 +20,16 @@ export function getDemoInventory(): Car[] {
 }
 
 export function normalizeVehicle(vehicle: any): Car {
+  const price = Number(vehicle.price);
+  const mileage = Number(vehicle.mileage);
   return {
     ...vehicle,
     bodyType: vehicle.bodyType || vehicle.body_type || '',
     fuel: vehicle.fuel || vehicle.fuel_type || '',
     transmission: vehicle.transmission || vehicle.transmission_type || '',
     key_features: vehicle.key_features || vehicle.keyFeatures || [],
+    price: Number.isFinite(price) && price > 0 ? price : 0,
+    mileage: Number.isFinite(mileage) && mileage > 0 ? mileage : 0,
   };
 }
 

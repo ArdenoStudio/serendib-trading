@@ -92,7 +92,7 @@ const ArdenoProductionCredit: React.FC<{ color?: string }> = ({ color = "#F7E7CE
         </div>
         
         <div className="flex flex-col items-center gap-1.5 text-center text-decoration-none">
-          <span className="text-[9px] uppercase tracking-[0.36em] text-white/35 group-hover:text-white/60 transition-all duration-700 font-sans decoration-none">
+          <span className="text-[9px] uppercase tracking-[0.36em] text-white/60 group-hover:text-white/80 transition-all duration-700 font-sans decoration-none">
             An Ardeno Production
           </span>
           <span 

@@ -102,7 +102,7 @@ export const uploadVehicleImage = async (file: File): Promise<string> => {
     throw new Error('Image is still too large after compression.');
   }
 
-  // Convert compressed blob/file to Data URL or upload via /api/upload endpoint
+  // Convert compressed blob/file to Data URL and upload via /api/upload endpoint
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async () => {
@@ -113,14 +113,16 @@ export const uploadVehicleImage = async (file: File): Promise<string> => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageUrl: dataUrl }),
         });
-        if (res.ok) {
-          const json = await res.json();
-          resolve(json.url || dataUrl);
-        } else {
-          resolve(dataUrl);
+        if (!res.ok) {
+          // Fail loudly instead of persisting a base64 blob into the database.
+          const err = await res.json().catch(() => ({}));
+          reject(new Error(err.error || 'Image upload failed.'));
+          return;
         }
-      } catch {
-        resolve(dataUrl);
+        const json = await res.json();
+        resolve(json.url || dataUrl);
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error('Image upload failed.'));
       }
     };
     reader.onerror = () => reject(new Error('Failed to read image file'));

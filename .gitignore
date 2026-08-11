@@ -11,3 +11,9 @@ renders/
 !.env.example
 
 .vercel
+
+# Local tooling / agent config that must never be committed or shipped
+Deepseek-API/
+.opencode/
+.swarm/
+.claude/

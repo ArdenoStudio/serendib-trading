@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "vite build && node scripts/install-browsers.mjs && node scripts/prerender.mjs",
     "build:app": "vite build",
     "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview",

@@ -7,6 +7,7 @@ const PHONE_PATTERN = /^[0-9+() -]{7,20}$/;
 const MAX_BODY_BYTES = 8192;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_PHONE_SUBMISSIONS_PER_WINDOW = 3;
+const MAX_IP_SUBMISSIONS_PER_WINDOW = 8;
 
 const send = (res, status, payload) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -25,7 +26,16 @@ const parseJsonBody = (raw) => {
 };
 
 const readBody = async (req) => {
-  if (req.body && typeof req.body === 'object') return req.body;
+  if (req.body && typeof req.body === 'object') {
+    // Runtime already parsed the body (e.g. vercel dev): enforce the same cap.
+    const size = Buffer.byteLength(JSON.stringify(req.body) || '', 'utf8');
+    if (size > MAX_BODY_BYTES) {
+      const error = new Error('Request body too large.');
+      error.status = 413;
+      throw error;
+    }
+    return req.body;
+  }
   if (typeof req.body === 'string') return parseJsonBody(req.body || '{}');
 
   let raw = '';
@@ -78,9 +88,10 @@ const sameOriginRequest = (req) => {
 };
 
 const getClientIp = (req) => {
-  const realIp = req.headers['x-real-ip'];
-  if (typeof realIp === 'string' && realIp.trim()) return realIp.trim();
-
+  // Only trust platform-provided IP headers. Vercel overwrites
+  // x-vercel-forwarded-for and x-forwarded-for with the real client IP;
+  // x-real-ip is NOT set by Vercel and can be spoofed by any client, so it
+  // must never be accepted for rate limiting.
   const vercelForwarded = req.headers['x-vercel-forwarded-for'];
   if (typeof vercelForwarded === 'string' && vercelForwarded.trim()) {
     return vercelForwarded.split(',')[0].trim();
@@ -88,21 +99,37 @@ const getClientIp = (req) => {
 
   const forwardedFor = req.headers['x-forwarded-for'];
   if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
-    const hops = forwardedFor
-      .split(',')
-      .map((hop) => hop.trim())
-      .filter(Boolean);
-    if (hops.length > 0) return hops[hops.length - 1];
+    const firstHop = forwardedFor.split(',')[0].trim();
+    if (firstHop) return firstHop;
   }
 
   return req.socket?.remoteAddress || 'unknown';
 };
 
+const getRateLimitSalt = () => {
+  const salt = process.env.LEAD_RATE_LIMIT_SALT;
+  if (!salt || salt.length < 16) {
+    // Fail closed: without a strong salt the rate-limit keying is predictable.
+    const error = new Error('Lead capture is unavailable right now.');
+    error.status = 500;
+    throw error;
+  }
+  return salt;
+};
+
 const hashRateKey = (req, phone) => {
-  const salt = process.env.LEAD_RATE_LIMIT_SALT || 'serendib-leads';
+  const salt = getRateLimitSalt();
   return crypto
     .createHash('sha256')
     .update(`${salt}:${getClientIp(req)}:${phone}`)
+    .digest('hex');
+};
+
+const hashIpKey = (req) => {
+  const salt = getRateLimitSalt();
+  return crypto
+    .createHash('sha256')
+    .update(`${salt}:ip:${getClientIp(req)}`)
     .digest('hex');
 };
 
@@ -172,22 +199,26 @@ const validateLead = (body) => {
 const enforceRateLimit = async (req, lead) => {
   const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
   const keyHash = hashRateKey(req, lead.phone);
+  const ipKey = hashIpKey(req);
 
-  const [ipLimit, phoneLimit] = await Promise.all([
+  const [ipLimit, phoneLimit, ipBucket] = await Promise.all([
     query('SELECT id FROM lead_rate_limits WHERE key_hash = $1 AND created_at >= $2 LIMIT 1', [keyHash, since]),
     query('SELECT id FROM leads WHERE phone = $1 AND created_at >= $2 LIMIT $3', [lead.phone, since, MAX_PHONE_SUBMISSIONS_PER_WINDOW]),
+    query('SELECT id FROM lead_rate_limits WHERE key_hash = $1 AND created_at >= $2 LIMIT $3', [ipKey, since, MAX_IP_SUBMISSIONS_PER_WINDOW]),
   ]);
 
   const phoneHits = Array.isArray(phoneLimit) ? phoneLimit.length : 0;
   const ipHits = Array.isArray(ipLimit) ? ipLimit.length : 0;
+  const ipBucketHits = Array.isArray(ipBucket) ? ipBucket.length : 0;
 
-  if (ipHits > 0 || phoneHits >= MAX_PHONE_SUBMISSIONS_PER_WINDOW) {
+  if (ipHits > 0 || phoneHits >= MAX_PHONE_SUBMISSIONS_PER_WINDOW || ipBucketHits >= MAX_IP_SUBMISSIONS_PER_WINDOW) {
     const error = new Error('Please wait before submitting another inquiry.');
     error.status = 429;
     throw error;
   }
 
   await query('INSERT INTO lead_rate_limits (key_hash, created_at) VALUES ($1, NOW())', [keyHash]);
+  await query('INSERT INTO lead_rate_limits (key_hash, created_at) VALUES ($1, NOW())', [ipKey]);
   await query("DELETE FROM lead_rate_limits WHERE created_at < NOW() - INTERVAL '24 hours'").catch(() => undefined);
 };
 

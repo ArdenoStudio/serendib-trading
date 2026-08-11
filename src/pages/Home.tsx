@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import InstagramShowcase from '../components/InstagramShowcase';
 import Footer from '../components/Footer';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { Car } from '../data/types';
 import { getInitialInventory } from '../lib/inventory';
 import { fetchInventoryList, invalidateInventoryCache } from '../lib/inventoryCache';
@@ -16,8 +16,12 @@ import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 import { optimizeImageUrl } from '../lib/images';
 
+// Animated card link so featured cards are keyboard- and screen-reader-accessible.
+const MotionCardLink = motion.create(Link);
+
 export default function Home() {
   const [cars, setCars] = useState<Car[]>(getInitialInventory);
+  const [fetchError, setFetchError] = useState(false);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const navigate = useNavigate();
 
@@ -25,9 +29,11 @@ export default function Home() {
     if (!isSupabaseConfigured) return;
     try {
       if (force) invalidateInventoryCache();
+      setFetchError(false);
       setCars(await fetchInventoryList({ force }));
     } catch (err) {
       console.error('Failed to fetch from Supabase:', err);
+      setFetchError(true);
     }
   };
 
@@ -35,9 +41,10 @@ export default function Home() {
     if (!isSupabaseConfigured) return;
     void fetchLiveVehicles(false);
 
+    // Gentle background refresh; the shared inventory cache already dedupes.
     const interval = setInterval(() => {
-      void fetchLiveVehicles(true);
-    }, 60_000);
+      void fetchLiveVehicles(false);
+    }, 10 * 60_000);
 
     return () => clearInterval(interval);
   }, []);
@@ -68,6 +75,7 @@ export default function Home() {
   // Featured-arrivals marquee: measure one card set so the loop wraps seamlessly
   // at any card count / breakpoint instead of relying on a magic pixel offset.
   const marqueeSetRef = useRef<HTMLDivElement>(null);
+  const marqueeWrapRef = useRef<HTMLDivElement>(null);
   const [marqueeSetWidth, setMarqueeSetWidth] = useState(0);
   const [marqueePaused, setMarqueePaused] = useState(false);
   const marqueeX = useMotionValue(0);
@@ -82,6 +90,30 @@ export default function Home() {
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, [cars.length]);
+
+  // Pause the marquee while it is off-screen so lazy images stay lazy and
+  // the rAF loop doesn't run forever on pages where it isn't visible.
+  useEffect(() => {
+    const wrap = marqueeWrapRef.current;
+    if (!wrap) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setMarqueePaused((paused) => (entry.isIntersecting ? paused : true));
+      },
+      { rootMargin: '100px' }
+    );
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, []);
+
+  // Pause when the tab is hidden.
+  useEffect(() => {
+    const onVisibility = () => {
+      setMarqueePaused(document.hidden);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   // Drive the marquee manually so speed stays constant and hover pauses instantly.
   useAnimationFrame((_, delta) => {
@@ -103,15 +135,16 @@ export default function Home() {
   const marqueeCars = cars;
 
   const renderFeaturedCard = (car: Car, key: string) => (
-    <motion.div
+    <MotionCardLink
       key={key}
+      to={`/car/${car.id}`}
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       whileHover={{ y: -10 }}
+      whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
       className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color,opacity,transform] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-      onClick={() => navigate(`/car/${car.id}`)}
     >
       {/* Image Container with Hover Zoom */}
       <div className="w-full h-64 md:h-72 overflow-hidden relative bg-[#0d0b09]">
@@ -133,9 +166,19 @@ export default function Home() {
           decoding="async"
           className="w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-1000 group-hover/card:scale-[1.02]"
           onError={(e) => {
-            // Fall back to the raw storage URL if a transform URL ever 403s.
+            // Try the raw storage URL once, then fall back to a local
+            // showroom image so the marquee never shows broken icons.
             const el = e.currentTarget;
-            if (car.image && el.src !== car.image) el.src = car.image;
+            if (el.dataset.fallback) {
+              el.src = '/images/showroom/serendib-showroom-floor-02.webp';
+              return;
+            }
+            el.dataset.fallback = '1';
+            if (car.image && el.src !== car.image) {
+              el.src = car.image;
+            } else {
+              el.src = '/images/showroom/serendib-showroom-floor-02.webp';
+            }
           }}
         />
 
@@ -161,15 +204,15 @@ export default function Home() {
 
         <div className="flex items-center justify-between pt-8 border-t border-white/10">
           <div className="flex flex-col">
-            <span className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-1">Price Guide</span>
+            <span className="text-[11px] uppercase tracking-[0.2em] text-white/60 mb-1">Price Guide</span>
             <span className="text-2xl font-black text-white tracking-tighter">
-              LKR {(car.price/1000000).toFixed(1)}M
+              {car.price > 0 ? `LKR ${(car.price / 1000000).toFixed(1)}M` : 'Price on request'}
             </span>
           </div>
 
           <motion.div
             whileHover={{ x: 5 }}
-            aria-label="View car details"
+            aria-hidden="true"
             className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]"
           >
             <span className="hidden md:block">Details</span>
@@ -182,7 +225,7 @@ export default function Home() {
         {/* Corner Accent */}
         <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
       </div>
-    </motion.div>
+    </MotionCardLink>
   );
 
   return (
@@ -234,11 +277,12 @@ export default function Home() {
                 className="absolute inset-0 h-full w-full object-cover brightness-[0.98] contrast-[1.08] saturate-[1.03]"
                 style={{ objectPosition: currentHeroSlide.objectPosition || 'center center' }}
                 decoding="async"
+                fetchPriority="high"
                 loading={activeHeroSlide === 0 ? 'eager' : 'lazy'}
-                initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.04 }}
+                initial={{ opacity: 0.001, scale: shouldReduceMotion ? 1 : 1.04 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
-                transition={{ duration: shouldReduceMotion ? 0 : 1.2, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
               />
             </AnimatePresence>
           </motion.div>
@@ -300,9 +344,9 @@ export default function Home() {
 
           {/* Left-Aligned Text Content */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0.001, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.2 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{ opacity: textOpacity }}
             className="flex w-full max-w-[calc(100vw-3rem)] flex-col relative z-10 md:max-w-[920px]"
           >
@@ -330,12 +374,12 @@ export default function Home() {
               initial="hidden"
               animate="visible"
               variants={{
-                hidden: { opacity: 0 },
+                hidden: { opacity: 0.001 },
                 visible: {
                   opacity: 1,
                   transition: {
-                    staggerChildren: 0.12,
-                    delayChildren: 0.3
+                    staggerChildren: 0.1,
+                    delayChildren: 0
                   }
                 }
               }}
@@ -344,11 +388,11 @@ export default function Home() {
               <div className="overflow-hidden">
                 <motion.span 
                   variants={{
-                    hidden: { y: "100%", opacity: 0 },
+                    hidden: { y: "35%", opacity: 0.001 },
                     visible: { y: 0, opacity: 1 }
                   }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="block text-5xl sm:text-7xl md:text-8xl lg:text-9xl leading-[0.84] tracking-[-0.04em] text-white font-black font-serif italic text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  className="block text-5xl sm:text-7xl md:text-8xl lg:text-9xl leading-[0.84] tracking-[-0.04em] text-white font-bold font-serif italic text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
                 >
                   Drive
                 </motion.span>
@@ -356,10 +400,10 @@ export default function Home() {
               <div className="overflow-hidden mt-2 lg:mt-4">
                 <motion.span 
                   variants={{
-                    hidden: { y: "100%", opacity: 0 },
+                    hidden: { y: "35%", opacity: 0.001 },
                     visible: { y: 0, opacity: 1 }
                   }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                   className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.84] tracking-[-0.04em] text-white ml-1 sm:ml-8 md:ml-16 font-black font-sans text-wrap-balance drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] md:text-transparent md:bg-clip-text md:bg-gradient-to-r md:from-[#D4AF37] md:via-[#F7E7CE] md:to-[#D4AF37]"
                 >
                   Your Way.
@@ -437,12 +481,12 @@ export default function Home() {
         {/* 6-item grid — perfectly centered */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
           {[
-            { name: 'SUV',      path: '/inventory?bodyType=SUV',      image: '/car-types/suv.webp' },
-            { name: 'Sedan',    path: '/inventory?bodyType=Sedan',    image: '/car-types/sedan.webp' },
-            { name: 'Hatchback',path: '/inventory?bodyType=Hatchback',image: '/car-types/hatchback.webp' },
-            { name: 'Luxury',   path: '/inventory?bodyType=Luxury',   image: '/car-types/rolls-royce.webp' },
-            { name: 'MPV',      path: '/inventory?bodyType=MPV',      image: '/car-types/car.webp' },
-            { name: 'Crossover',path: '/inventory?bodyType=Crossover',image: '/car-types/crossover.webp' },
+            { name: 'SUV',       path: '/inventory?bodyType=SUV',       image: '/car-types/suv.webp' },
+            { name: 'Sedan',     path: '/inventory?bodyType=Sedan',     image: '/car-types/sedan.webp' },
+            { name: 'Hatchback', path: '/inventory?bodyType=Hatchback', image: '/car-types/hatchback.webp' },
+            { name: 'Pickup',    path: '/inventory?bodyType=Pickup',    image: '/car-types/car.webp' },
+            { name: 'Coupe',     path: '/inventory?bodyType=Coupe',     image: '/car-types/rolls-royce.webp' },
+            { name: 'Crossover', path: '/inventory?bodyType=Crossover', image: '/car-types/crossover.webp' },
           ].map((type, idx) => (
             <motion.button
               key={type.name}
@@ -586,19 +630,36 @@ export default function Home() {
         
         {/* Horizontal Marquee Container */}
         <div
-          className="w-screen relative left-1/2 right-1/2 -ml-[50vw] +mr-[50vw] overflow-hidden py-12"
+          ref={marqueeWrapRef}
+          className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-12"
           onMouseEnter={() => setMarqueePaused(true)}
           onMouseLeave={() => setMarqueePaused(false)}
         >
-          <motion.div className="flex w-max" style={{ x: marqueeX }}>
-            {/* Two identical sets; the first is measured so we wrap by exactly one set width */}
-            <div ref={marqueeSetRef} className="flex gap-8 pr-8 shrink-0">
-              {marqueeCars.map((car, i) => renderFeaturedCard(car, `set1-${car.id}-${i}`))}
+          {cars.length === 0 ? (
+            <div className="mx-auto max-w-2xl px-6 text-center">
+              {fetchError ? (
+                <p className="text-gray-400 font-light leading-relaxed">
+                  Our live inventory is temporarily unavailable. Please check back shortly or
+                  <a href="https://wa.me/94756363427" className="text-[#D4AF37] hover:underline" rel="noopener noreferrer" target="_blank"> message us</a>.
+                </p>
+              ) : (
+                <p className="text-gray-400 font-light leading-relaxed">
+                  Our next arrivals are being prepared. Follow us on Instagram or
+                  <a href="https://wa.me/94756363427" className="text-[#D4AF37] hover:underline" rel="noopener noreferrer" target="_blank"> message us</a> for early access.
+                </p>
+              )}
             </div>
-            <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
-              {marqueeCars.map((car, i) => renderFeaturedCard(car, `set2-${car.id}-${i}`))}
-            </div>
-          </motion.div>
+          ) : (
+            <motion.div className="flex w-max" style={{ x: marqueeX }}>
+              {/* Two identical sets; the first is measured so we wrap by exactly one set width */}
+              <div ref={marqueeSetRef} className="flex gap-8 pr-8 shrink-0">
+                {marqueeCars.map((car, i) => renderFeaturedCard(car, `set1-${car.id}-${i}`))}
+              </div>
+              <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
+                {marqueeCars.map((car, i) => renderFeaturedCard(car, `set2-${car.id}-${i}`))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
       {/* ===== TRADE-IN SECTION (DARK) ===== */}

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /admin/login
 
-Sitemap: https://serendib-trading.vercel.app/sitemap.xml
+Sitemap: https://serendibtrading.lk/sitemap.xml

@@ -5,12 +5,20 @@ import SEO from '../components/SEO';
 
 const sections = [
   {
+    title: 'About Serendib Trading',
+    body: 'Serendib Trading is a vehicle importer and showroom based at 47/A, S. De S. Jayasinghe Mawatha, Dehiwala-Mount Lavinia, Sri Lanka. You can reach us at bilalikras1@gmail.com or +94 75 636 3427.',
+  },
+  {
     title: 'Use of Website',
     body: 'By accessing this website, you agree to use it only for lawful purposes. You must not misuse this site by introducing viruses, attempting to gain unauthorised access, or engaging in any conduct that disrupts or damages the service.',
   },
   {
     title: 'Vehicle Information & Pricing',
-    body: 'All vehicle listings, specifications, and pricing displayed on this website are for informational purposes only and may be subject to change without notice. Final prices are confirmed at the time of sale. We reserve the right to correct any errors or inaccuracies.',
+    body: 'All vehicle listings, specifications, images, and pricing displayed on this website are provided for informational purposes only and may change without notice. Vehicles are imported used vehicles; while we review the documents and condition available to us, we make no guarantee regarding any specific vehicle\'s condition, mileage accuracy, accident history, or origin beyond what is stated in the listing and confirmed in writing at the time of sale. Final prices are confirmed at the time of sale, and we reserve the right to correct errors or inaccuracies.',
+  },
+  {
+    title: 'Finance Guidance Disclaimer',
+    body: 'Any finance or loan calculator figures shown on this website are estimates for planning purposes only. They do not constitute financial advice, a loan offer, or a guarantee of approval or terms. Actual rates and eligibility are determined solely by the relevant financial institution.',
   },
   {
     title: 'No Contractual Obligation',

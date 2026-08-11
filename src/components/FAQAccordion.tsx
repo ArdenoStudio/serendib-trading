@@ -37,6 +37,9 @@ export default function FAQAccordion() {
         >
           <button 
             onClick={() => setOpenIndex(openIndex === index ? null : index)} 
+            aria-expanded={openIndex === index}
+            aria-controls={`faq-panel-${index}`}
+            id={`faq-button-${index}`}
             className="w-full px-6 md:px-10 py-6 md:py-8 flex items-center justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0b09] group active:scale-[0.99] transition-transform"
           >
             <div className="flex items-center gap-4">
@@ -56,6 +59,9 @@ export default function FAQAccordion() {
           <AnimatePresence>
             {openIndex === index && (
               <motion.div 
+                id={`faq-panel-${index}`}
+                role="region"
+                aria-labelledby={`faq-button-${index}`}
                 initial={{ height: 0, opacity: 0 }} 
                 animate={{ height: "auto", opacity: 1 }} 
                 exit={{ height: 0, opacity: 0 }} 

@@ -29,7 +29,7 @@ export default function NotFound() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-6xl md:text-8xl font-black tracking-[-0.06em] font-serif italic text-white leading-none">
+          <h1 className="text-6xl md:text-8xl font-bold tracking-[-0.06em] font-serif italic text-white leading-none">
             Lost<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37] font-sans not-italic">the road.</span>
           </h1>

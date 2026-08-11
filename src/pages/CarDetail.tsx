@@ -97,12 +97,12 @@ export default function CarDetail() {
     };
   }, [id]);
 
-  const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am' });
+  const [testDriveForm, setTestDriveForm] = useState({ name: '', phone: '', date: '', time: '9:30am', consent: false });
   const [leadError, setLeadError] = useState('');
   const [leadSuccess, setLeadSuccess] = useState('');
   const [whatsappContinueUrl, setWhatsappContinueUrl] = useState('');
   const [submittingLead, setSubmittingLead] = useState(false);
-  const [activeImage, setActiveImage] = useState(car?.image || '');
+  const [activeImage, setActiveImage] = useState('');
   const [copyToast, setCopyToast] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
@@ -157,6 +157,10 @@ export default function CarDetail() {
       setLeadError('Choose today or a future date.');
       return;
     }
+    if (!testDriveForm.consent) {
+      setLeadError('Please accept the privacy policy so we can arrange your viewing.');
+      return;
+    }
 
     setLeadError('');
     setLeadSuccess('');
@@ -202,9 +206,13 @@ export default function CarDetail() {
         console.error('Share failed:', err);
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      setCopyToast(true);
-      setTimeout(() => setCopyToast(false), 2500);
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => {
+          setCopyToast(true);
+          setTimeout(() => setCopyToast(false), 2500);
+        })
+        .catch((err) => console.error('Copy link failed:', err));
     }
   };
 
@@ -212,7 +220,7 @@ export default function CarDetail() {
     <div className="min-h-screen font-sans bg-[#0d0b09] text-white overflow-x-hidden">
       <SEO 
         title={`${car.year} ${car.make} ${car.model} for Sale`}
-        description={`Explore the ${car.year} ${car.make} ${car.model} at Serendib Trading in Sri Lanka. LKR ${car.price.toLocaleString()}. ${car.condition} condition${car.mileage > 0 ? `, ${car.mileage.toLocaleString()} KM` : ''}.`}
+        description={`Explore the ${car.year} ${car.make} ${car.model} at Serendib Trading in Sri Lanka.${car.price > 0 ? ` LKR ${car.price.toLocaleString()}.` : ''} ${car.condition} condition${car.mileage > 0 ? `, ${car.mileage.toLocaleString()} KM` : ''}.`}
         ogImage={car.image}
         ogImageAlt={`${car.year} ${car.make} ${car.model} listed by Serendib Trading`}
         canonical={`/car/${car.id}`}
@@ -260,22 +268,33 @@ export default function CarDetail() {
           
           {/* LEFT: VISUALS SECTION (7 cols) */}
           <div className="lg:col-span-7 space-y-8">
-            <motion.div 
+            <motion.button
+              type="button"
               layoutId={`car-image-${car.id}`}
               onClick={() => setLightboxImage(activeImage)}
-              className="aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl cursor-zoom-in"
+              aria-label="Zoom vehicle photo"
+              className="w-full aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl cursor-zoom-in"
             >
               <AnimatePresence mode="wait">
-                  <motion.img 
-                    key={activeImage}
-                    initial={{ opacity: 0, scale: 1.02 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6 }}
-                    src={activeImage} 
-                    alt={car.model} 
-                    className="w-full h-full object-cover object-center origin-center scale-[0.94] will-change-transform"
-                  />
+                  {activeImage && (
+                    <motion.img
+                      key={activeImage}
+                      initial={{ opacity: 0, scale: 1.02 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                      src={activeImage}
+                      onError={() => {
+                        if (activeImage !== car.image && car.image) {
+                          setActiveImage(car.image);
+                        } else {
+                          setActiveImage('/images/showroom/serendib-showroom-floor-02.webp');
+                        }
+                      }}
+                      alt={`${car.year} ${getBrandLabel(car.make)} ${car.model}`}
+                      className="w-full h-full object-cover object-center origin-center scale-[0.94] will-change-transform"
+                    />
+                  )}
               </AnimatePresence>
               {/* Zoom indicator on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -298,7 +317,7 @@ export default function CarDetail() {
               </div>
               {/* Image Depth Outline */}
               <div className="absolute inset-0 border border-white/10 pointer-events-none rounded-[40px]" />
-            </motion.div>
+            </motion.button>
 
             {/* Thumbnails Gallery */}
             <div className="grid grid-cols-4 gap-6">
@@ -315,7 +334,7 @@ export default function CarDetail() {
                     isActive ? 'border-[#D4AF37] p-1' : 'border-white/5 opacity-50 hover:opacity-100'
                   }`}
                 >
-                  <img src={thumbSrc} alt={`Gallery ${i+1}`} loading="lazy" decoding="async" className="w-full h-full object-cover object-center origin-center scale-[0.94] rounded-[20px] group-hover:scale-[1.02] transition-transform duration-700" />
+                  <img src={thumbSrc} alt={i === 0 ? `${car.year} ${getBrandLabel(car.make)} ${car.model} main photo` : `${car.year} ${getBrandLabel(car.make)} ${car.model} photo ${i + 1}`} loading="lazy" decoding="async" onError={(e) => { const el = e.currentTarget; if (!el.dataset.fallback) { el.dataset.fallback = '1'; if (img && el.src !== img) el.src = img; } }} className="w-full h-full object-cover object-center origin-center scale-[0.94] rounded-[20px] group-hover:scale-[1.02] transition-transform duration-700" />
                   {isActive && <div className="absolute inset-0 bg-[#D4AF37]/10" />}
                   {/* Zoom hint on hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/40">
@@ -450,7 +469,7 @@ export default function CarDetail() {
                    <Calendar className="w-24 h-24" />
                 </div>
                 <div className="space-y-2 relative z-10">
-                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">Private Viewing</h3>
+                  <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">Private Viewing</h2>
                   <p className="text-[13px] text-gray-500 font-medium">Coordinate a personalized showroom experience.</p>
                 </div>
                 
@@ -497,6 +516,19 @@ export default function CarDetail() {
                       Continue on WhatsApp
                     </a>
                   )}
+                  <label className="flex items-start gap-3 cursor-pointer pt-2" htmlFor="test-drive-consent">
+                    <input
+                      type="checkbox"
+                      id="test-drive-consent"
+                      checked={testDriveForm.consent}
+                      onChange={(e) => setTestDriveForm({ ...testDriveForm, consent: e.target.checked })}
+                      className="mt-0.5 size-5 shrink-0 accent-[#D4AF37] cursor-pointer"
+                    />
+                    <span className="text-xs leading-relaxed text-gray-400">
+                      I agree that Serendib Trading may store my name and contact details to arrange this viewing, and that we may continue the conversation on WhatsApp. See our{' '}
+                      <Link to="/privacy" className="text-[#D4AF37] hover:underline">Privacy Policy</Link>.
+                    </span>
+                  </label>
                   <button type="submit" disabled={submittingLead} className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
                     {submittingLead ? 'Sending Request' : 'Request Appointment'}
                   </button>

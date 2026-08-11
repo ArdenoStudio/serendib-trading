@@ -4,7 +4,8 @@ import { X, BarChart2, Plus, Info, ShieldCheck, TrendingUp, Cpu } from 'lucide-r
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Car } from '../data/types';
 import { allowDemoInventory, getDemoInventory, mapLiveVehicles } from '../lib/inventory';
-import { INVENTORY_LIST_COLUMNS, fetchInventoryList } from '../lib/inventoryCache';
+import { fetchInventoryList } from '../lib/inventoryCache';
+import { optimizeImageUrl } from '../lib/images';
 import { LiquidButton } from './ui/liquid-glass-button';
 import { readStringList, writeStringList } from '../lib/storage';
 import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
@@ -185,7 +186,21 @@ export default function ComparisonTray() {
                         <div className="bg-white/[0.03] border border-white/10 rounded-[32px] p-6 space-y-8 group-hover:bg-white/[0.05] group-hover:border-[#D4AF37]/20 transition-all duration-500">
                            {/* Vehicle Image Container */}
                            <div className="aspect-[16/10] rounded-2xl overflow-hidden relative shadow-2xl">
-                              <img src={v.image} className="w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-700 group-hover:scale-[1.02]" alt={getDisplayModel(v.make, v.model)} />
+                              {v.image ? (
+                                <img
+                                  src={optimizeImageUrl(v.image, 'card') || v.image}
+                                  onError={(e) => {
+                                    const el = e.currentTarget;
+                                    if (v.image && el.src !== v.image) el.src = v.image;
+                                  }}
+                                  className="w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-700 group-hover:scale-[1.02]"
+                                  alt={getDisplayModel(v.make, v.model)}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-white/[0.03] text-white/30 text-[11px] font-black uppercase tracking-widest">
+                                  No photo
+                                </div>
+                              )}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                               <div className="absolute bottom-6 left-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
                                  <Cpu className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -206,8 +221,8 @@ export default function ComparisonTray() {
 
                               <div className="grid grid-cols-2 gap-y-10 gap-x-8">
                                 {[
-                                  { label: 'Listed Price', value: `LKR ${v.price.toLocaleString()}`, accent: true },
-                                  { label: 'Odometer Reading', value: `${v.mileage.toLocaleString()} KM` },
+                                  { label: 'Listed Price', value: v.price > 0 ? `LKR ${v.price.toLocaleString()}` : 'Price on request', accent: true },
+                                  { label: 'Odometer Reading', value: v.mileage > 0 ? `${v.mileage.toLocaleString()} KM` : 'Ask showroom' },
                                   { label: 'Transmission System', value: v.transmission },
                                   { label: 'Power Source', value: v.fuel },
                                 ].map((spec, i) => (

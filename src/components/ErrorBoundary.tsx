@@ -7,13 +7,14 @@ type Props = {
 
 type State = {
   hasError: boolean;
+  attempt: number;
 };
 
 export default class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
+  state: State = { hasError: false, attempt: 0 };
 
   static getDerivedStateFromError(): State {
-    return { hasError: true };
+    return { hasError: true, attempt: 0 };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -21,11 +22,14 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReset = () => {
-    this.setState({ hasError: false });
+    // Remount children via a fresh key so the same error doesn't replay.
+    this.setState((prev) => ({ hasError: false, attempt: prev.attempt + 1 }));
   };
 
   render() {
-    if (!this.state.hasError) return this.props.children;
+    if (!this.state.hasError) {
+      return <div key={this.state.attempt}>{this.props.children}</div>;
+    }
 
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-6 py-24 bg-[#0d0b09] text-white">
