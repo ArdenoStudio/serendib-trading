@@ -15,7 +15,7 @@ export const escapeHtml = (value) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const DEFAULT_SITE_ORIGIN = 'https://serendib-trading.vercel.app';
+const DEFAULT_SITE_ORIGIN = 'https://serendibtrading.lk';
 const DEFAULT_OG_IMAGE = '/images/showroom/serendib-showroom-floor-02.webp';
 
 const configuredOrigin = () => {

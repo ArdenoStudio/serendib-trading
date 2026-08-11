@@ -8,7 +8,7 @@ import {
 } from './_session.js';
 import { query } from '../_db.js';
 
-const DEFAULT_SITE_ORIGIN = 'https://serendib-trading.vercel.app';
+const DEFAULT_SITE_ORIGIN = 'https://serendibtrading.lk';
 
 const configuredOrigin = () => {
   const raw = process.env.SITE_URL || process.env.VITE_SITE_URL || DEFAULT_SITE_ORIGIN;

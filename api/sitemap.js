@@ -12,7 +12,7 @@ const STATIC_PATHS = [
 ];
 
 const DEFAULT_OG = '/images/showroom/serendib-showroom-floor-02.webp';
-const DEFAULT_SITE_ORIGIN = 'https://serendib-trading.vercel.app';
+const DEFAULT_SITE_ORIGIN = 'https://serendibtrading.lk';
 
 const escapeXml = (value) =>
   String(value ?? '')

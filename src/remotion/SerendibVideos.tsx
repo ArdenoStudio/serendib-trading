@@ -821,7 +821,7 @@ const BrowserTopBar = () => (
         justifyContent: 'center',
       }}
     >
-      serendib-trading.vercel.app
+      serendibtrading.lk
     </div>
   </div>
 );
