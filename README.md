@@ -1,74 +1,116 @@
-# Serendib Trading
+# SERENDIB TRADING
 
-Luxury vehicle showroom website and lightweight inventory admin for Serendib Trading.
+> **Imported Vehicles · Dehiwala & Colombo, Sri Lanka**
+> UK & Japan imports — curated, inspected, and ready for Sri Lankan roads.
 
-**Production:** https://serendibtrading.lk
+![Status](https://img.shields.io/badge/status-live-gold)
+![Domain](https://img.shields.io/badge/serendibtrading.lk-DFFF?style=flat&logo=vercel&logoColor=black&label=production)
+![Stack](https://img.shields.io/badge/React%2019%20%C2%B7%20Vite%20%C2%B7%20TypeScript-black)
+![License](https://img.shields.io/badge/license-proprietary-black)
 
-## Stack
+---
 
-- **Frontend:** React 19 + TypeScript, Vite 6, Tailwind CSS 4, framer-motion, lenis
-- **Backend:** Vercel serverless functions (`api/`) — leads, auth, inventory, analytics, sitemap, OG, uploads
-- **Database:** Neon Postgres (Singapore region)
-- **Admin auth:** Google OAuth → JWT session cookie (allow-listed emails)
-- **Images:** Supabase Storage (`vehicle-images` bucket, public)
-- **Analytics:** Vercel Analytics + lightweight page/car view logging
+## The House of Serendib
 
-## Run Locally
+Serendib Trading is a boutique vehicle importer and showroom in Dehiwala, minutes from Colombo. We hand-curate direct UK and Japan imports — every unit reviewed against its documents, mileage, and visible condition before it earns a place on our floor.
+
+This repository powers our flagship digital showroom: a cinematic, gold-on-black experience where buyers can browse the collection, compare vehicles, estimate finance, request private viewings, and reach our concierge on WhatsApp — all in one seamless journey.
+
+### The Collection
+
+- **Curated Inventory** — every listing verified, photographed, and graded. Live from our showroom database.
+- **Clear Histories** — JAAI / HPI reports, auction sheets, and service records available for review.
+- **Trade-In Exchange** — honest evaluations against the model you want next.
+- **Finance Guidance** — leasing comparisons with Sri Lanka's leading banks.
+- **Private Viewings** — by-appointment showroom experiences in Dehiwala.
+- **WhatsApp Concierge** — one-tap conversation with our team, islandwide.
+- **Lightweight Admin** — the in-house dashboard to manage inventory, leads, and analytics.
+
+---
+
+## The Engine Room
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend** | React 19 · TypeScript · Vite 6 | Cinematic SPA with route-level code splitting |
+| **Design** | Tailwind CSS 4 · framer-motion · lenis | Gold-on-black luxury theme, 60fps motion |
+| **Backend** | Vercel Serverless Functions (`api/`) | Leads, auth, inventory, analytics, sitemap, OG cards |
+| **Database** | Neon Postgres (Singapore) | Live inventory, leads, traffic |
+| **Identity** | Google OAuth → signed JWT session | Admin access, allow-listed emails only |
+| **Media** | Supabase Storage (`vehicle-images`) | Admin image uploads, public CDN |
+| **Observability** | Vercel Analytics · page/car view logging | Gentle, privacy-respecting insight |
+
+---
+
+## The Craft — Local Development
 
 **Prerequisites:** Node.js 20+
 
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Copy `.env.example` to `.env.local` and fill in the values (see table below).
-
-3. Run the app:
-
-   ```bash
-   npm run dev
-   ```
-
-   > The serverless API (`/api/*`) only runs under `vercel dev` — plain `vite dev`/`vite preview` serves the SPA shell and the API calls fail gracefully (empty states shown). Use `vercel dev` for full-stack local development.
-
-## Environment Variables
-
-| Variable | Required | Used by |
-|---|---|---|
-| `DATABASE_URL` | ✅ | Neon Postgres connection (serverless API) |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | Admin Google OAuth login |
-| `AUTH_SECRET` | ✅ (≥32 chars) | JWT session cookie signing — **fails closed if missing** |
-| `LEAD_RATE_LIMIT_SALT` | ✅ (≥16 chars) | Lead-form rate limiting — **fails closed if missing** |
-| `SITE_URL` / `VITE_SITE_URL` | ✅ | Canonical, sitemap, OG and OAuth redirect origins (`https://serendibtrading.lk`) |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | ✅ for image uploads | Admin image upload → Supabase Storage |
-| `VITE_IMAGE_CDN_BASE_URL` | optional | Custom image CDN origin |
-
-All of the above are already configured in Vercel (Production/Preview/Development).
-
-## Checks
-
 ```bash
-npm run lint                 # tsc --noEmit
-npm run build                # vite build + playwright chromium install + prerender
-npm run test:e2e             # Playwright (18 tests, API stubbed — vite preview can't run serverless functions)
+# 1 · Install the dependencies
+npm install
+
+# 2 · Prepare the environment
+cp .env.example .env.local    # then fill in the values (table below)
+
+# 3 · Run the full stack (API + SPA)
+vercel dev
 ```
 
-`npm run build` also prerenders `/` and `/inventory` to static HTML for crawlers. The build never fails if Chromium can't be installed or launched — it falls back to the SPA shell.
+> **Note for connoisseurs:** `vite dev` / `vite preview` serve the SPA shell only — the serverless API lives under `vercel dev`. Without it, API calls fail gracefully and the site shows its refined empty states.
 
-## Deployment
+---
+
+## The Keys — Environment Variables
+
+| Variable | Required | Serves |
+|---|---|---|
+| `DATABASE_URL` | ✅ | Neon Postgres connection (serverless API) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | Admin Google OAuth |
+| `AUTH_SECRET` | ✅ ≥32 chars | JWT session signing — **fails closed if missing** |
+| `LEAD_RATE_LIMIT_SALT` | ✅ ≥16 chars | Lead-form rate limiting — **fails closed if missing** |
+| `SITE_URL` / `VITE_SITE_URL` | ✅ | Canonical, sitemap, OG & OAuth origins — `https://serendibtrading.lk` |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | ✅ for uploads | Admin image uploads → Supabase Storage |
+| `VITE_IMAGE_CDN_BASE_URL` | optional | Custom image CDN origin |
+
+All are configured in Vercel (Production / Preview / Development).
+
+---
+
+## The Ritual — Checks
+
+```bash
+npm run lint          # TypeScript audit (tsc --noEmit)
+npm run build         # vite build → Playwright Chromium install → prerender / & /inventory
+npm run test:e2e      # Playwright — 18 tests, API stubbed for the preview sandbox
+```
+
+The build never fails on a missing browser — it gracefully falls back to the SPA shell.
+
+---
+
+## The Unveiling — Deployment
 
 ```bash
 vercel --prod
 ```
 
-The `serendibtrading.lk` domain is aliased to the production deployment in Vercel.
+The `serendibtrading.lk` domain is aliased to the production deployment.
 
-## Maintenance Notes
+---
 
-- **Secrets:** never commit a real `DATABASE_URL` (a live credential was previously committed in `.env.example` — rotate the Neon password if it has ever been exposed in git history).
-- **RLS / Supabase SQL migrations:** the SQL files in the repo root (`supabase_*.sql`) are historical Supabase config. The production data plane is Neon + serverless functions, so those migrations are **not** applied anywhere. Table access is enforced by the API code (JWT admin sessions on every admin endpoint).
-- **Image uploads:** admin uploads are stored in Supabase Storage via the service role key. If the Supabase project hits its quota, storage URLs return HTTP 402 and cards fall back to a local showroom placeholder — check the project's storage quota before blaming the UI.
-- **Lead forms:** `/api/leads` validates input, enforces a per-IP + per-phone rate limit, and requires a consent checkbox (Sri Lanka PDPA / GDPR). Data is stored in Neon; conversations continue on WhatsApp only when the visitor chooses to.
-- **Demo data:** `src/data/cars.json` is local-dev-only and never served in production.
+## The Stewardship — Governance & Maintenance
+
+- **Secrets are sacred.** Never commit a real `DATABASE_URL` (one was previously committed — rotate the Neon password if it ever touched git history).
+- **RLS & SQL migrations** (`supabase_*.sql`) are historical Supabase artifacts. Production runs on Neon + serverless functions, where access is enforced by signed JWT sessions on every admin endpoint.
+- **Image uploads** flow to Supabase Storage behind the admin session. If the project exceeds its quota, storage returns HTTP 402 and cards fall back to a local showroom portrait — watch the quota.
+- **Leads & consent.** `/api/leads` validates, rate-limits by IP and phone, and requires explicit consent — compliant with Sri Lanka's PDPA and respectful of GDPR visitors.
+- **Demo inventory** (`src/data/cars.json`) is a local-development courtesy only. The showroom floor in production is always live.
+
+---
+
+*Serendib Trading — founded on provenance, driven by passion.*
+
+**47/A, S. De S. Jayasinghe Mawatha · Dehiwala-Mount Lavinia · Sri Lanka**
+
+[serendibtrading.lk](https://serendibtrading.lk) · [+94 75 636 3427](tel:+94756363427) · [@serendib_trading](https://www.instagram.com/serendib_trading/)
