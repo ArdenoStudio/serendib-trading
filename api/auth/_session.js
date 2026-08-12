@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import * as cookie from 'cookie';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 const SESSION_ISSUER = 'serendib-trading';
 const SESSION_AUDIENCE = 'serendib-trading-admin';
@@ -146,9 +146,10 @@ export function getOauthState(req) {
 }
 
 export function timingSafeEqualStr(a, b) {
-  const bufA = Buffer.from(String(a));
-  const bufB = Buffer.from(String(b));
-  if (bufA.length !== bufB.length) return false;
-  return createHash('sha256').update(bufA).digest() === createHash('sha256').update(bufB).digest();
+  // Hash both sides first so the buffers are always equal length, then compare
+  // with a real constant-time primitive (Buffer === compares references!).
+  const hashA = createHash('sha256').update(String(a)).digest();
+  const hashB = createHash('sha256').update(String(b)).digest();
+  return timingSafeEqual(hashA, hashB);
 }
 

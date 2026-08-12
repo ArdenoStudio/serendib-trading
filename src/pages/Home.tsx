@@ -75,7 +75,6 @@ export default function Home() {
   // Featured-arrivals marquee: measure one card set so the loop wraps seamlessly
   // at any card count / breakpoint instead of relying on a magic pixel offset.
   const marqueeSetRef = useRef<HTMLDivElement>(null);
-  const marqueeWrapRef = useRef<HTMLDivElement>(null);
   const [marqueeSetWidth, setMarqueeSetWidth] = useState(0);
   const [marqueePaused, setMarqueePaused] = useState(false);
   const marqueeX = useMotionValue(0);
@@ -91,33 +90,11 @@ export default function Home() {
     return () => window.removeEventListener('resize', measure);
   }, [cars.length]);
 
-  // Pause the marquee while it is off-screen so lazy images stay lazy and
-  // the rAF loop doesn't run forever on pages where it isn't visible.
-  useEffect(() => {
-    const wrap = marqueeWrapRef.current;
-    if (!wrap) return undefined;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setMarqueePaused((paused) => (entry.isIntersecting ? paused : true));
-      },
-      { rootMargin: '100px' }
-    );
-    observer.observe(wrap);
-    return () => observer.disconnect();
-  }, []);
-
-  // Pause when the tab is hidden.
-  useEffect(() => {
-    const onVisibility = () => {
-      setMarqueePaused(document.hidden);
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, []);
-
-  // Drive the marquee manually so speed stays constant and hover pauses instantly.
+  // Drive the marquee manually so speed stays constant and hover pauses
+  // instantly. Pause is driven ONLY by hover (below) — no observers or
+  // visibility listeners so the state never fights itself.
   useAnimationFrame((_, delta) => {
-    if (marqueePaused || shouldReduceMotion || marqueeSetWidth === 0) return;
+    if (marqueePaused || shouldReduceMotion || document.hidden || marqueeSetWidth === 0) return;
     const speed = 55; // px per second
     let next = marqueeX.get() - (speed * delta) / 1000;
     if (next <= -marqueeSetWidth) next += marqueeSetWidth; // seamless wrap by one set
@@ -630,7 +607,6 @@ export default function Home() {
         
         {/* Horizontal Marquee Container */}
         <div
-          ref={marqueeWrapRef}
           className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-12"
           onMouseEnter={() => setMarqueePaused(true)}
           onMouseLeave={() => setMarqueePaused(false)}
