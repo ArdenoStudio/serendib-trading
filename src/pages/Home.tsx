@@ -121,7 +121,7 @@ export default function Home() {
       whileHover={{ y: -10 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color,opacity,transform] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+      className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
     >
       {/* Image Container with Hover Zoom */}
       <div className="w-full h-64 md:h-72 overflow-hidden relative bg-[#0d0b09]">
