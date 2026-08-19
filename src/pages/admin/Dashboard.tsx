@@ -13,7 +13,6 @@ import {
   DollarSign,
   Edit2,
   Eye,
-  Gauge,
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -24,13 +23,13 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  Sparkles,
   Trash2,
   TrendingUp,
   Users,
   WalletCards,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { invalidateInventoryCache } from '../../lib/inventoryCache';
 import { isSupabaseConfigured, signOut } from '../../lib/supabase';
 import Loader from '../../components/Loader';
 import { Lead } from '../../data/types';
@@ -123,6 +122,46 @@ const leadStatusStyles: Record<Lead['status'], { badge: string; dot: string; act
     active: 'border-emerald-300 bg-emerald-300 text-black',
   },
 };
+
+const panel = 'rounded-2xl border border-white/10 bg-white/[0.03]';
+const searchField =
+  'w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-[#D4AF37] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]';
+const pill = (active: boolean) =>
+  `rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+    active
+      ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
+      : 'border-white/10 text-white/70 hover:border-white/25 hover:text-white'
+  }`;
+const iconBtn =
+  'inline-flex size-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition-colors hover:border-[#D4AF37]/40 hover:text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]';
+
+function Meter({ pct, barClassName = 'bg-[#D4AF37]' }: { pct: number; barClassName?: string }) {
+  return (
+    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div className={`h-full rounded-full ${barClassName}`} style={{ width: `${clampPercent(pct)}%` }} />
+    </div>
+  );
+}
+
+function SegmentRows({ items, empty = 'No data' }: { items: AnalyticsSegment[]; empty?: string }) {
+  if (items.length === 0) {
+    return <p className="py-6 text-center text-sm text-white/45">{empty}</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((segment) => (
+        <div key={segment.label}>
+          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+            <span className="truncate text-white/60">{segment.label}</span>
+            <span className="shrink-0 tabular-nums text-white">{segment.meta ?? segment.count}</span>
+          </div>
+          <Meter pct={segment.pct} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<DashboardTab>('overview');
@@ -421,10 +460,10 @@ export default function AdminDashboard() {
   ];
 
   const summaryCards = [
-    { label: 'Total stock', value: stats.total.toLocaleString('en-LK'), meta: 'All listed units', icon: Car },
-    { label: 'Available', value: stats.available.toLocaleString('en-LK'), meta: 'Visible inventory', icon: ShieldCheck },
-    { label: 'Sold', value: stats.sold.toLocaleString('en-LK'), meta: 'Archive queue', icon: CheckCircle2 },
-    { label: 'Portfolio value', value: formatMillions(stats.totalValue), meta: formatFullLkr(stats.totalValue), icon: WalletCards },
+    { label: 'Cars', value: stats.total.toLocaleString('en-LK'), meta: 'Listed', icon: Car },
+    { label: 'On website', value: stats.available.toLocaleString('en-LK'), meta: 'Available now', icon: ShieldCheck },
+    { label: 'Sold', value: stats.sold.toLocaleString('en-LK'), meta: 'Archived', icon: CheckCircle2 },
+    { label: 'Total value', value: formatMillions(stats.totalValue), meta: formatFullLkr(stats.totalValue), icon: WalletCards },
   ];
 
   const handleDelete = async (v: Vehicle) => {
@@ -509,38 +548,32 @@ export default function AdminDashboard() {
   };
 
   const handleSaved = () => {
-    void import('../../lib/inventoryCache').then(({ invalidateInventoryCache }) => {
-      invalidateInventoryCache();
-    });
+    invalidateInventoryCache();
     fetchVehicles();
     setNotice({ type: 'success', message: 'Inventory saved.' });
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#0d0b09] text-white font-sans">
-      <div className="pointer-events-none fixed inset-0 opacity-[0.32] bg-[linear-gradient(120deg,rgba(255,255,255,0.055)_0,transparent_22%,transparent_72%,rgba(212,175,55,0.08)_100%)]" />
-      <div className="pointer-events-none fixed inset-0 bg-noise" />
+    <div className="min-h-dvh bg-[#0d0b09] font-sans text-white">
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0d0b09]/85 backdrop-blur-2xl">
-        <div className="mx-auto flex min-h-[88px] w-full max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0d0b09]/90 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="group flex min-w-0 items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-2xl"
+            className="group flex min-w-0 items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
             aria-label="Back to website"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 transition-colors group-hover:border-[#D4AF37]/50">
-              <img src="/serendib-logo-192.png" alt="Serendib Trading" className="h-9 w-auto" />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+              <img src="/serendib-logo-192.png" alt="" className="h-7 w-auto" />
             </span>
             <span className="min-w-0">
-              <span className="block text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Serendib Trading</span>
-              <span className="block truncate text-lg font-black uppercase leading-none tracking-normal text-white sm:text-xl">
-                Dashboard
-              </span>
+              <span className="block truncate text-sm font-semibold text-white">Serendib Trading</span>
+              <span className="block text-xs text-white/45">Admin</span>
             </span>
           </button>
 
-          <nav className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] p-1 lg:flex" aria-label="Admin sections">
+          <nav className="hidden items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 lg:flex" aria-label="Admin sections">
             {tabs.map((item) => {
               const Icon = item.icon;
               const active = tab === item.id;
@@ -550,16 +583,16 @@ export default function AdminDashboard() {
                   type="button"
                   onClick={() => setTab(item.id)}
                   aria-pressed={active}
-                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
-                    active ? 'bg-[#D4AF37] text-black' : 'text-white/45 hover:bg-white/5 hover:text-white'
+                  className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+                    active ? 'bg-[#D4AF37] text-black' : 'text-white/65 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="size-4" aria-hidden="true" />
                   {item.label}
-                  <span className={`tabular-nums ${active ? 'text-black/60' : 'text-[#D4AF37]'}`}>{item.count}</span>
+                  <span className={`tabular-nums ${active ? 'text-black/60' : 'text-white/45'}`}>{item.count}</span>
                   {item.id === 'leads' && newLeadCount > 0 && (
                     <>
-                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_16px_rgba(239,68,68,0.8)]" aria-hidden="true" />
+                      <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-400" aria-hidden="true" />
                       <span className="sr-only">{newLeadCount} new leads</span>
                     </>
                   )}
@@ -572,18 +605,18 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] md:flex"
+              className="hidden items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] md:inline-flex"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="size-4" aria-hidden="true" />
               Website
             </button>
             <button
               type="button"
               onClick={handleManualRefresh}
               aria-label="Refresh dashboard data"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all hover:border-[#D4AF37]/35 hover:text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+              className={iconBtn}
             >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              <RefreshCw className="size-4" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -592,14 +625,14 @@ export default function AdminDashboard() {
                 navigate('/admin/login');
               }}
               aria-label="Sign out"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-red-400/15 bg-red-500/10 text-red-300 transition-all hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              className="inline-flex size-10 items-center justify-center rounded-xl border border-red-400/20 bg-red-500/10 text-red-200 hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <LogOut className="size-4" aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[1500px] gap-2 overflow-x-auto px-4 pb-4 sm:px-6 lg:hidden" aria-label="Admin sections">
+        <div className="mx-auto flex w-full max-w-6xl gap-2 overflow-x-auto px-4 pb-3 sm:px-6 lg:hidden" aria-label="Admin sections">
           {tabs.map((item) => {
             const Icon = item.icon;
             const active = tab === item.id;
@@ -609,13 +642,13 @@ export default function AdminDashboard() {
                 type="button"
                 onClick={() => setTab(item.id)}
                 aria-pressed={active}
-                className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
                   active
                     ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
-                    : 'border-white/10 bg-white/[0.035] text-white/55'
+                    : 'border-white/10 text-white/65'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="size-4" aria-hidden="true" />
                 {item.label}
               </button>
             );
@@ -623,82 +656,45 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto w-full max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <section className="relative overflow-hidden border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-          <div
-            className="absolute inset-0 opacity-[0.18]"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, rgba(13,11,9,0.82), rgba(13,11,9,0.55)), url('/images/showroom/serendib-showroom-floor-02.webp')",
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(212,175,55,0.12),transparent_42%,rgba(255,255,255,0.05))]" />
-          <div className="relative grid gap-8 p-6 md:p-8 lg:grid-cols-[1fr_420px] lg:p-10">
-            <div className="max-w-4xl">
-              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
-                Live listings
-              </div>
-              <h1 className="max-w-4xl text-4xl font-black uppercase leading-[0.9] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                Manage cars and leads
-              </h1>
-              <p className="mt-6 max-w-2xl text-sm font-medium leading-7 text-white/60 md:text-base">
-                Add or edit vehicles, follow up buyer enquiries, and check site traffic.
-              </p>
-            </div>
-
-            <div className="grid content-end gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <button
-                type="button"
-                onClick={() => setModalVehicle(null)}
-                aria-label="Add a new vehicle to inventory"
-                className="group flex items-center justify-between gap-4 rounded-2xl bg-[#D4AF37] px-5 py-4 text-left text-black transition-transform hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <span>
-                  <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-black/60">New listing</span>
-                  <span className="mt-1 block text-lg font-black uppercase leading-none tracking-tight">Add vehicle</span>
-                </span>
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-[#D4AF37] transition-transform group-hover:rotate-90">
-                  <Plus className="h-5 w-5" />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTab('leads')}
-                className="group flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/35 px-5 py-4 text-left text-white transition-all hover:border-[#D4AF37]/40 hover:bg-black/50"
-              >
-                <span>
-                  <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-white/40">Attention needed</span>
-                  <span className="mt-1 flex items-baseline gap-2 text-lg font-black uppercase leading-none tracking-tight">
-                    <span className="tabular-nums">{newLeadCount}</span>
-                    <span>new lead{newLeadCount === 1 ? '' : 's'}</span>
-                  </span>
-                </span>
-                <ArrowUpRight className="h-5 w-5 text-[#D4AF37] transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-              </button>
-            </div>
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white text-balance">Dashboard</h1>
+            <p className="mt-1 text-sm text-white/55">Add cars, follow up leads, and check traffic.</p>
           </div>
-        </section>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setModalVehicle(null)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Add vehicle
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('leads')}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+            >
+              {newLeadCount} new lead{newLeadCount === 1 ? '' : 's'}
+              <ArrowUpRight className="size-4 text-[#D4AF37]" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
 
         <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {summaryCards.map((card) => {
             const Icon = card.icon;
             return (
-              <article
-                key={card.label}
-                className="group border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-[#D4AF37]/35 hover:bg-white/[0.055]"
-              >
-                <div className="mb-6 flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/38">{card.label}</span>
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-[#D4AF37]">
-                    <Icon className="h-4 w-4" />
+              <article key={card.label} className={`${panel} p-4`}>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm text-white/55">{card.label}</span>
+                  <span className="flex size-9 items-center justify-center rounded-lg border border-white/10 text-[#D4AF37]">
+                    <Icon className="size-4" aria-hidden="true" />
                   </span>
                 </div>
-                <p className="text-3xl font-black uppercase leading-none tracking-tight text-white tabular-nums">{card.value}</p>
-                <p className="mt-3 truncate text-[11px] font-bold uppercase tracking-[0.16em] text-white/35">{card.meta}</p>
+                <p className="text-2xl font-semibold tabular-nums text-white">{card.value}</p>
+                <p className="mt-1 truncate text-sm text-white/40">{card.meta}</p>
               </article>
             );
           })}
@@ -710,7 +706,7 @@ export default function AdminDashboard() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className={`mt-5 flex items-center gap-3 border px-4 py-3 text-sm font-bold ${
+              className={`mt-5 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${
                 notice.type === 'error'
                   ? 'border-red-400/30 bg-red-500/10 text-red-200'
                   : 'border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F5D66B]'
@@ -725,20 +721,10 @@ export default function AdminDashboard() {
 
         {tab === 'overview' && (
           <section className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-              <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <div className="mb-3 flex items-center gap-3">
-                    <span className="h-px w-10 bg-white/15" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Today</p>
-                  </div>
-                  <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white text-balance md:text-5xl">
-                    Overview
-                  </h2>
-                </div>
-                <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
-                  {isSupabaseConfigured ? 'Listings and photos' : 'Local fallback mode'}
-                </div>
+            <div className={`${panel} p-5`}>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-white">Needs attention</h2>
+                <p className="text-sm text-white/45">{isSupabaseConfigured ? 'Live data' : 'Local fallback'}</p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -776,100 +762,86 @@ export default function AdminDashboard() {
                     key={label}
                     type="button"
                     onClick={action}
-                    className="group border border-white/10 bg-black/25 p-4 text-left transition-all hover:border-[#D4AF37]/35 hover:bg-black/40"
+                    className={`${panel} p-4 text-left hover:border-[#D4AF37]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]`}
                   >
-                    <div className="mb-5 flex items-center justify-between">
-                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">{label}</span>
-                      <Icon className="h-4 w-4 text-[#D4AF37]" />
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-sm text-white/55">{label}</span>
+                      <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
                     </div>
-                    <p className="text-3xl font-black leading-none text-white tabular-nums">{value}</p>
-                    <p className="mt-3 truncate text-[10px] font-black uppercase tracking-[0.16em] text-white/32">{meta}</p>
+                    <p className="text-2xl font-semibold tabular-nums text-white">{value}</p>
+                    <p className="mt-1 truncate text-sm text-white/40">{meta}</p>
                   </button>
                 ))}
               </div>
 
               <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.95fr]">
-                <section className="border border-white/10 bg-black/20 p-5">
-                  <div className="mb-5 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Listing quality</p>
-                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Readiness score</h3>
-                    </div>
-                    <p className="text-4xl font-black leading-none text-white tabular-nums">{dashboardHealth.readiness}%</p>
+                <section className={`${panel} p-5`}>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h3 className="text-base font-semibold text-white">Listing quality</h3>
+                    <p className="text-2xl font-semibold tabular-nums text-white">{dashboardHealth.readiness}%</p>
                   </div>
-                  <div className="h-3 overflow-hidden bg-white/[0.06]">
-                    <div className="h-full bg-[#D4AF37]" style={{ width: `${dashboardHealth.readiness}%` }} />
-                  </div>
-                  <div className="mt-5 grid gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/42 sm:grid-cols-3">
-                    <span>{stats.available} live units</span>
+                  <Meter pct={dashboardHealth.readiness} />
+                  <div className="mt-4 grid gap-2 text-sm text-white/55 sm:grid-cols-3">
+                    <span>{stats.available} on website</span>
                     <span>{dashboardHealth.incompleteListings.length} incomplete</span>
-                    <span>{stats.topMake} leads stock mix</span>
+                    <span>{stats.topMake} most listed</span>
                   </div>
                 </section>
 
-                <section className="border border-white/10 bg-black/20 p-5">
-                  <div className="mb-5 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Traffic</p>
-                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Today</h3>
-                    </div>
-                    <BarChart2 className="h-5 w-5 text-white/28" />
-                  </div>
+                <section className={`${panel} p-5`}>
+                  <h3 className="mb-4 text-base font-semibold text-white">Today’s traffic</h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="border border-white/10 bg-white/[0.035] p-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Visitors</p>
-                      <p className="mt-3 text-3xl font-black leading-none text-white tabular-nums">
+                    <div className="rounded-xl border border-white/10 p-3">
+                      <p className="text-sm text-white/55">Visitors</p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
                         {dashboardHealth.todayTraffic?.visitor_count || 0}
                       </p>
                     </div>
-                    <div className="border border-white/10 bg-white/[0.035] p-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Page views</p>
-                      <p className="mt-3 text-3xl font-black leading-none text-white tabular-nums">
+                    <div className="rounded-xl border border-white/10 p-3">
+                      <p className="text-sm text-white/55">Page views</p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
                         {dashboardHealth.todayTraffic?.page_views || 0}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-4 text-sm font-medium leading-6 text-white/45 text-pretty">
-                    Last tracked day: {formatDate(dashboardHealth.todayTraffic?.date)}. Use the analytics tab for the full 7-day view.
+                  <p className="mt-3 text-sm text-white/45 text-pretty">
+                    Last recorded: {formatDate(dashboardHealth.todayTraffic?.date)}. Open Analytics for the week.
                   </p>
                 </section>
               </div>
             </div>
 
             <aside className="grid gap-4">
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Quick actions</p>
-                <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+              <section className={`${panel} p-5`}>
+                <h2 className="text-lg font-semibold text-white">Quick actions</h2>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
                   {[
                     { label: 'Add vehicle', icon: Plus, action: () => setModalVehicle(null) },
-                    { label: 'Manage inventory', icon: Car, action: () => setTab('inventory') },
-                    { label: 'Review leads', icon: Users, action: () => setTab('leads') },
-                    { label: 'Open analytics', icon: PieChart, action: () => setTab('analytics') },
-                    { label: 'View public showroom', icon: ArrowUpRight, action: () => navigate('/inventory') },
+                    { label: 'Inventory', icon: Car, action: () => setTab('inventory') },
+                    { label: 'Leads', icon: Users, action: () => setTab('leads') },
+                    { label: 'Analytics', icon: PieChart, action: () => setTab('analytics') },
+                    { label: 'View website', icon: ArrowUpRight, action: () => navigate('/inventory') },
                   ].map(({ label, icon: Icon, action }) => (
                     <button
                       key={label}
                       type="button"
                       onClick={action}
-                      className="flex items-center justify-between gap-4 border border-white/10 bg-black/25 px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.16em] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-white"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-4 py-2.5 text-left text-sm text-white/75 hover:border-[#D4AF37]/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                     >
                       {label}
-                      <Icon className="h-4 w-4 text-[#D4AF37]" />
+                      <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
                     </button>
                   ))}
                 </div>
               </section>
 
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Recent leads</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Buyer inbox</h3>
-                  </div>
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-white">Recent leads</h2>
                   <button
                     type="button"
                     onClick={() => setTab('leads')}
-                    className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/45 transition-all hover:border-[#D4AF37]/35 hover:text-white"
+                    className="text-sm text-white/55 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                   >
                     View all
                   </button>
@@ -877,23 +849,23 @@ export default function AdminDashboard() {
 
                 <div className="grid gap-3">
                   {dashboardHealth.recentLeads.length === 0 ? (
-                    <div className="border border-dashed border-white/10 px-4 py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">
+                    <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-white/45">
                       No incoming leads yet
                     </div>
                   ) : (
                     dashboardHealth.recentLeads.map((lead) => {
                       const tone = leadStatusStyles[lead.status] ?? leadStatusStyles.New;
                       return (
-                        <article key={lead.id} className="border border-white/10 bg-black/25 p-4">
-                          <div className="mb-3 flex items-center justify-between gap-3">
-                            <h4 className="truncate text-sm font-black uppercase tracking-tight text-white">{lead.name}</h4>
-                            <span className={`inline-flex shrink-0 items-center gap-1.5 border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${tone.badge}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                        <article key={lead.id} className="rounded-xl border border-white/10 p-3">
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <h3 className="truncate text-sm font-semibold text-white">{lead.name}</h3>
+                            <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs ${tone.badge}`}>
+                              <span className={`size-1.5 rounded-full ${tone.dot}`} />
                               {lead.status}
                             </span>
                           </div>
-                          <p className="truncate text-[11px] font-bold uppercase tracking-[0.13em] text-white/45">
-                            {lead.vehicle_model || lead.type} - {lead.phone}
+                          <p className="truncate text-sm text-white/50">
+                            {lead.vehicle_model || lead.type} · {lead.phone}
                           </p>
                         </article>
                       );
@@ -907,30 +879,22 @@ export default function AdminDashboard() {
 
         {tab === 'inventory' && (
           <section className="mt-8">
-            <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="h-px w-10 bg-white/15" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Inventory</p>
-                </div>
-                <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Cars
-                </h2>
-              </div>
+            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <h2 className="text-lg font-semibold text-white">Cars</h2>
 
               <label className="relative w-full lg:max-w-md">
                 <span className="sr-only">Search inventory</span>
-                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
+                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search make, model, year, body..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37] focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                  placeholder="Search make, model, year..."
+                  className={searchField}
                 />
               </label>
             </div>
 
-            <div className="mb-5 flex flex-wrap gap-2">
+            <div className="mb-4 flex flex-wrap gap-2">
               {inventoryFilters.map((filter) => {
                 const active = inventoryFilter === filter;
                 return (
@@ -939,11 +903,7 @@ export default function AdminDashboard() {
                     type="button"
                     onClick={() => setInventoryFilter(filter)}
                     aria-pressed={active}
-                    className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] transition-all ${
-                      active
-                        ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
-                        : 'border-white/10 bg-white/[0.035] text-white/45 hover:border-[#D4AF37]/35 hover:text-white'
-                    }`}
+                    className={pill(active)}
                   >
                     {filter}
                   </button>
@@ -953,18 +913,18 @@ export default function AdminDashboard() {
 
             <div className="grid gap-3">
               {filtered.length === 0 ? (
-                <div className="border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
-                  <Sparkles className="mx-auto mb-4 h-8 w-8 text-[#D4AF37]" />
-                  <h3 className="text-2xl font-black uppercase tracking-tight text-white">No matching vehicles</h3>
-                  <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-white/45">
-                    Adjust the search term or add a new unit to the live inventory.
+                <div className={`${panel} px-6 py-12 text-center`}>
+                  <Car className="mx-auto mb-3 size-8 text-[#D4AF37]" aria-hidden="true" />
+                  <h3 className="text-lg font-semibold text-white">No matching vehicles</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-white/50">
+                    Try a different search, or add a car.
                   </p>
                   <button
                     type="button"
                     onClick={() => setModalVehicle(null)}
-                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-black transition-transform hover:-translate-y-0.5"
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-black"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="size-4" aria-hidden="true" />
                     Add vehicle
                   </button>
                 </div>
@@ -973,30 +933,23 @@ export default function AdminDashboard() {
                   const sold = vehicle.is_sold;
                   const removalDays = sold && vehicle.sold_at ? daysUntilRemoval(vehicle.sold_at) : 0;
                   return (
-                    <motion.article
+                    <article
                       key={vehicle.id}
-                      layout
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`group grid gap-5 border p-4 transition-all md:grid-cols-[150px_1fr_auto] md:items-center md:p-5 ${
-                        sold
-                          ? 'border-red-400/20 bg-red-500/[0.045]'
-                          : 'border-white/10 bg-white/[0.035] hover:border-[#D4AF37]/28 hover:bg-white/[0.055]'
+                      className={`grid gap-4 rounded-2xl border p-4 md:grid-cols-[132px_1fr_auto] md:items-center ${
+                        sold ? 'border-red-400/20 bg-red-500/[0.04]' : `${panel}`
                       }`}
                     >
-                      <div className="relative aspect-[4/3] overflow-hidden bg-black/40">
+                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-black/40">
                         <img
                           src={vehicle.image}
                           alt={`${vehicle.year} ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
-                          className={`h-full w-full object-cover transition-transform duration-700 ${
-                            sold ? 'grayscale opacity-45' : 'group-hover:scale-105'
-                          }`}
+                          className={`h-full w-full object-cover ${sold ? 'opacity-50 grayscale' : ''}`}
                         />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/85 to-transparent px-3 pb-3 pt-8">
-                          <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/70">{vehicle.condition}</span>
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-2 py-1.5 text-xs text-white/80">
+                          <span>{vehicle.condition}</span>
                           {vehicle.gallery?.length ? (
-                            <span className="flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[9px] font-black text-[#D4AF37]">
-                              <ImageIcon className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 text-[#D4AF37]">
+                              <ImageIcon className="size-3" aria-hidden="true" />
                               {vehicle.gallery.length}
                             </span>
                           ) : null}
@@ -1004,43 +957,27 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="min-w-0">
-                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-2 border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
-                            <BrandMark
-                              make={vehicle.make}
-                              tone="mono"
-                              className="size-4 shrink-0 text-[#D4AF37]"
-                            />
+                        <div className="mb-1 flex flex-wrap items-center gap-2 text-sm">
+                          <span className="inline-flex items-center gap-1.5 text-[#D4AF37]">
+                            <BrandMark make={vehicle.make} tone="mono" className="size-4 shrink-0" />
                             {getBrandLabel(vehicle.make)}
                           </span>
-                          <span className="border border-white/10 bg-white/[0.035] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-white/45">
-                            {vehicle.year}
-                          </span>
-                          {sold && (
-                            <span className="border border-red-400/25 bg-red-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-red-200">
-                              Sold
-                            </span>
-                          )}
+                          <span className="text-white/45">{vehicle.year}</span>
+                          {sold && <span className="rounded-full border border-red-400/25 bg-red-500/10 px-2 py-0.5 text-xs text-red-200">Sold</span>}
                         </div>
-                        <h3 className="truncate text-2xl font-black uppercase leading-none tracking-tight text-white md:text-3xl">
+                        <h3 className="truncate text-lg font-semibold text-white">
                           {getDisplayModel(vehicle.make, vehicle.model)}
                         </h3>
-                        <div className="mt-4 grid gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40 sm:grid-cols-2 xl:grid-cols-4">
-                          <span className="flex items-center gap-2 text-white">
-                            <DollarSign className="h-3.5 w-3.5 text-[#D4AF37]" />
-                            {formatMillions(vehicle.price)}
-                          </span>
-                          <span className="flex items-center gap-2">
-                            <Gauge className="h-3.5 w-3.5 text-white/25" />
-                            {Number(vehicle.mileage) > 0 ? `${Number(vehicle.mileage).toLocaleString('en-LK')} km` : 'Mileage not set'}
-                          </span>
+                        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/55">
+                          <span className="text-white">{formatMillions(vehicle.price)}</span>
+                          <span>{Number(vehicle.mileage) > 0 ? `${Number(vehicle.mileage).toLocaleString('en-LK')} km` : 'Mileage not set'}</span>
                           <span>{vehicle.fuel || 'Fuel not set'}</span>
                           <span>{vehicle.bodyType || vehicle.color || 'Details pending'}</span>
-                        </div>
+                        </p>
                         {sold && vehicle.sold_at && (
-                          <p className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-amber-200">
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            {removalDays > 0 ? `Public archive removal in ${removalDays} day${removalDays === 1 ? '' : 's'}` : 'Hidden from public site'}
+                          <p className="mt-2 flex items-center gap-2 text-sm text-amber-200">
+                            <AlertTriangle className="size-3.5" aria-hidden="true" />
+                            {removalDays > 0 ? `Hidden from site in ${removalDays} day${removalDays === 1 ? '' : 's'}` : 'Hidden from the website'}
                           </p>
                         )}
                       </div>
@@ -1049,15 +986,10 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => handleToggleSold(vehicle)}
-                          aria-label={
+                          className={`rounded-xl border px-3 py-2 text-sm font-medium ${
                             sold
-                              ? `Relist ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`
-                              : `Mark ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)} as sold`
-                          }
-                          className={`rounded-full border px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.16em] transition-all ${
-                            sold
-                              ? 'border-red-400/25 bg-red-500/10 text-red-200 hover:bg-red-500/20'
-                              : 'border-white/10 bg-white/[0.035] text-white/55 hover:border-[#D4AF37]/35 hover:text-white'
+                              ? 'border-red-400/25 bg-red-500/10 text-red-200'
+                              : 'border-white/10 text-white/70 hover:text-white'
                           }`}
                         >
                           {sold ? 'Relist' : 'Mark sold'}
@@ -1065,21 +997,19 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => openEdit(vehicle)}
-                          aria-label={`Edit ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
-                          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+                          className="rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/80 hover:text-white"
                         >
-                          <Edit2 className="h-4 w-4" />
+                          Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(vehicle)}
-                          aria-label={`Delete ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
-                          className="flex h-11 w-11 items-center justify-center rounded-full border border-red-400/15 bg-red-500/10 text-red-200 transition-all hover:bg-red-500/20"
+                          className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-200"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          Delete
                         </button>
                       </div>
-                    </motion.article>
+                    </article>
                   );
                 })
               )}
@@ -1089,32 +1019,26 @@ export default function AdminDashboard() {
 
         {tab === 'leads' && (
           <section className="mt-8">
-            <div className="mb-5 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="h-px w-10 bg-white/15" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Enquiries</p>
-                </div>
-                <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Buyer messages
-                </h2>
+                <h2 className="text-lg font-semibold text-white">Leads</h2>
+                <p className="mt-1 text-sm text-white/50">Newest first. Open WhatsApp from the same row.</p>
               </div>
-
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
                   ['New', newLeadCount],
                   ['Contacted', contactedLeadCount],
                   ['Closed', closedLeadCount],
                 ].map(([label, value]) => (
-                  <div key={label} className="min-w-[105px] border border-white/10 bg-white/[0.035] px-4 py-3">
-                    <p className="text-2xl font-black leading-none tabular-nums">{value}</p>
-                    <p className="mt-2 text-[9px] font-black uppercase tracking-[0.18em] text-white/40">{label}</p>
+                  <div key={label} className={`${panel} min-w-[96px] px-3 py-2.5`}>
+                    <p className="text-xl font-semibold tabular-nums text-white">{value}</p>
+                    <p className="mt-1 text-xs text-white/45">{label}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="mb-5 grid gap-3 xl:grid-cols-[1fr_420px] xl:items-center">
+            <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex flex-wrap gap-2">
                 {leadFilters.map((filter) => {
                   const active = leadFilter === filter;
@@ -1124,11 +1048,7 @@ export default function AdminDashboard() {
                       type="button"
                       onClick={() => setLeadFilter(filter)}
                       aria-pressed={active}
-                      className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] transition-all ${
-                        active
-                          ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
-                          : 'border-white/10 bg-white/[0.035] text-white/45 hover:border-[#D4AF37]/35 hover:text-white'
-                      }`}
+                      className={pill(active)}
                     >
                       {filter}
                     </button>
@@ -1136,29 +1056,29 @@ export default function AdminDashboard() {
                 })}
               </div>
 
-              <label className="relative w-full">
+              <label className="relative w-full xl:max-w-md">
                 <span className="sr-only">Search leads</span>
-                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
+                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
                 <input
                   value={leadSearch}
                   onChange={(event) => setLeadSearch(event.target.value)}
-                  placeholder="Search buyer, phone, vehicle..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37] focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                  placeholder="Search name, phone, car, or message"
+                  className={searchField}
                 />
               </label>
             </div>
 
             <div className="grid gap-3">
               {filteredLeads.length === 0 ? (
-                <div className="border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
-                  <Users className="mx-auto mb-4 h-8 w-8 text-[#D4AF37]" />
-                  <h3 className="text-2xl font-black uppercase tracking-tight text-white">
+                <div className={`${panel} px-6 py-12 text-center`}>
+                  <Users className="mx-auto mb-3 size-8 text-[#D4AF37]" aria-hidden="true" />
+                  <h3 className="text-lg font-semibold text-white">
                     {leads.length === 0 ? 'No leads yet' : 'No matching leads'}
                   </h3>
-                  <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-white/45">
+                  <p className="mx-auto mt-2 max-w-md text-sm text-white/50">
                     {leads.length === 0
                       ? 'New enquiries, test drives, and vehicle requests will appear here.'
-                      : 'Adjust the status filter or search term to widen the buyer queue.'}
+                      : 'Try another filter or search term.'}
                   </p>
                 </div>
               ) : (
@@ -1166,42 +1086,40 @@ export default function AdminDashboard() {
                   const tone = leadStatusStyles[lead.status] ?? leadStatusStyles.New;
                   const phoneDigits = lead.phone.replace(/\D/g, '');
                   return (
-                    <article key={lead.id} className="grid gap-5 border border-white/10 bg-white/[0.035] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                    <article key={lead.id} className={`${panel} grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto] lg:items-start`}>
                       <div className="min-w-0">
-                        <div className="mb-4 flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex items-center gap-2 border px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${tone.badge}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs ${tone.badge}`}>
+                            <span className={`size-1.5 rounded-full ${tone.dot}`} />
                             {lead.status}
                           </span>
-                          <span className="border border-white/10 bg-white/[0.035] px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+                          <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/55">
                             {lead.type}
                           </span>
-                          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/28">
-                            {formatDate(lead.created_at)}
-                          </span>
+                          <span className="text-xs text-white/40">{formatDate(lead.created_at)}</span>
                         </div>
 
-                        <h3 className="text-2xl font-black uppercase leading-none tracking-tight text-white">{lead.name}</h3>
-                        <div className="mt-4 grid gap-2 text-[11px] font-bold uppercase tracking-[0.13em] text-white/45 md:grid-cols-2 xl:grid-cols-4">
+                        <h3 className="text-base font-semibold text-white">{lead.name}</h3>
+                        <div className="mt-3 grid gap-2 text-sm text-white/55 md:grid-cols-2 xl:grid-cols-4">
                           <span className="flex items-center gap-2 text-white">
-                            <Phone className="h-3.5 w-3.5 text-[#D4AF37]" />
+                            <Phone className="size-3.5 text-[#D4AF37]" aria-hidden="true" />
                             {lead.phone}
                           </span>
                           {lead.vehicle_model && (
                             <span className="flex items-center gap-2">
-                              <Car className="h-3.5 w-3.5 text-white/25" />
+                              <Car className="size-3.5 text-white/30" aria-hidden="true" />
                               {lead.vehicle_model}
                             </span>
                           )}
                           {lead.date && (
                             <span className="flex items-center gap-2">
-                              <CalendarIcon className="h-3.5 w-3.5 text-white/25" />
+                              <CalendarIcon className="size-3.5 text-white/30" aria-hidden="true" />
                               {lead.date}{lead.time ? `, ${lead.time}` : ''}
                             </span>
                           )}
                           {lead.message && (
-                            <span className="flex items-center gap-2 truncate normal-case tracking-normal">
-                              <Mail className="h-3.5 w-3.5 text-white/25" />
+                            <span className="flex items-center gap-2 truncate">
+                              <Mail className="size-3.5 shrink-0 text-white/30" aria-hidden="true" />
                               {lead.message}
                             </span>
                           )}
@@ -1217,24 +1135,26 @@ export default function AdminDashboard() {
                               type="button"
                               disabled={active}
                               onClick={() => handleLeadStatus(lead.id, status)}
-                              className={`rounded-full border px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.16em] transition-all disabled:cursor-default ${
+                              aria-pressed={active}
+                              className={`rounded-lg border px-3 py-1.5 text-xs font-medium disabled:cursor-default ${
                                 active
                                   ? leadStatusStyles[status].active
-                                  : 'border-white/10 bg-white/[0.035] text-white/45 hover:border-[#D4AF37]/35 hover:text-white'
+                                  : 'border-white/10 text-white/50 hover:text-white'
                               }`}
                             >
                               {status}
                             </button>
                           );
                         })}
-                        <button
-                          type="button"
-                          onClick={() => window.open(`https://wa.me/${phoneDigits}`, '_blank', 'noopener,noreferrer')}
-                          className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-500/10 text-emerald-200 transition-all hover:bg-emerald-500/20"
-                          aria-label={`Open WhatsApp chat with ${lead.name}`}
+                        <a
+                          href={`https://wa.me/${phoneDigits}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-100"
                         >
-                          <Phone className="h-4 w-4" />
-                        </button>
+                          <Phone className="size-3.5" aria-hidden="true" />
+                          WhatsApp
+                        </a>
                       </div>
                     </article>
                   );
@@ -1246,21 +1166,16 @@ export default function AdminDashboard() {
 
         {tab === 'analytics' && (
           <section className="mt-8">
-            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="h-px w-10 bg-white/15" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Traffic</p>
-                </div>
-                <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Site analytics
-                </h2>
+                <h2 className="text-lg font-semibold text-white">Analytics</h2>
+                <p className="mt-1 text-sm text-white/50">Traffic, demand, and listing quality.</p>
               </div>
-              <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em]">
-                <span className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-white/45">
-                  {isSupabaseConfigured ? 'Last 30 days' : 'Local fallback mode'}
+              <div className="flex flex-wrap gap-2 text-sm">
+                <span className="rounded-full border border-white/10 px-3 py-1.5 text-white/55">
+                  {isSupabaseConfigured ? 'Last 30 days' : 'Local fallback'}
                 </span>
-                <span className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-[#F5D66B]">
+                <span className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1.5 text-[#F5D66B]">
                   Updated {formatDate(analytics.latestTraffic?.date)}
                 </span>
               </div>
@@ -1275,38 +1190,33 @@ export default function AdminDashboard() {
                 { icon: CheckCircle2, label: 'Readiness', value: `${dashboardHealth.readiness}%`, meta: `${analytics.incompleteLive.length} live gaps` },
                 { icon: DollarSign, label: 'Live value', value: formatMillions(analytics.availableValue), meta: `${stats.available} available units` },
               ].map(({ icon: Icon, label, value, meta }) => (
-                <article key={label} className="border border-white/10 bg-white/[0.035] p-5">
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-[#D4AF37]">
-                    <Icon className="h-5 w-5" />
+                <article key={label} className={`${panel} p-4`}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm text-white/55">{label}</span>
+                    <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">{label}</p>
-                  <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white tabular-nums">{value}</h3>
-                  <p className="mt-3 min-h-[28px] text-[10px] font-bold uppercase tracking-[0.12em] leading-4 text-white/38">{meta}</p>
+                  <h3 className="text-xl font-semibold tabular-nums text-white">{value}</h3>
+                  <p className="mt-1 min-h-[20px] text-xs text-white/40">{meta}</p>
                 </article>
               ))}
             </div>
 
             <div className="mt-3 grid gap-3 xl:grid-cols-[1.55fr_1fr]">
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Top interests</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Vehicle clicks</h3>
-                  </div>
-                  <Eye className="h-5 w-5 text-white/28" />
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Vehicle clicks</h3>
+                  <Eye className="size-4 text-white/30" aria-hidden="true" />
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
                   {stats.topViewed.length === 0 ? (
-                    <p className="col-span-full py-10 text-center text-[11px] font-black uppercase tracking-[0.2em] text-white/35">
-                      Waiting for view data
-                    </p>
+                    <p className="col-span-full py-8 text-center text-sm text-white/45">Waiting for view data</p>
                   ) : (
                     stats.topViewed.map((vehicle, index) => (
-                      <div key={vehicle.id} className="grid grid-cols-[74px_1fr_auto] items-center gap-4 border border-white/10 bg-black/25 p-3">
-                        <div className="relative aspect-square overflow-hidden bg-black/40">
+                      <div key={vehicle.id} className="grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-xl border border-white/10 p-3">
+                        <div className="relative aspect-square overflow-hidden rounded-lg bg-black/40">
                           <img src={vehicle.image} alt={`${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`} className="h-full w-full object-cover" />
-                          <span className="absolute left-2 top-2 bg-[#D4AF37] px-1.5 py-0.5 text-[9px] font-black text-black">
+                          <span className="absolute left-1.5 top-1.5 rounded bg-[#D4AF37] px-1.5 py-0.5 text-[10px] font-semibold text-black">
                             {index + 1}
                           </span>
                         </div>
@@ -1315,37 +1225,32 @@ export default function AdminDashboard() {
                             <BrandMark
                               make={vehicle.make}
                               tone="mono"
-                              className="size-6 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-white/50"
+                              className="size-5 shrink-0 text-white/50"
                             />
-                            <h4 className="truncate text-sm font-black uppercase tracking-tight text-white">
+                            <h4 className="truncate text-sm font-medium text-white">
                               {getBrandLabel(vehicle.make)} {getDisplayModel(vehicle.make, vehicle.model)}
                             </h4>
                           </div>
-                          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">
-                            {formatMillions(vehicle.price)}
-                          </p>
+                          <p className="mt-1 text-xs text-white/40">{formatMillions(vehicle.price)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-black leading-none text-[#D4AF37] tabular-nums">{vehicle.views || 0}</p>
-                          <p className="mt-1 text-[8px] font-black uppercase tracking-[0.18em] text-white/35">Clicks</p>
+                          <p className="text-lg font-semibold tabular-nums text-[#D4AF37]">{vehicle.views || 0}</p>
+                          <p className="text-xs text-white/40">Clicks</p>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
 
-                <div className="mt-8 border-t border-white/10 pt-6">
-                  <div className="mb-6 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Traffic evolution</p>
-                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Last 7 days</h3>
-                    </div>
-                    <BarChart2 className="h-5 w-5 text-white/28" />
+                <div className="mt-6 border-t border-white/10 pt-5">
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-white">Last 7 days</h3>
+                    <BarChart2 className="size-4 text-white/30" aria-hidden="true" />
                   </div>
 
-                  <div className="flex h-44 items-end gap-2">
+                  <div className="flex h-40 items-end gap-2">
                     {traffic.length === 0 ? (
-                      <div className="flex h-full w-full items-center justify-center border border-dashed border-white/10 text-center text-[11px] font-black uppercase tracking-[0.2em] text-white/35">
+                      <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-white/10 text-center text-sm text-white/45">
                         Tracking started, waiting for data
                       </div>
                     ) : (
@@ -1354,14 +1259,13 @@ export default function AdminDashboard() {
                         .reverse()
                         .map((item) => (
                           <div key={item.date} className="flex h-full flex-1 flex-col justify-end gap-2">
-                            <div className="relative flex min-h-0 flex-1 items-end bg-white/[0.04]">
-                              <motion.div
-                                initial={{ height: 0 }}
-                                animate={{ height: `${((item.page_views || 0) / analytics.maxPageViews) * 100}%` }}
-                                className="w-full bg-[#D4AF37]/45 transition-colors hover:bg-[#D4AF37]"
+                            <div className="relative flex min-h-0 flex-1 items-end overflow-hidden rounded-md bg-white/[0.06]">
+                              <div
+                                className="w-full rounded-md bg-[#D4AF37]/70"
+                                style={{ height: `${((item.page_views || 0) / analytics.maxPageViews) * 100}%` }}
                               />
                             </div>
-                            <span className="text-center text-[9px] font-black uppercase tracking-tight text-white/35">
+                            <span className="text-center text-[11px] text-white/45">
                               {new Date(item.date).toLocaleDateString('en-LK', { weekday: 'short' })}
                             </span>
                           </div>
@@ -1372,76 +1276,51 @@ export default function AdminDashboard() {
               </section>
 
               <aside className="grid gap-3">
-                <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                  <div className="mb-6 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Fleet composition</p>
-                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Body types</h3>
-                    </div>
-                    <PieChart className="h-5 w-5 text-white/28" />
+                <section className={`${panel} p-5`}>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-white">Body types</h3>
+                    <PieChart className="size-4 text-white/30" aria-hidden="true" />
                   </div>
-
-                  <div className="space-y-4">
-                    {stats.sortedBT.length === 0 ? (
-                      <p className="py-8 text-center text-[11px] font-black uppercase tracking-[0.2em] text-white/35">No stock data</p>
-                    ) : (
-                      stats.sortedBT.map(([bodyType, count]) => {
-                        const pct = stats.total > 0 ? (count / stats.total) * 100 : 0;
-                        return (
-                          <div key={bodyType}>
-                            <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.16em]">
-                              <span className="truncate text-white/48">{bodyType}</span>
-                              <span className="text-white">{count} units</span>
-                            </div>
-                            <div className="h-2 overflow-hidden bg-white/[0.06]">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${pct}%` }}
-                                className="h-full bg-[#D4AF37]"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
+                  {stats.sortedBT.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-white/45">No stock data</p>
+                  ) : (
+                    <SegmentRows
+                      items={stats.sortedBT.map(([bodyType, count]) => ({
+                        label: bodyType,
+                        count,
+                        pct: stats.total > 0 ? (count / stats.total) * 100 : 0,
+                        meta: `${count} units`,
+                      }))}
+                    />
+                  )}
                 </section>
 
-                <section className="border border-[#D4AF37]/35 bg-[#D4AF37] p-6 text-black">
-                  <div className="mb-8 flex items-center justify-between">
-                    <Sparkles className="h-8 w-8" />
-                    <Clock3 className="h-5 w-5 opacity-60" />
-                  </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-black/55">Today</p>
-                  <h3 className="mt-2 text-3xl font-black uppercase leading-none tracking-tight">
+                <section className={`${panel} p-5`}>
+                  <p className="text-sm text-white/50">Today</p>
+                  <h3 className="mt-1 text-2xl font-semibold tabular-nums text-white">
                     {traffic[0]?.visitor_count || 0} visitors
                   </h3>
-                  <p className="mt-4 text-sm font-bold leading-6 text-black/65">
-                    People who visited the website, plus clicks on cars.
-                  </p>
+                  <p className="mt-2 text-sm text-white/45">People who visited the website, plus clicks on cars.</p>
                   <button
                     type="button"
                     onClick={() => setTab('leads')}
-                    className="mt-8 inline-flex items-center gap-3 rounded-full bg-black px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white transition-transform hover:-translate-y-0.5"
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                   >
                     Review leads
-                    <ArrowUpRight className="h-4 w-4 text-[#D4AF37]" />
+                    <ArrowUpRight className="size-4 text-[#D4AF37]" aria-hidden="true" />
                   </button>
                 </section>
               </aside>
             </div>
 
             <div className="mt-3 grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Leads</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Recent enquiries</h3>
-                  </div>
-                  <Users className="h-5 w-5 text-white/28" />
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Lead funnel</h3>
+                  <Users className="size-4 text-white/30" aria-hidden="true" />
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+                <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
                   <div className="grid gap-4">
                     {(['New', 'Contacted', 'Closed'] as Lead['status'][]).map((status) => {
                       const count = analytics.leadStatusCounts[status];
@@ -1449,65 +1328,44 @@ export default function AdminDashboard() {
                       const tone = leadStatusStyles[status];
                       return (
                         <div key={status}>
-                          <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.16em]">
-                            <span className="inline-flex items-center gap-2 text-white/55">
-                              <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                            <span className="inline-flex items-center gap-2 text-white/60">
+                              <span className={`size-1.5 rounded-full ${tone.dot}`} />
                               {status}
                             </span>
-                            <span className="text-white">{count}</span>
+                            <span className="tabular-nums text-white">{count}</span>
                           </div>
-                          <div className="h-2 overflow-hidden bg-white/[0.06]">
-                            <div className={`h-full ${tone.dot}`} style={{ width: `${clampPercent(pct)}%` }} />
-                          </div>
+                          <Meter pct={pct} barClassName={tone.dot} />
                         </div>
                       );
                     })}
 
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-2 sm:grid-cols-3">
                       {[
                         { label: 'Follow-up', value: formatPercent(analytics.followUpRate), meta: 'Contacted or closed' },
                         { label: 'Close rate', value: formatPercent(analytics.closedLeadRate), meta: `${closedLeadCount} wins` },
                         { label: 'Lead yield', value: analytics.leadsPerHundredVisitors.toFixed(1), meta: 'Per 100 visitors' },
                       ].map((item) => (
-                        <div key={item.label} className="border border-white/10 bg-black/25 p-4">
-                          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">{item.label}</p>
-                          <p className="mt-3 text-2xl font-black leading-none text-white tabular-nums">{item.value}</p>
-                          <p className="mt-3 truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/32">{item.meta}</p>
+                        <div key={item.label} className="rounded-xl border border-white/10 p-3">
+                          <p className="text-xs text-white/45">{item.label}</p>
+                          <p className="mt-2 text-lg font-semibold tabular-nums text-white">{item.value}</p>
+                          <p className="mt-1 truncate text-xs text-white/35">{item.meta}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="border border-white/10 bg-black/25 p-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">Lead types</p>
-                    <div className="mt-5 space-y-4">
-                      {analytics.leadTypeSegments.length === 0 ? (
-                        <p className="py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">No lead types yet</p>
-                      ) : (
-                        analytics.leadTypeSegments.map((segment) => (
-                          <div key={segment.label}>
-                            <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.14em]">
-                              <span className="truncate text-white/48">{segment.label}</span>
-                              <span className="text-white">{segment.count}</span>
-                            </div>
-                            <div className="h-1.5 overflow-hidden bg-white/[0.06]">
-                              <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(segment.pct)}%` }} />
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                  <div className="rounded-xl border border-white/10 p-4">
+                    <p className="mb-3 text-sm font-medium text-white">Lead types</p>
+                    <SegmentRows items={analytics.leadTypeSegments} empty="No lead types yet" />
                   </div>
                 </div>
               </section>
 
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Listing quality</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Action queue</h3>
-                  </div>
-                  <AlertTriangle className="h-5 w-5 text-white/28" />
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Action queue</h3>
+                  <AlertTriangle className="size-4 text-white/30" aria-hidden="true" />
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -1523,15 +1381,15 @@ export default function AdminDashboard() {
                       key={label}
                       type="button"
                       onClick={action}
-                      className="grid grid-cols-[1fr_auto] items-center gap-3 border border-white/10 bg-black/25 px-4 py-3 text-left transition-all hover:border-[#D4AF37]/35 hover:bg-black/40"
+                      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 text-left hover:border-[#D4AF37]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-[11px] font-black uppercase tracking-[0.16em] text-white/58">{label}</span>
-                        <span className="mt-1 block truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/32">{meta}</span>
+                        <span className="block truncate text-sm text-white">{label}</span>
+                        <span className="mt-0.5 block truncate text-xs text-white/40">{meta}</span>
                       </span>
-                      <span className="flex items-center gap-3">
-                        <span className="text-2xl font-black leading-none text-white tabular-nums">{value}</span>
-                        <Icon className="h-4 w-4 text-[#D4AF37]" />
+                      <span className="flex items-center gap-2">
+                        <span className="text-lg font-semibold tabular-nums text-white">{value}</span>
+                        <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
                       </span>
                     </button>
                   ))}
@@ -1540,55 +1398,47 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-3 grid gap-3 xl:grid-cols-[1fr_1fr_0.9fr]">
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Portfolio value</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Brand concentration</h3>
-                  </div>
-                  <WalletCards className="h-5 w-5 text-white/28" />
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Brand concentration</h3>
+                  <WalletCards className="size-4 text-white/30" aria-hidden="true" />
                 </div>
 
-                <div className="space-y-4">
-                  {analytics.brandValueSegments.length === 0 ? (
-                    <p className="py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">No stock data</p>
-                  ) : (
-                    analytics.brandValueSegments.slice(0, 6).map((segment) => (
+                {analytics.brandValueSegments.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-white/45">No stock data</p>
+                ) : (
+                  <div className="space-y-3">
+                    {analytics.brandValueSegments.slice(0, 6).map((segment) => (
                       <div key={segment.label}>
-                        <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.15em]">
-                          <span className="flex min-w-0 items-center gap-2 text-white/58">
-                            <BrandMark make={segment.label} tone="mono" className="size-5 shrink-0 text-[#D4AF37]" />
+                        <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                          <span className="flex min-w-0 items-center gap-2 text-white/70">
+                            <BrandMark make={segment.label} tone="mono" className="size-4 shrink-0 text-[#D4AF37]" />
                             <span className="truncate">{segment.label}</span>
                           </span>
-                          <span className="shrink-0 text-white">{segment.meta}</span>
+                          <span className="shrink-0 tabular-nums text-white">{segment.meta}</span>
                         </div>
-                        <div className="h-2 overflow-hidden bg-white/[0.06]">
-                          <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(segment.pct)}%` }} />
-                        </div>
+                        <Meter pct={segment.pct} />
                       </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="border border-white/10 bg-black/25 p-4">
-                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Sold value</p>
-                    <p className="mt-3 text-2xl font-black leading-none text-white tabular-nums">{formatMillions(analytics.soldValue)}</p>
+                    ))}
                   </div>
-                  <div className="border border-white/10 bg-black/25 p-4">
-                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Avg days live</p>
-                    <p className="mt-3 text-2xl font-black leading-none text-white tabular-nums">{formatNumber(analytics.avgDaysLive)}</p>
+                )}
+
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Sold value</p>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-white">{formatMillions(analytics.soldValue)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Avg days live</p>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-white">{formatNumber(analytics.avgDaysLive)}</p>
                   </div>
                 </div>
               </section>
 
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Fleet composition</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Stock mix</h3>
-                  </div>
-                  <PieChart className="h-5 w-5 text-white/28" />
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Stock mix</h3>
+                  <PieChart className="size-4 text-white/30" aria-hidden="true" />
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
@@ -1599,94 +1449,65 @@ export default function AdminDashboard() {
                     { title: 'Transmission', segments: analytics.transmissionSegments },
                   ].map((group) => (
                     <div key={group.title}>
-                      <p className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-white/35">{group.title}</p>
-                      <div className="space-y-3">
-                        {group.segments.length === 0 ? (
-                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/28">No data</p>
-                        ) : (
-                          group.segments.slice(0, 4).map((segment) => (
-                            <div key={segment.label}>
-                              <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.12em]">
-                                <span className="truncate text-white/48">{segment.label}</span>
-                                <span className="text-white">{segment.count}</span>
-                              </div>
-                              <div className="h-1.5 overflow-hidden bg-white/[0.06]">
-                                <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(segment.pct)}%` }} />
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
+                      <p className="mb-3 text-sm font-medium text-white">{group.title}</p>
+                      <SegmentRows items={group.segments.slice(0, 4)} />
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Pricing lanes</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Available bands</h3>
-                  </div>
-                  <TrendingUp className="h-5 w-5 text-white/28" />
+              <section className={`${panel} p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Price bands</h3>
+                  <TrendingUp className="size-4 text-white/30" aria-hidden="true" />
                 </div>
 
-                <div className="space-y-4">
-                  {analytics.priceBands.map((band) => (
-                    <div key={band.label}>
-                      <div className="mb-2 flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.14em]">
-                        <span className="truncate text-white/48">{band.label}</span>
-                        <span className="text-white">{band.count} units</span>
-                      </div>
-                      <div className="h-2 overflow-hidden bg-white/[0.06]">
-                        <div className="h-full bg-[#D4AF37]" style={{ width: `${clampPercent(band.pct)}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <SegmentRows
+                  items={analytics.priceBands.map((band) => ({
+                    ...band,
+                    meta: `${band.count} units`,
+                  }))}
+                />
 
-                <div className="mt-6 grid gap-3">
-                  <div className="border border-white/10 bg-black/25 p-4">
-                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Oldest live unit</p>
-                    <p className="mt-3 truncate text-2xl font-black uppercase leading-none text-white">
+                <div className="mt-5 grid gap-2">
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Oldest live unit</p>
+                    <p className="mt-2 truncate text-lg font-semibold text-white">
                       {analytics.oldestLive ? `${analytics.oldestLive.days} days` : 'N/A'}
                     </p>
                   </div>
-                  <div className="border border-white/10 bg-black/25 p-4">
-                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">Total click pool</p>
-                    <p className="mt-3 text-2xl font-black uppercase leading-none text-white tabular-nums">{formatNumber(analytics.totalViews)}</p>
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Total clicks</p>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-white">{formatNumber(analytics.totalViews)}</p>
                   </div>
                 </div>
               </section>
             </div>
 
-            <section className="mt-3 border border-white/10 bg-white/[0.035] p-5 md:p-6">
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">High-value gaps</p>
-                  <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Listings to fix first</h3>
-                </div>
-                <Edit2 className="h-5 w-5 text-white/28" />
+            <section className={`${panel} mt-3 p-5`}>
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <h3 className="text-lg font-semibold text-white">Listings to fix first</h3>
+                <Edit2 className="size-4 text-white/30" aria-hidden="true" />
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                 {analytics.highValueIncomplete.length === 0 ? (
-                  <p className="col-span-full py-8 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/35">No live quality gaps</p>
+                  <p className="col-span-full py-8 text-center text-sm text-white/45">No live quality gaps</p>
                 ) : (
                   analytics.highValueIncomplete.map((vehicle) => (
                     <button
                       key={vehicle.id}
                       type="button"
                       onClick={() => openEdit(vehicle)}
-                      className="grid grid-cols-[1fr_auto] items-center gap-3 border border-white/10 bg-black/25 px-4 py-4 text-left transition-all hover:border-[#D4AF37]/35"
+                      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-white/10 px-3 py-3 text-left hover:border-[#D4AF37]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-xs font-black uppercase tracking-tight text-white">{getVehicleName(vehicle)}</span>
-                        <span className="mt-1 block text-[9px] font-black uppercase tracking-[0.14em] text-white/35">
+                        <span className="block truncate text-sm font-medium text-white">{getVehicleName(vehicle)}</span>
+                        <span className="mt-1 block text-xs text-white/40">
                           {!vehicle.image ? 'Missing image' : !vehicle.description?.trim() ? 'Missing description' : 'Missing features'}
                         </span>
                       </span>
-                      <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-[#D4AF37]">{formatMillions(vehicle.price)}</span>
+                      <span className="shrink-0 text-sm text-[#D4AF37]">{formatMillions(vehicle.price)}</span>
                     </button>
                   ))
                 )}
