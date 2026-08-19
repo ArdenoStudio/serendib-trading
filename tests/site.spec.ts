@@ -84,11 +84,19 @@ test('featured arrival hover keeps a stable hit box', async ({ page }, testInfo)
   await page.goto('/');
   await page.getByRole('heading', { name: /featured arrivals/i }).scrollIntoViewIfNeeded();
 
+  const marquee = page.getByTestId('featured-arrivals-marquee');
+  await expect(marquee).toBeVisible();
+  // Pause the ticker first so Playwright is not waiting on a moving transform.
+  await marquee.hover({ position: { x: 24, y: 24 } });
+
   const card = page.locator('a[href="/car/test-1"]').first();
   await expect(card).toBeVisible();
 
   const start = (await card.boundingBox())!;
-  await card.hover({ position: { x: Math.max(8, start.width - 36), y: Math.max(8, start.height - 24) } });
+  await card.hover({
+    force: true,
+    position: { x: Math.max(8, start.width - 36), y: Math.max(8, start.height - 24) },
+  });
 
   const ySamples: number[] = [];
   const hSamples: number[] = [];

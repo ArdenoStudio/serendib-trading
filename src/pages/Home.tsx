@@ -602,6 +602,7 @@ export default function Home() {
         
         {/* Horizontal Marquee Container */}
         <div
+          data-testid="featured-arrivals-marquee"
           className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-12"
           onMouseEnter={() => setMarqueePaused(true)}
           onMouseLeave={() => setMarqueePaused(false)}
