@@ -23,11 +23,26 @@ export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 // __Host- prefix is only valid on secure origins; keep the plain name for local dev.
 export const COOKIE_NAME = IS_PRODUCTION ? '__Host-admin_session' : 'admin_session';
 
-export const ALLOWED_ADMIN_EMAILS = new Set([
+const DEFAULT_ADMIN_EMAILS = [
   'bilalikras1@gmail.com',
   'ardenostudio@gmail.com',
   'suvenseoras@gmail.com',
-]);
+];
+
+function parseAdminAllowlist() {
+  const fromEnv = process.env.ALLOWED_ADMIN_EMAILS;
+  if (typeof fromEnv === 'string' && fromEnv.trim()) {
+    return new Set(
+      fromEnv
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean)
+    );
+  }
+  return new Set(DEFAULT_ADMIN_EMAILS);
+}
+
+export const ALLOWED_ADMIN_EMAILS = parseAdminAllowlist();
 
 export async function createSessionToken(user) {
   const now = Math.floor(Date.now() / 1000);

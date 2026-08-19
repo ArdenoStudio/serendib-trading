@@ -9,6 +9,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
 import WhatsAppFloat from './components/WhatsAppFloat';
 import ErrorBoundary from './components/ErrorBoundary';
+import Loader from './components/Loader';
 
 const Home = lazy(() => import('./pages/Home'));
 const Inventory = lazy(() => import('./pages/Inventory'));
@@ -84,13 +85,7 @@ export default function App() {
           ~1s on every route. Route content keeps its own (non-LCP) entrances. */}
       <div id="main-content" tabIndex={-1}>
         <ErrorBoundary key={pathname}>
-          <Suspense
-            fallback={
-              <div className="min-h-[70vh] flex items-center justify-center bg-[#0d0b09]">
-                <div className="w-10 h-10 rounded-full border-2 border-[#D4AF37]/20 border-t-[#D4AF37] animate-spin" />
-              </div>
-            }
-          >
+          <Suspense fallback={<Loader />}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/inventory" element={<Inventory />} />

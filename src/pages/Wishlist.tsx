@@ -128,7 +128,7 @@ export default function Wishlist() {
           </div>
 
           {loading ? (
-            <Loader />
+            <Loader fullScreen={false} />
           ) : cars.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 16 }}
