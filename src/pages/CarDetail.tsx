@@ -179,6 +179,7 @@ export default function CarDetail() {
         phone,
         date: testDriveForm.date,
         time: testDriveForm.time,
+        consent: true,
       });
       setLeadSuccess('Request received. Continue on WhatsApp to confirm with our team.');
       setWhatsappContinueUrl(whatsappUrl);

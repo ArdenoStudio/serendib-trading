@@ -183,6 +183,12 @@ const validateLead = (body) => {
     throw error;
   }
 
+  if (body.consent !== true) {
+    const error = new Error('Please accept the privacy policy so we can handle this inquiry.');
+    error.status = 400;
+    throw error;
+  }
+
   return {
     type,
     name,

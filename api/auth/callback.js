@@ -6,7 +6,6 @@ import {
   timingSafeEqualStr,
   ALLOWED_ADMIN_EMAILS,
 } from './_session.js';
-import { query } from '../_db.js';
 
 const DEFAULT_SITE_ORIGIN = 'https://serendibtrading.lk';
 
@@ -108,20 +107,9 @@ export default async function handler(req, res) {
 
     if (!email) return redirect('invalid_email');
 
-    // Check whitelist or admin_users table in database
-    let isAuthorized = ALLOWED_ADMIN_EMAILS.has(email);
-    if (!isAuthorized) {
-      try {
-        const rows = await query('SELECT email FROM admin_users WHERE LOWER(email) = $1 LIMIT 1', [email]);
-        if (Array.isArray(rows) && rows.length > 0) {
-          isAuthorized = true;
-        }
-      } catch {
-        // Table query fallback failed; retain whitelist check
-      }
-    }
-
-    if (!isAuthorized) return redirect('unauthorized');
+    // Same allowlist as getSessionFromRequest — a DB-only admin would otherwise
+    // receive a cookie and then be rejected on every subsequent admin API call.
+    if (!ALLOWED_ADMIN_EMAILS.has(email)) return redirect('unauthorized');
 
     const sessionToken = await createSessionToken({
       email,

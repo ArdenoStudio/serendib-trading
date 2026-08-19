@@ -337,7 +337,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                     {galleryPreviews.map((src,i) => (
                       <div key={i} className="relative w-24 h-20 rounded-xl overflow-hidden group border border-white/10">
                         <img src={src} alt="" className="w-full h-full object-cover"/>
-                        <button type="button" onClick={()=>removeGallery(i)} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <button type="button" onClick={()=>removeGallery(i)} aria-label={`Remove gallery image ${i + 1}`} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                           <Trash2 className="w-4 h-4 text-red-400"/>
                         </button>
                       </div>
@@ -363,7 +363,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
                     {(form.key_features ?? []).map((f,i) => (
                       <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-full text-[11px] font-bold text-[#D4AF37]">
                         <Tag className="w-3 h-3"/>{f}
-                        <button type="button" onClick={()=>removeFeature(i)} className="ml-1 text-[#D4AF37]/60 hover:text-red-400 transition-colors"><X className="w-3 h-3"/></button>
+                        <button type="button" onClick={()=>removeFeature(i)} aria-label={`Remove ${f}`} className="ml-1 text-[#D4AF37]/60 hover:text-red-400 transition-colors"><X className="w-3 h-3"/></button>
                       </span>
                     ))}
                   </div>

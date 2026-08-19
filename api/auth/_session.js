@@ -69,6 +69,16 @@ export async function getSessionFromRequest(req) {
   }
 }
 
+function appendCookie(res, value) {
+  const current = res.getHeader('Set-Cookie');
+  if (!current) {
+    res.setHeader('Set-Cookie', value);
+    return;
+  }
+  const existing = Array.isArray(current) ? current : [current];
+  res.setHeader('Set-Cookie', [...existing, value]);
+}
+
 export function setSessionCookie(res, token) {
   const serialized = cookie.serialize(COOKIE_NAME, token, {
     httpOnly: true,
@@ -77,7 +87,7 @@ export function setSessionCookie(res, token) {
     maxAge: 7 * 24 * 60 * 60, // 7 days
     path: '/',
   });
-  res.setHeader('Set-Cookie', serialized);
+  appendCookie(res, serialized);
 }
 
 export function clearSessionCookie(res) {
@@ -88,7 +98,7 @@ export function clearSessionCookie(res) {
     maxAge: 0,
     path: '/',
   });
-  res.setHeader('Set-Cookie', serialized);
+  appendCookie(res, serialized);
 }
 
 // --- OAuth CSRF (state) + PKCE helpers -------------------------------------
@@ -112,7 +122,7 @@ export function setOauthStateCookie(res, payload) {
     maxAge: 10 * 60, // 10 minutes
     path: '/',
   });
-  res.setHeader('Set-Cookie', serialized);
+  appendCookie(res, serialized);
 }
 
 export function clearOauthStateCookie(res) {
@@ -123,7 +133,7 @@ export function clearOauthStateCookie(res) {
     maxAge: 0,
     path: '/',
   });
-  res.setHeader('Set-Cookie', serialized);
+  appendCookie(res, serialized);
 }
 
 export function getOauthState(req) {

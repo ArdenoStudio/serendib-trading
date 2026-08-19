@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // `vite preview` can't run Vercel serverless functions, so the inventory API is
 // unavailable in this environment. Stub it so the pages render real content and
@@ -32,6 +34,12 @@ const stubVehicles = async (page: import('@playwright/test').Page) => {
     })
   );
 };
+
+test('static HTML shell uses the production domain', () => {
+  const html = readFileSync(resolve('index.html'), 'utf8');
+  expect(html).not.toMatch(/vercel\.app/);
+  expect(html).toContain('https://serendibtrading.lk/');
+});
 
 const routes = [
   { path: '/', heading: /drive/i },

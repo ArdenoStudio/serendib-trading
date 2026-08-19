@@ -60,7 +60,7 @@ export default async function handler(req, res) {
         'public, s-maxage=60, stale-while-revalidate=300'
       );
     } catch (err) {
-      return sendJson(res, 500, { error: err.message || 'Failed to fetch vehicles' });
+      return sendJson(res, 500, { error: 'Failed to fetch vehicles' });
     }
   }
 
@@ -213,6 +213,6 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, POST, PATCH, DELETE, OPTIONS');
     return sendJson(res, 405, { error: 'Method not allowed' });
   } catch (err) {
-    return sendJson(res, 500, { error: err.message || 'Database error' });
+    return sendJson(res, 500, { error: 'Database error' });
   }
 }

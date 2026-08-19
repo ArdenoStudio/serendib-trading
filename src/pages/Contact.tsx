@@ -81,6 +81,7 @@ export default function Contact() {
         name,
         phone,
         message,
+        consent: true,
       });
       setFormSuccess('Inquiry received. Continue on WhatsApp to finish the conversation.');
       setWhatsappContinueUrl(whatsappUrl);

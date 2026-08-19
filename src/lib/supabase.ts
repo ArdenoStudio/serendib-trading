@@ -199,6 +199,7 @@ export const logPageView = async () => {
 };
 
 export const logCarView = async (carId: string) => {
+  if (import.meta.env.VITE_ENABLE_SUPABASE_ANALYTICS !== 'true') return;
   try {
     await fetch('/api/db/analytics', {
       method: 'POST',

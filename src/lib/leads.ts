@@ -7,6 +7,7 @@ export type LeadSubmission = {
   message?: string;
   date?: string;
   time?: string;
+  consent: true;
 };
 
 export const submitLead = async (lead: LeadSubmission) => {
@@ -17,6 +18,7 @@ export const submitLead = async (lead: LeadSubmission) => {
     },
     body: JSON.stringify({
       ...lead,
+      consent: true,
       botField: '',
     }),
   });

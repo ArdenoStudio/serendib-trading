@@ -7,10 +7,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const rows = await query('SELECT * FROM vehicle_knowledge ORDER BY created_at DESC');
+      const rows = await query('SELECT * FROM vehicle_knowledge');
       return res.status(200).json(Array.isArray(rows) ? rows : []);
-    } catch (err) {
-      return res.status(500).json({ error: err.message || 'Failed to fetch vehicle knowledge' });
+    } catch {
+      // Optional parser aid — never fail the admin UI over a missing column.
+      return res.status(200).json([]);
     }
   }
 
@@ -41,8 +42,8 @@ export default async function handler(req, res) {
         [category || 'General', topic, content]
       );
       return res.status(201).json(rows[0]);
-    } catch (err) {
-      return res.status(500).json({ error: err.message || 'Failed to insert knowledge' });
+    } catch {
+      return res.status(500).json({ error: 'Failed to insert knowledge' });
     }
   }
 

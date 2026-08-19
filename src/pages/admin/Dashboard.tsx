@@ -724,7 +724,7 @@ export default function AdminDashboard() {
                   </h2>
                 </div>
                 <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
-                  {isSupabaseConfigured ? 'Live Supabase data' : 'Local fallback mode'}
+                  {isSupabaseConfigured ? 'Live inventory (Neon) + photos (Supabase Storage)' : 'Local fallback mode'}
                 </div>
               </div>
 
@@ -1240,7 +1240,7 @@ export default function AdminDashboard() {
               </div>
               <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em]">
                 <span className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-white/45">
-                  {isSupabaseConfigured ? 'Live Supabase data' : 'Local fallback mode'}
+                  {isSupabaseConfigured ? 'Live inventory (Neon) + photos (Supabase Storage)' : 'Local fallback mode'}
                 </span>
                 <span className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-[#F5D66B]">
                   Updated {formatDate(analytics.latestTraffic?.date)}
