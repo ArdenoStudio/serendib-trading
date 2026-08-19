@@ -1,3 +1,9 @@
+/**
+ * System of record: Neon Postgres (DATABASE_URL).
+ * Photos: Supabase Storage URLs stored as text on `cars.image` / `cars.gallery`.
+ * Do not move records back to Supabase Postgres, and never store image bytes
+ * in Postgres — that is what blew egress on both providers.
+ */
 import { neon } from '@neondatabase/serverless';
 
 export const getDb = () => {

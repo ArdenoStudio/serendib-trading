@@ -1,8 +1,18 @@
 import { query } from '../_db.js';
 import { getSessionFromRequest } from '../auth/_session.js';
 
-const sendJson = (res, status, data) => {
-  res.setHeader('Cache-Control', 'no-store');
+/**
+ * Public list cards never need gallery JSONB or long descriptions.
+ * Selecting only these columns (and CDN-caching the response) is what
+ * keeps Neon egress bounded — photos themselves live in Supabase Storage.
+ */
+const PUBLIC_LIST_COLUMNS = `
+  id, make, model, year, price, mileage, fuel, transmission,
+  "bodyType", color, image, condition, key_features, is_sold, sold_at, created_at
+`;
+
+const sendJson = (res, status, data, cacheControl = 'no-store') => {
+  res.setHeader('Cache-Control', cacheControl);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   return res.status(status).json(data);
 };
@@ -24,11 +34,31 @@ export default async function handler(req, res) {
         if (!Array.isArray(rows) || rows.length === 0) {
           return sendJson(res, 404, { error: 'Vehicle not found' });
         }
-        return sendJson(res, 200, rows[0]);
+        return sendJson(res, 200, rows[0], 'public, s-maxage=30, stale-while-revalidate=120');
       }
 
-      const rows = await query('SELECT * FROM cars ORDER BY created_at DESC');
-      return sendJson(res, 200, Array.isArray(rows) ? rows : []);
+      // Admin dashboard needs gallery/description/views. Keep that on a
+      // distinct URL so the public list can be CDN-cached without mixing
+      // authenticated payloads into the same cache key.
+      const view = req.query && req.query.view;
+      if (view === 'full') {
+        const session = await getSessionFromRequest(req);
+        if (!session) {
+          return sendJson(res, 401, { error: 'Unauthorized admin request' });
+        }
+        const rows = await query('SELECT * FROM cars ORDER BY created_at DESC');
+        return sendJson(res, 200, Array.isArray(rows) ? rows : []);
+      }
+
+      const rows = await query(
+        `SELECT ${PUBLIC_LIST_COLUMNS} FROM cars ORDER BY created_at DESC`
+      );
+      return sendJson(
+        res,
+        200,
+        Array.isArray(rows) ? rows : [],
+        'public, s-maxage=60, stale-while-revalidate=300'
+      );
     } catch (err) {
       return sendJson(res, 500, { error: err.message || 'Failed to fetch vehicles' });
     }

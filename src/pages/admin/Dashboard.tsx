@@ -140,7 +140,7 @@ export default function AdminDashboard() {
 
   const fetchVehicles = async () => {
     try {
-      const res = await fetch('/api/db/vehicles');
+      const res = await fetch('/api/db/vehicles?view=full');
       if (res.ok) {
         const data = await res.json();
         setVehicles(Array.isArray(data) ? data : []);

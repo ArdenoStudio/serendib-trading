@@ -77,6 +77,32 @@ test('inventory renders listings from the API', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('featured arrival hover keeps a stable hit box', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Hover jitter is a fine-pointer issue');
+
+  await stubVehicles(page);
+  await page.goto('/');
+  await page.getByRole('heading', { name: /featured arrivals/i }).scrollIntoViewIfNeeded();
+
+  const card = page.locator('a[href="/car/test-1"]').first();
+  await expect(card).toBeVisible();
+
+  const start = (await card.boundingBox())!;
+  await card.hover({ position: { x: Math.max(8, start.width - 36), y: Math.max(8, start.height - 24) } });
+
+  const ySamples: number[] = [];
+  const hSamples: number[] = [];
+  for (let i = 0; i < 8; i += 1) {
+    await page.waitForTimeout(40);
+    const next = (await card.boundingBox())!;
+    ySamples.push(next.y);
+    hSamples.push(next.height);
+  }
+
+  expect(Math.max(...ySamples) - Math.min(...ySamples)).toBeLessThan(3);
+  expect(Math.max(...hSamples) - Math.min(...hSamples)).toBeLessThan(3);
+});
+
 test('homepage hero CTAs stay equal-sized and aligned', async ({ page }, testInfo) => {
   await stubVehicles(page);
   await page.goto('/');

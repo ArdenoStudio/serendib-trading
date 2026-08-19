@@ -2,9 +2,9 @@ import type { Car } from '../data/types';
 import { isSupabaseConfigured, getVehicles } from './supabase';
 import { mapLiveVehicles, normalizeVehicle, isSoldExpired } from './inventory';
 
-/** Columns needed for public list cards and filters. */
+/** Columns returned by the public inventory list (no gallery/description). */
 export const INVENTORY_LIST_COLUMNS =
-  'id,make,model,year,price,mileage,fuel,transmission,bodyType,color,image,gallery,condition,description,key_features,is_sold,sold_at,created_at';
+  'id,make,model,year,price,mileage,fuel,transmission,bodyType,color,image,condition,key_features,is_sold,sold_at,created_at';
 
 const CACHE_TTL_MS = 45_000;
 

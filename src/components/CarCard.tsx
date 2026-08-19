@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Gauge, Milestone, Settings2, Heart, BarChart2 } from 'lucide-react';
+import { Gauge, Settings2, Heart, BarChart2 } from 'lucide-react';
 import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
 import { readStringList, writeStringList } from '../lib/storage';
 import { cleanSpec } from '../lib/utils';
@@ -92,10 +91,9 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
 
   return (
     <Link to={`/car/${car.id}`} className={`block group ${className}`}>
-      <motion.div
-        whileHover={{ y: -10 }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        className="overflow-hidden rounded-3xl bg-white/[0.03] border border-white/5 hover:border-[#D4AF37]/40 shadow-2xl transition-all duration-500 relative h-full flex flex-col focus-within:ring-2 focus-within:ring-[#D4AF37] focus-within:outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+      {/* Stable Link hit box: lift the inner visual only so hover cannot jitter. */}
+      <div
+        className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] shadow-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,transform] duration-200 ease-out motion-reduce:transform-none group-hover:border-[#D4AF37]/40 group-focus-within:outline-none group-focus-within:ring-2 group-focus-within:ring-[#D4AF37] [@media(hover:hover)]:group-hover:-translate-y-2"
       >
         {/* Background Glow on Hover */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
@@ -117,14 +115,12 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
 
         {/* Image Container - taller aspect on mobile to show more vehicle */}
         <div className="relative aspect-[4/3] md:aspect-[16/11] overflow-hidden bg-[#0d0b09]">
-          <motion.img
-            whileHover={{ scale: 1.06 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          <img
             src={imageSrc}
             alt={`${displayMake} ${displayModel}`}
             width={384}
             height={240}
-            className={`w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-700 ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
+            className={`h-full w-full origin-center scale-[0.94] object-cover object-center transition-transform duration-300 ease-out motion-reduce:transform-none [@media(hover:hover)]:group-hover:scale-[1.02] ${car.is_sold ? 'opacity-40 grayscale' : ''}`}
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"
@@ -237,15 +233,15 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
               </p>
             </div>
             
-            <div className="w-11 h-11 rounded-full border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:text-black group-hover:border-[#D4AF37] transition-all duration-500">
+            <div className="flex size-11 items-center justify-center rounded-full border border-[#D4AF37]/30 text-[#D4AF37] transition-colors duration-200 group-hover:border-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:text-black">
               &rarr;
             </div>
           </div>
 
           {/* Corner Accent */}
-          <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 }

@@ -16,9 +16,6 @@ import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 import { optimizeImageUrl } from '../lib/images';
 
-// Animated card link so featured cards are keyboard- and screen-reader-accessible.
-const MotionCardLink = motion.create(Link);
-
 export default function Home() {
   const [cars, setCars] = useState<Car[]>(getInitialInventory);
   const [fetchError, setFetchError] = useState(false);
@@ -112,97 +109,95 @@ export default function Home() {
   const marqueeCars = cars;
 
   const renderFeaturedCard = (car: Car, key: string) => (
-    <MotionCardLink
+    // The Link is the stable hit box. Never translate this element on hover —
+    // lifting the hover target itself makes the cursor leave the card, which
+    // drops it, which re-enters hover, which looks like a glitch.
+    <Link
       key={key}
       to={`/car/${car.id}`}
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      whileHover={{ y: -10 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card bg-white/[0.03] backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden hover:bg-white/[0.05] hover:border-[#D4AF37]/40 transition-[border-color,background-color] duration-500 cursor-pointer relative shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+      className="w-[320px] md:w-[420px] inline-block flex-shrink-0 group/card cursor-pointer relative"
     >
-      {/* Image Container with Hover Zoom */}
-      <div className="w-full h-64 md:h-72 overflow-hidden relative bg-[#0d0b09]">
-        {/* Premium Year Tag */}
-        <div className="absolute top-6 left-6 z-20 bg-black/50 backdrop-blur-xl border border-white/10 text-[#D4AF37] text-[11px] font-bold px-4 py-2 rounded-full uppercase tracking-[0.2em]">
-          Model {car.year}
+      <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-2xl transition-[border-color,background-color,transform] duration-200 ease-out motion-reduce:transform-none group-hover/card:border-[#D4AF37]/40 group-hover/card:bg-white/[0.05] [@media(hover:hover)]:group-hover/card:-translate-y-2">
+        {/* Image Container with Hover Zoom */}
+        <div className="relative h-64 w-full overflow-hidden bg-[#0d0b09] md:h-72">
+          {/* Premium Year Tag */}
+          <div className="absolute top-6 left-6 z-20 rounded-full border border-white/10 bg-black/50 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] backdrop-blur-xl">
+            Model {car.year}
+          </div>
+
+          <img
+            src={
+              car.image?.includes('unsplash.com')
+                ? `${car.image}&w=600&q=70`
+                : optimizeImageUrl(car.image, 'card') || car.image
+            }
+            alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
+            width={420}
+            height={288}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full origin-center scale-[0.94] object-cover object-center transition-transform duration-300 ease-out motion-reduce:transform-none [@media(hover:hover)]:group-hover/card:scale-[1.02]"
+            onError={(e) => {
+              // Try the raw storage URL once, then fall back to a local
+              // showroom image so the marquee never shows broken icons.
+              const el = e.currentTarget;
+              if (el.dataset.fallback) {
+                el.src = '/images/showroom/serendib-showroom-floor-02.webp';
+                return;
+              }
+              el.dataset.fallback = '1';
+              if (car.image && el.src !== car.image) {
+                el.src = car.image;
+              } else {
+                el.src = '/images/showroom/serendib-showroom-floor-02.webp';
+              }
+            }}
+          />
+
+          {/* Cinematic Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
+          <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100" />
         </div>
 
-        <motion.img
-          src={
-            car.image?.includes('unsplash.com')
-              ? `${car.image}&w=600&q=70`
-              : optimizeImageUrl(car.image, 'card') || car.image
-          }
-          alt={`${car.year} ${getBrandLabel(car.make)} ${getDisplayModel(car.make, car.model)}`}
-          width={420}
-          height={288}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-cover object-center origin-center scale-[0.94] transition-transform duration-1000 group-hover/card:scale-[1.02]"
-          onError={(e) => {
-            // Try the raw storage URL once, then fall back to a local
-            // showroom image so the marquee never shows broken icons.
-            const el = e.currentTarget;
-            if (el.dataset.fallback) {
-              el.src = '/images/showroom/serendib-showroom-floor-02.webp';
-              return;
-            }
-            el.dataset.fallback = '1';
-            if (car.image && el.src !== car.image) {
-              el.src = car.image;
-            } else {
-              el.src = '/images/showroom/serendib-showroom-floor-02.webp';
-            }
-          }}
-        />
-
-        {/* Cinematic Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
-        <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
-      </div>
-
-      {/* Card Content */}
-      <div className="p-8 md:p-10 relative">
-         <div className="flex items-center gap-3 mb-3">
+        {/* Card Content */}
+        <div className="relative p-8 md:p-10">
+          <div className="mb-3 flex items-center gap-3">
             <BrandMark
               make={car.make}
               tone="mono"
-              className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-500 group-hover/card:border-[#D4AF37]/35 group-hover/card:text-[#D4AF37]"
+              className="size-8 shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-1.5 text-white/45 transition-colors duration-200 group-hover/card:border-[#D4AF37]/35 group-hover/card:text-[#D4AF37]"
             />
             <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">{getBrandLabel(car.make)}</span>
-         </div>
-
-         <h3 className="text-xl md:text-2xl font-extrabold uppercase tracking-tight text-white mb-6 leading-none transition-colors duration-500 group-hover/card:text-[#D4AF37]">
-          {getDisplayModel(car.make, car.model)}
-        </h3>
-
-        <div className="flex items-center justify-between pt-8 border-t border-white/10">
-          <div className="flex flex-col">
-            <span className="text-[11px] uppercase tracking-[0.2em] text-white/60 mb-1">Price Guide</span>
-            <span className="text-2xl font-black text-white tracking-tighter">
-              {car.price > 0 ? `LKR ${(car.price / 1000000).toFixed(1)}M` : 'Price on request'}
-            </span>
           </div>
 
-          <motion.div
-            whileHover={{ x: 5 }}
-            aria-hidden="true"
-            className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]"
-          >
-            <span className="hidden md:block">Details</span>
-            <div className="w-10 h-10 rounded-full border border-[#D4AF37]/30 flex items-center justify-center group-hover/card:bg-[#D4AF37] group-hover/card:text-black transition-all duration-500">
-              &rarr;
-            </div>
-          </motion.div>
-        </div>
+          <h3 className="mb-6 text-xl leading-none font-extrabold tracking-tight text-white uppercase transition-colors duration-200 group-hover/card:text-[#D4AF37] md:text-2xl">
+            {getDisplayModel(car.make, car.model)}
+          </h3>
 
-        {/* Corner Accent */}
-        <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+          <div className="flex items-center justify-between border-t border-white/10 pt-8">
+            <div className="flex flex-col">
+              <span className="mb-1 text-[11px] tracking-[0.2em] text-white/60 uppercase">Price Guide</span>
+              <span className="text-2xl font-black tracking-tighter text-white tabular-nums">
+                {car.price > 0 ? `LKR ${(car.price / 1000000).toFixed(1)}M` : 'Price on request'}
+              </span>
+            </div>
+
+            <div
+              aria-hidden="true"
+              className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-[#D4AF37] uppercase"
+            >
+              <span className="hidden md:block">Details</span>
+              <div className="flex size-10 items-center justify-center rounded-full border border-[#D4AF37]/30 transition-colors duration-200 group-hover/card:bg-[#D4AF37] group-hover/card:text-black">
+                <span className="inline-block transition-transform duration-200 ease-out [@media(hover:hover)]:group-hover/card:translate-x-0.5">&rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Corner Accent */}
+          <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100" />
+        </div>
       </div>
-    </MotionCardLink>
+    </Link>
   );
 
   return (
