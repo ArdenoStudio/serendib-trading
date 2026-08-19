@@ -36,7 +36,7 @@ const BODY_TYPE_OPTIONS = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Coupe', 'P
 
 const EMPTY: VehicleFormData = {
   make:'', model:'', year: new Date().getFullYear(), price:0, mileage:0,
-  fuel:'Hybrid', transmission:'Automatic', bodyType:'Sedan', color:'',
+  fuel:'Petrol', transmission:'Automatic', bodyType:'Sedan', color:'',
   image:'', gallery:[], condition:'Registered', is_sold:false, description:'', key_features:[],
 };
 

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 // `vite preview` can't run Vercel serverless functions, so the inventory API is
@@ -148,4 +148,42 @@ test('homepage hero CTAs stay equal-sized and aligned', async ({ page }, testInf
   } else {
     expect(Math.abs(exploreBox.x - contactBox.x)).toBeLessThan(2);
   }
+});
+
+test('branded splash loader is gone', () => {
+  expect(existsSync(resolve('src/components/SplashLoader.tsx'))).toBe(false);
+  const loader = readFileSync(resolve('src/components/Loader.tsx'), 'utf8');
+  expect(loader).not.toMatch(/ORCHESTRATING/);
+  expect(loader).toContain('aria-label="Loading"');
+  expect(loader).toContain('animate-spin');
+});
+
+test('vehicle detail shows a simple spinner while loading', async ({ page }) => {
+  await page.route('**/api/db/vehicles**', async (route) => {
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 2_000));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 'test-1',
+        make: 'Toyota',
+        model: 'Land Cruiser Prado',
+        year: 2022,
+        price: 48500000,
+        mileage: 45000,
+        fuel: 'Diesel',
+        transmission: 'Automatic',
+        bodyType: 'SUV',
+        condition: 'Registered',
+        color: 'White',
+        image: '',
+        gallery: [],
+        is_sold: false,
+      }),
+    });
+  });
+
+  await page.goto('/car/test-1');
+  await expect(page.getByRole('status', { name: 'Loading' })).toBeVisible();
+  await expect(page.getByText('ORCHESTRATING EXCELLENCE')).toHaveCount(0);
 });

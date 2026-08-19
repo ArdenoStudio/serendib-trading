@@ -5,11 +5,26 @@ const MAX_DATA_URL_BYTES = 5 * 1024 * 1024;
 const MAX_URL_LENGTH = 2048;
 const DATA_URL_PATTERN = /^data:image\/(jpeg|jpg|png|webp|avif);base64,(.+)$/s;
 const EXT_BY_MIME = { jpeg: 'jpg', jpg: 'jpg', png: 'png', webp: 'webp', avif: 'avif' };
+const UPLOAD_BUCKET_MS = 60_000;
+const MAX_UPLOADS_PER_MINUTE = 20;
+const uploadBuckets = new Map();
 
 const send = (res, status, payload) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   return res.status(status).json(payload);
+};
+
+const throttle = (key) => {
+  const now = Date.now();
+  const bucket = uploadBuckets.get(key);
+  if (!bucket || now - bucket.startedAt > UPLOAD_BUCKET_MS) {
+    uploadBuckets.set(key, { startedAt: now, count: 1 });
+    return true;
+  }
+  if (bucket.count >= MAX_UPLOADS_PER_MINUTE) return false;
+  bucket.count += 1;
+  return true;
 };
 
 const parseBody = (req) => {
@@ -97,6 +112,11 @@ export default async function handler(req, res) {
     return send(res, 401, { error: 'Unauthorized admin request' });
   }
 
+  const uploadKey = session.email || 'admin';
+  if (!throttle(uploadKey)) {
+    return send(res, 429, { error: 'Too many uploads. Wait a minute and try again.' });
+  }
+
   try {
     const body = parseBody(req);
     const imageUrl = body.imageUrl || body.url || '';
@@ -122,6 +142,8 @@ export default async function handler(req, res) {
     const publicUrl = await uploadToStorage(match[2], mimeType);
     return send(res, 200, { url: publicUrl });
   } catch (err) {
-    return send(res, err.status || 500, { error: err.message || 'Upload error' });
+    const status = err.status || 500;
+    const message = status >= 500 ? 'Upload failed.' : err.message || 'Upload error';
+    return send(res, status, { error: message });
   }
 }

@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       fetchVehicles();
       fetchLeads();
       fetchTraffic();
-    }, 15_000);
+    }, 60_000);
 
     return () => clearInterval(interval);
   }, []);
@@ -442,6 +442,14 @@ export default function AdminDashboard() {
 
   const handleToggleSold = async (v: Vehicle) => {
     const nowSold = !v.is_sold;
+    const vehicleName = `${v.year} ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)}`;
+    const confirmed = window.confirm(
+      nowSold
+        ? `Mark ${vehicleName} as sold? It will be hidden from the public website.`
+        : `Put ${vehicleName} back on the website?`,
+    );
+    if (!confirmed) return;
+
     const res = await fetch('/api/db/vehicles', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -526,7 +534,7 @@ export default function AdminDashboard() {
             <span className="min-w-0">
               <span className="block text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Serendib Trading</span>
               <span className="block truncate text-lg font-black uppercase leading-none tracking-normal text-white sm:text-xl">
-                Admin Control Room
+                Dashboard
               </span>
             </span>
           </button>
@@ -563,7 +571,7 @@ export default function AdminDashboard() {
               className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-white md:flex"
             >
               <ChevronLeft className="h-4 w-4" />
-              Showroom
+              Website
             </button>
             <button
               type="button"
@@ -626,13 +634,13 @@ export default function AdminDashboard() {
             <div className="max-w-4xl">
               <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
-                Live inventory command
+                Live listings
               </div>
               <h1 className="max-w-4xl text-4xl font-black uppercase leading-[0.9] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                Showroom <span className="font-serif italic text-[#D4AF37]">operations</span>
+                Manage cars and leads
               </h1>
               <p className="mt-6 max-w-2xl text-sm font-medium leading-7 text-white/60 md:text-base">
-                Manage high-value stock, buyer enquiries, and site interest from one Serendib-grade console.
+                Add or edit vehicles, follow up buyer enquiries, and check site traffic.
               </p>
             </div>
 
@@ -644,7 +652,7 @@ export default function AdminDashboard() {
                 className="group flex items-center justify-between gap-4 rounded-2xl bg-[#D4AF37] px-5 py-4 text-left text-black transition-transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 <span>
-                  <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-black/60">Inventory action</span>
+                  <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-black/60">New listing</span>
                   <span className="mt-1 block text-lg font-black uppercase leading-none tracking-tight">Add vehicle</span>
                 </span>
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-[#D4AF37] transition-transform group-hover:rotate-90">
@@ -717,14 +725,14 @@ export default function AdminDashboard() {
                 <div>
                   <div className="mb-3 flex items-center gap-3">
                     <span className="h-px w-10 bg-white/15" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Today desk</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Today</p>
                   </div>
                   <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white text-balance md:text-5xl">
-                    Admin overview
+                    Overview
                   </h2>
                 </div>
                 <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
-                  {isSupabaseConfigured ? 'Live inventory (Neon) + photos (Supabase Storage)' : 'Local fallback mode'}
+                  {isSupabaseConfigured ? 'Listings and photos' : 'Local fallback mode'}
                 </div>
               </div>
 
@@ -1036,6 +1044,11 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => handleToggleSold(vehicle)}
+                          aria-label={
+                            sold
+                              ? `Relist ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`
+                              : `Mark ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)} as sold`
+                          }
                           className={`rounded-full border px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.16em] transition-all ${
                             sold
                               ? 'border-red-400/25 bg-red-500/10 text-red-200 hover:bg-red-500/20'
@@ -1075,10 +1088,10 @@ export default function AdminDashboard() {
               <div>
                 <div className="mb-3 flex items-center gap-3">
                   <span className="h-px w-10 bg-white/15" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Buyer pipeline</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Enquiries</p>
                 </div>
                 <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Lead follow-up
+                  Buyer messages
                 </h2>
               </div>
 
@@ -1232,15 +1245,15 @@ export default function AdminDashboard() {
               <div>
                 <div className="mb-3 flex items-center gap-3">
                   <span className="h-px w-10 bg-white/15" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Decision desk</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Traffic</p>
                 </div>
                 <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Analytics command center
+                  Site analytics
                 </h2>
               </div>
               <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em]">
                 <span className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-white/45">
-                  {isSupabaseConfigured ? 'Live inventory (Neon) + photos (Supabase Storage)' : 'Local fallback mode'}
+                  {isSupabaseConfigured ? 'Last 30 days' : 'Local fallback mode'}
                 </span>
                 <span className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-[#F5D66B]">
                   Updated {formatDate(analytics.latestTraffic?.date)}
@@ -1417,8 +1430,8 @@ export default function AdminDashboard() {
               <section className="border border-white/10 bg-white/[0.035] p-5 md:p-6">
                 <div className="mb-6 flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Lead pipeline</p>
-                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Sales movement</h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Leads</p>
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Recent enquiries</h3>
                   </div>
                   <Users className="h-5 w-5 text-white/28" />
                 </div>
