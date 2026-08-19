@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Upload, Sparkles, ImagePlus, Trash2, Tag, Plus } from 'lucide-react';
 import { uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle } from '../../lib/supabase';
 import { isBlobUrl } from '../../lib/images';
@@ -33,26 +33,45 @@ interface Props {
 const FUEL_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'] as const;
 const TRANSMISSION_OPTIONS = ['Automatic', 'Manual'] as const;
 const BODY_TYPE_OPTIONS = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Coupe', 'Pickup', 'Double Cab', 'Van', 'Wagon', 'Convertible'] as const;
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const EMPTY: VehicleFormData = {
-  make:'', model:'', year: new Date().getFullYear(), price:0, mileage:0,
-  fuel:'Petrol', transmission:'Automatic', bodyType:'Sedan', color:'',
-  image:'', gallery:[], condition:'Registered', is_sold:false, description:'', key_features:[],
+  make: '',
+  model: '',
+  year: new Date().getFullYear(),
+  price: 0,
+  mileage: 0,
+  fuel: 'Petrol',
+  transmission: 'Automatic',
+  bodyType: 'Sedan',
+  color: '',
+  image: '',
+  gallery: [],
+  condition: 'Registered',
+  is_sold: false,
+  description: '',
+  key_features: [],
 };
 
 const sanitizeForm = (data: VehicleFormData): VehicleFormData => ({
   ...data,
   fuel: (FUEL_OPTIONS as readonly string[]).includes(data.fuel) ? data.fuel : 'Petrol',
-  transmission: (TRANSMISSION_OPTIONS as readonly string[]).includes(data.transmission) ? data.transmission : 'Automatic',
-  bodyType: (BODY_TYPE_OPTIONS as readonly string[]).includes(data.bodyType) ? data.bodyType : data.bodyType || 'Sedan',
+  transmission: (TRANSMISSION_OPTIONS as readonly string[]).includes(data.transmission)
+    ? data.transmission
+    : 'Automatic',
+  bodyType: (BODY_TYPE_OPTIONS as readonly string[]).includes(data.bodyType)
+    ? data.bodyType
+    : data.bodyType || 'Sedan',
 });
 
-const inp = 'w-full bg-white/[0.05] border border-white/10 rounded-xl py-3 px-4 text-sm font-medium text-white placeholder:text-white/55 focus:outline-none focus:border-[#D4AF37] transition-all [color-scheme:dark]';
-const lbl = 'block text-[10px] font-black uppercase tracking-[0.2em] text-white/65 mb-1.5';
+const inp =
+  'w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-medium text-white placeholder:text-white/55 transition-all [color-scheme:dark] focus:border-[#D4AF37] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]';
+const lbl = 'mb-1.5 block text-sm font-semibold text-white/80';
 
 export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   const [form, setForm] = useState<VehicleFormData>(sanitizeForm(initial ?? EMPTY));
-  const [tab, setTab] = useState<'form'|'paste'>('form');
+  const [tab, setTab] = useState<'form' | 'paste'>('form');
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -61,9 +80,13 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   const [heroPreview, setHeroPreview] = useState(initial?.image ?? '');
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>(initial?.gallery ?? []);
   const [newFeature, setNewFeature] = useState('');
+  const [parseStatus, setParseStatus] = useState('');
+  const [dynamicKB, setDynamicKB] = useState<Record<string, any>>({});
   const heroRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const [dynamicKB, setDynamicKB] = useState<Record<string, any>>({});
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     fetchDynamicKnowledge().then(setDynamicKB);
@@ -72,19 +95,42 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const root = dialogRef.current;
+      if (!root) return;
+      const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => !el.hasAttribute('disabled') && el.tabIndex !== -1,
+      );
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener('keydown', handleKeyDown);
 
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
+      previous?.focus();
     };
   }, [onClose]);
 
-  const set = (k: keyof VehicleFormData, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: keyof VehicleFormData, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleHeroUpload = async (file: File) => {
     const preview = URL.createObjectURL(file);
@@ -99,7 +145,9 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     } catch (err) {
       const detail = err instanceof Error ? err.message : 'Unknown storage error';
       setFormError(`Storage upload failed: ${detail} Local previews cannot be published.`);
-    } finally { setUploading(false); }
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleGalleryUpload = async (files: FileList) => {
@@ -129,24 +177,25 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
   };
 
   const removeGallery = (idx: number) => {
-    setGalleryPreviews(p => p.filter((_, i) => i !== idx));
-    set('gallery', (form.gallery ?? []).filter((_, i) => i !== idx));
+    setGalleryPreviews((p) => p.filter((_, i) => i !== idx));
+    set(
+      'gallery',
+      (form.gallery ?? []).filter((_, i) => i !== idx),
+    );
   };
-
-  const [parseStatus, setParseStatus] = useState('');
 
   const handleParse = () => {
     if (!pasteText.trim()) return;
     setParsing(true);
     setParseStatus('Extracting key data...');
-    
+
     setTimeout(() => {
       setParseStatus('Analyzing vehicle model...');
       setTimeout(() => {
         setParseStatus('Inferring missing specifications...');
         setTimeout(() => {
           const parsed = parseVehicleText(pasteText, dynamicKB);
-          setForm(f => sanitizeForm({ ...f, ...parsed }));
+          setForm((f) => sanitizeForm({ ...f, ...parsed }));
           setParsing(false);
           setParseStatus('');
           setTab('form');
@@ -160,7 +209,11 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     set('key_features', [...(form.key_features ?? []), newFeature.trim()]);
     setNewFeature('');
   };
-  const removeFeature = (i: number) => set('key_features', (form.key_features ?? []).filter((_, idx) => idx !== i));
+  const removeFeature = (i: number) =>
+    set(
+      'key_features',
+      (form.key_features ?? []).filter((_, idx) => idx !== i),
+    );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,7 +227,7 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
       return;
     }
     if (!data.image?.trim()) {
-      setFormError('Add a hero image before saving this vehicle.');
+      setFormError('Add a main photo before saving this vehicle.');
       setSaving(false);
       return;
     }
@@ -200,202 +253,484 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
           throw new Error(err.error || 'Failed to create vehicle');
         }
       }
-      
+
       await learnFromVehicle(form);
 
       onSaved();
       onClose();
     } catch (err: any) {
       setFormError(`Error saving vehicle: ${err.message}`);
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const modal = (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 px-3 py-4 text-white sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="vehicle-modal-title">
-      <div className="flex min-h-full items-start justify-center">
-      <motion.div
-        initial={{ opacity:0, y:12, scale:0.98 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:12, scale:0.98 }}
-        transition={{ duration: 0.16, ease: 'easeOut' }}
-        className="relative w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-[#0A0A0A] shadow-2xl"
-      >
-        <button type="button" onClick={onClose} aria-label="Close vehicle form" className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/70 text-gray-500 transition-colors hover:text-white">
-          <X className="w-5 h-5" />
-        </button>
+  const motionProps = shouldReduceMotion
+    ? { initial: false, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        initial: { opacity: 0, y: 12 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: 12 },
+        transition: { duration: 0.16, ease: 'easeOut' as const },
+      };
 
-        <div className="sticky top-0 z-10 border-b border-white/10 bg-[#0A0A0A]/95 p-5 sm:p-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <h3 id="vehicle-modal-title" className="text-2xl font-black uppercase tracking-tight text-balance">
-                {initial ? 'Edit' : 'New'} <span className="text-[#D4AF37]">Vehicle</span>
-              </h3>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">
-                {initial ? 'Modify Existing Entry' : 'Add to Inventory'}
+  const modal = (
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/80 p-0 sm:items-center sm:p-4">
+      <motion.div
+        ref={dialogRef}
+        {...motionProps}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vehicle-modal-title"
+        aria-describedby="vehicle-modal-copy"
+        className="flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden border border-white/10 bg-[#0A0A0A] text-white shadow-2xl sm:h-auto sm:max-h-[min(920px,calc(100dvh-2rem))] sm:rounded-[28px]"
+        onWheel={(event) => event.stopPropagation()}
+        onTouchMove={(event) => event.stopPropagation()}
+      >
+        <header className="shrink-0 border-b border-white/10 px-5 py-4 sm:px-7 sm:py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 pr-2">
+              <h2 id="vehicle-modal-title" className="text-xl font-black tracking-tight text-white sm:text-2xl">
+                {initial ? 'Edit vehicle' : 'Add vehicle'}
+              </h2>
+              <p id="vehicle-modal-copy" className="mt-1 text-sm text-white/60">
+                {initial ? 'Update details, photos, or price, then save.' : 'Fill in the car details and add a main photo.'}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 pr-12 lg:justify-end">
-              {(['form','paste'] as const).map(t => (
-                <button key={t} type="button" onClick={() => setTab(t)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${tab===t ? 'bg-[#D4AF37] text-black' : 'bg-white/5 text-gray-400 hover:text-white'}`}>
-                  {t === 'paste' ? <><Sparkles className="w-3 h-3" />Smart Fill</> : 'Manual Form'}
-                </button>
-              ))}
-            </div>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
-        </div>
+          <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Vehicle entry method">
+            {(['form', 'paste'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={tab === t}
+                onClick={() => setTab(t)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+                  tab === t ? 'bg-[#D4AF37] text-black' : 'bg-white/5 text-white/70 hover:text-white'
+                }`}
+              >
+                {t === 'paste' ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                    Paste text
+                  </span>
+                ) : (
+                  'Form'
+                )}
+              </button>
+            ))}
+          </div>
+        </header>
 
-        <div className="p-5 sm:p-8">
-          <AnimatePresence mode="wait">
-            {tab === 'paste' ? (
-              <motion.div key="paste" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="space-y-4">
-                <p className="text-xs text-white/65 leading-relaxed text-pretty">Paste any vehicle description, ad text, or spec sheet below. We'll auto-identify all details and fill the form for you.</p>
+        <AnimatePresence mode="wait">
+          {tab === 'paste' ? (
+            <motion.div
+              key="paste"
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8">
+                <label htmlFor="vehicle-paste" className={lbl}>
+                  Listing text
+                </label>
+                <p className="mb-3 text-sm text-white/60">
+                  Paste an ad or spec sheet. We will fill the form from it.
+                </p>
                 <textarea
+                  id="vehicle-paste"
                   value={pasteText}
-                  onChange={e => setPasteText(e.target.value)}
+                  onChange={(e) => setPasteText(e.target.value)}
                   rows={12}
-                  placeholder={"Toyota Land Cruiser Prado 2020\nColor: Pearl White\nMileage: 45,000 km\nFuel: Diesel\nTransmission: Automatic\nCondition: Registered\nPrice: LKR 35,000,000\n\nPristine condition, full service history..."}
-                  className={inp + " resize-none font-mono text-xs leading-relaxed"}
+                  placeholder={
+                    'Toyota Land Cruiser Prado 2020\nColor: Pearl White\nMileage: 45,000 km\nFuel: Diesel\nPrice: LKR 35,000,000'
+                  }
+                  className={`${inp} resize-y font-mono text-xs leading-relaxed`}
                 />
-                <button onClick={handleParse} disabled={parsing || !pasteText.trim()}
-                  className="px-8 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-xs rounded-xl hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-2">
-                  {parsing ? parseStatus : <><Sparkles className="w-4 h-4" />Parse & Auto-Fill</>}
+              </div>
+              <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-white/10 bg-[#0A0A0A] p-4 sm:flex-row sm:justify-end sm:px-7 sm:py-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl px-6 py-3 text-sm font-semibold text-white/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                >
+                  Cancel
                 </button>
-              </motion.div>
-            ) : (
-              <motion.form key="form" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} onSubmit={handleSubmit} className="space-y-6">
-                {/* Row 1 */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div><label className={lbl}>Make</label><input required value={form.make} onChange={e=>set('make',e.target.value)} className={inp} placeholder="Toyota"/></div>
-                  <div><label className={lbl}>Model</label><input required value={form.model} onChange={e=>set('model',e.target.value)} className={inp} placeholder="Land Cruiser"/></div>
-                  <div><label className={lbl}>Year</label><input required type="number" value={form.year} onChange={e=>set('year',Number(e.target.value))} className={inp}/></div>
-                  <div>
-                    <label className={lbl}>Condition</label>
-                    <select value={form.condition} onChange={e=>set('condition',e.target.value)} className={inp}>
-                      {['New','Registered','Reconditioned'].map(c=><option key={c} value={c} className="bg-black text-white">{c}</option>)}
-                    </select>
-                  </div>
-                </div>
-                {/* Row 2 */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div><label className={lbl}>Price (LKR)</label><input required type="number" value={form.price} onChange={e=>set('price',Number(e.target.value))} className={inp}/></div>
-                  <div><label className={lbl}>Mileage (KM)</label><input required type="number" value={form.mileage} onChange={e=>set('mileage',Number(e.target.value))} className={inp}/></div>
-                   <div>
-                    <label className={lbl}>Fuel</label>
-                    <select value={form.fuel} onChange={e=>set('fuel',e.target.value)} className={inp}>
-                      {FUEL_OPTIONS.map(f=><option key={f} value={f} className="bg-black text-white">{f}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={lbl}>Transmission</label>
-                    <select value={form.transmission} onChange={e=>set('transmission',e.target.value)} className={inp}>
-                      {TRANSMISSION_OPTIONS.map(t=><option key={t} value={t} className="bg-black text-white">{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-                {/* Row 3 */}
+                <button
+                  type="button"
+                  onClick={handleParse}
+                  disabled={parsing || !pasteText.trim()}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4AF37] px-8 py-3 text-sm font-bold text-black disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  {parsing ? parseStatus : (
+                    <>
+                      <Sparkles className="h-4 w-4" aria-hidden="true" />
+                      Fill form
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.form
+              key="form"
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onSubmit={handleSubmit}
+              className="flex min-h-0 flex-1 flex-col"
+              aria-busy={saving || uploading}
+            >
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <label className={lbl}>Body Type</label>
-                    <select value={form.bodyType} onChange={e=>set('bodyType',e.target.value)} className={inp}>
-                      {BODY_TYPE_OPTIONS.map(b=><option key={b} value={b} className="bg-black text-white">{b}</option>)}
+                    <label htmlFor="vehicle-make" className={lbl}>
+                      Make
+                    </label>
+                    <input
+                      id="vehicle-make"
+                      required
+                      value={form.make}
+                      onChange={(e) => set('make', e.target.value)}
+                      className={inp}
+                      placeholder="Toyota"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vehicle-model" className={lbl}>
+                      Model
+                    </label>
+                    <input
+                      id="vehicle-model"
+                      required
+                      value={form.model}
+                      onChange={(e) => set('model', e.target.value)}
+                      className={inp}
+                      placeholder="Land Cruiser"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vehicle-year" className={lbl}>
+                      Year
+                    </label>
+                    <input
+                      id="vehicle-year"
+                      required
+                      type="number"
+                      value={form.year}
+                      onChange={(e) => set('year', Number(e.target.value))}
+                      className={inp}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vehicle-condition" className={lbl}>
+                      Condition
+                    </label>
+                    <select
+                      id="vehicle-condition"
+                      value={form.condition}
+                      onChange={(e) => set('condition', e.target.value)}
+                      className={inp}
+                    >
+                      {['New', 'Registered', 'Reconditioned'].map((c) => (
+                        <option key={c} value={c} className="bg-black text-white">
+                          {c}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                  <div className="sm:col-span-1 lg:col-span-3"><label className={lbl}>Color</label><input value={form.color} onChange={e=>set('color',e.target.value)} className={inp} placeholder="Pearl White"/></div>
                 </div>
 
-                {/* Hero Image */}
-                <div className="space-y-3">
-                  <label className={lbl}>Hero Image (Main Photo)</label>
-                  <div
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <label htmlFor="vehicle-price" className={lbl}>
+                      Price (LKR)
+                    </label>
+                    <input
+                      id="vehicle-price"
+                      required
+                      type="number"
+                      value={form.price}
+                      onChange={(e) => set('price', Number(e.target.value))}
+                      className={inp}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vehicle-mileage" className={lbl}>
+                      Mileage (km)
+                    </label>
+                    <input
+                      id="vehicle-mileage"
+                      required
+                      type="number"
+                      value={form.mileage}
+                      onChange={(e) => set('mileage', Number(e.target.value))}
+                      className={inp}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vehicle-fuel" className={lbl}>
+                      Fuel
+                    </label>
+                    <select
+                      id="vehicle-fuel"
+                      value={form.fuel}
+                      onChange={(e) => set('fuel', e.target.value)}
+                      className={inp}
+                    >
+                      {FUEL_OPTIONS.map((f) => (
+                        <option key={f} value={f} className="bg-black text-white">
+                          {f}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="vehicle-transmission" className={lbl}>
+                      Transmission
+                    </label>
+                    <select
+                      id="vehicle-transmission"
+                      value={form.transmission}
+                      onChange={(e) => set('transmission', e.target.value)}
+                      className={inp}
+                    >
+                      {TRANSMISSION_OPTIONS.map((t) => (
+                        <option key={t} value={t} className="bg-black text-white">
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <label htmlFor="vehicle-body" className={lbl}>
+                      Body type
+                    </label>
+                    <select
+                      id="vehicle-body"
+                      value={form.bodyType}
+                      onChange={(e) => set('bodyType', e.target.value)}
+                      className={inp}
+                    >
+                      {BODY_TYPE_OPTIONS.map((b) => (
+                        <option key={b} value={b} className="bg-black text-white">
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-1 lg:col-span-3">
+                    <label htmlFor="vehicle-color" className={lbl}>
+                      Color
+                    </label>
+                    <input
+                      id="vehicle-color"
+                      value={form.color}
+                      onChange={(e) => set('color', e.target.value)}
+                      className={inp}
+                      placeholder="Pearl White"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                  <p className={lbl} id="vehicle-hero-label">
+                    Main photo
+                  </p>
+                  <button
+                    type="button"
                     onClick={() => heroRef.current?.click()}
-                    className="relative group cursor-pointer rounded-2xl border-2 border-dashed border-white/10 hover:border-[#D4AF37]/50 transition-all overflow-hidden"
-                    style={{ height: heroPreview ? 200 : 120 }}
+                    aria-labelledby="vehicle-hero-label"
+                    className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 text-left transition-all hover:border-[#D4AF37]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                    style={{ height: heroPreview ? 180 : 120 }}
                   >
                     {heroPreview ? (
-                      <img src={heroPreview} alt="Hero" className="w-full h-full object-cover group-hover:opacity-60 transition-opacity"/>
+                      <img src={heroPreview} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-500">
-                        <Upload className="w-8 h-8"/>
-                        <span className="text-[11px] font-black uppercase tracking-widest">Click to upload hero image</span>
-                      </div>
+                      <span className="flex h-full flex-col items-center justify-center gap-2 text-white/55">
+                        <Upload className="h-8 w-8" aria-hidden="true" />
+                        <span className="text-sm font-semibold">Click to upload main photo</span>
+                      </span>
                     )}
                     {heroPreview && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
-                        <span className="text-[11px] font-black uppercase tracking-widest text-white flex items-center gap-2"><Upload className="w-4 h-4"/>Change Image</span>
-                      </div>
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                        Change photo
+                      </span>
                     )}
-                    {uploading && <div className="absolute inset-0 bg-black/70 flex items-center justify-center"><span className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Uploading...</span></div>}
-                  </div>
-                  <input ref={heroRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleHeroUpload(e.target.files[0]); }}/>
-                  <p className="text-[10px] text-white/55">Or paste a URL directly:</p>
-                  <input value={form.image} onChange={e=>{set('image',e.target.value);setHeroPreview(e.target.value);}} className={inp} placeholder="https://..."/>
+                    {uploading && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/70 text-sm font-semibold text-[#D4AF37]">
+                        Uploading…
+                      </span>
+                    )}
+                  </button>
+                  <input
+                    ref={heroRef}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    tabIndex={-1}
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) handleHeroUpload(e.target.files[0]);
+                    }}
+                  />
+                  <label htmlFor="vehicle-image-url" className={lbl}>
+                    Or paste a photo URL
+                  </label>
+                  <input
+                    id="vehicle-image-url"
+                    value={form.image}
+                    onChange={(e) => {
+                      set('image', e.target.value);
+                      setHeroPreview(e.target.value);
+                    }}
+                    className={inp}
+                    placeholder="https://"
+                  />
                 </div>
 
-                {/* Gallery */}
-                <div className="space-y-3">
-                  <label className={lbl}>Gallery Images</label>
-                  <div className="flex flex-wrap gap-3">
-                    {galleryPreviews.map((src,i) => (
-                      <div key={i} className="relative w-24 h-20 rounded-xl overflow-hidden group border border-white/10">
-                        <img src={src} alt="" className="w-full h-full object-cover"/>
-                        <button type="button" onClick={()=>removeGallery(i)} aria-label={`Remove gallery image ${i + 1}`} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Trash2 className="w-4 h-4 text-red-400"/>
+                <div className="mt-6 space-y-3">
+                  <p className={lbl} id="vehicle-gallery-label">
+                    Gallery photos
+                  </p>
+                  <div className="flex flex-wrap gap-3" role="list" aria-labelledby="vehicle-gallery-label">
+                    {galleryPreviews.map((src, i) => (
+                      <div key={`${src}-${i}`} className="relative h-20 w-24 overflow-hidden rounded-xl border border-white/10" role="listitem">
+                        <img src={src} alt="" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeGallery(i)}
+                          aria-label={`Remove gallery photo ${i + 1}`}
+                          className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/80 text-red-200 hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       </div>
                     ))}
-                    <button type="button" onClick={()=>galleryRef.current?.click()}
-                      className="w-24 h-20 rounded-xl border-2 border-dashed border-white/10 hover:border-[#D4AF37]/50 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#D4AF37] transition-all">
-                      <ImagePlus className="w-5 h-5"/><span className="text-[9px] uppercase font-black">Add</span>
+                    <button
+                      type="button"
+                      onClick={() => galleryRef.current?.click()}
+                      className="flex h-20 w-24 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-white/10 text-white/55 transition-all hover:border-[#D4AF37]/50 hover:text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                    >
+                      <ImagePlus className="h-5 w-5" aria-hidden="true" />
+                      <span className="text-xs font-semibold">Add</span>
                     </button>
                   </div>
-                  <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={e=>{if(e.target.files) handleGalleryUpload(e.target.files);}}/>
+                  <input
+                    ref={galleryRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    tabIndex={-1}
+                    onChange={(e) => {
+                      if (e.target.files) handleGalleryUpload(e.target.files);
+                    }}
+                  />
                 </div>
 
-                {/* Description */}
-                <div>
-                  <label className={lbl}>Description</label>
-                  <textarea rows={4} value={form.description} onChange={e=>set('description',e.target.value)} className={inp+' resize-none'}/>
+                <div className="mt-6">
+                  <label htmlFor="vehicle-description" className={lbl}>
+                    Description
+                  </label>
+                  <textarea
+                    id="vehicle-description"
+                    rows={4}
+                    value={form.description}
+                    onChange={(e) => set('description', e.target.value)}
+                    className={`${inp} resize-y`}
+                  />
                 </div>
 
-                {/* Key Features */}
-                <div className="space-y-3">
-                  <label className={lbl}>Key Features</label>
-                  <div className="flex flex-wrap gap-2 min-h-[36px]">
-                    {(form.key_features ?? []).map((f,i) => (
-                      <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-full text-[11px] font-bold text-[#D4AF37]">
-                        <Tag className="w-3 h-3"/>{f}
-                        <button type="button" onClick={()=>removeFeature(i)} aria-label={`Remove ${f}`} className="ml-1 text-[#D4AF37]/60 hover:text-red-400 transition-colors"><X className="w-3 h-3"/></button>
+                <div className="mt-6 space-y-3">
+                  <p className={lbl} id="vehicle-features-label">
+                    Key features
+                  </p>
+                  <div className="flex min-h-[36px] flex-wrap gap-2">
+                    {(form.key_features ?? []).map((f, i) => (
+                      <span
+                        key={`${f}-${i}`}
+                        className="flex items-center gap-1.5 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1.5 text-sm font-semibold text-[#D4AF37]"
+                      >
+                        <Tag className="h-3 w-3" aria-hidden="true" />
+                        {f}
+                        <button
+                          type="button"
+                          onClick={() => removeFeature(i)}
+                          aria-label={`Remove ${f}`}
+                          className="ml-1 text-[#D4AF37]/70 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                        >
+                          <X className="h-3 w-3" aria-hidden="true" />
+                        </button>
                       </span>
                     ))}
                   </div>
                   <div className="flex gap-2">
-                    <input value={newFeature} onChange={e=>setNewFeature(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addFeature();}}}
-                      className={inp+' flex-1'} placeholder="e.g. Sunroof, Apple CarPlay, 4WD..."/>
-                    <button type="button" onClick={addFeature} aria-label="Add feature" className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-[#D4AF37] transition-colors">
-                      <Plus className="w-4 h-4"/>
+                    <input
+                      id="vehicle-new-feature"
+                      value={newFeature}
+                      onChange={(e) => setNewFeature(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addFeature();
+                        }
+                      }}
+                      aria-labelledby="vehicle-features-label"
+                      className={`${inp} flex-1`}
+                      placeholder="e.g. Sunroof, Apple CarPlay, 4WD"
+                    />
+                    <button
+                      type="button"
+                      onClick={addFeature}
+                      aria-label="Add feature"
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white/70 hover:text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                    >
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
 
                 {formError && (
-                  <div className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-200" role="alert">
+                  <div id="vehicle-form-error" className="mt-6 rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200" role="alert">
                     {formError}
                   </div>
                 )}
+              </div>
 
-                {/* Submit */}
-                <div className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-col-reverse gap-3 border-t border-white/10 bg-[#0A0A0A]/95 p-5 sm:-mx-8 sm:-mb-8 sm:flex-row sm:justify-end sm:p-6">
-                  <button type="button" onClick={onClose} className="px-6 py-3 text-gray-500 font-black uppercase tracking-widest text-[11px] hover:text-white transition-colors">Cancel</button>
-                  <button type="submit" disabled={saving || uploading}
-                    className="px-10 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] rounded-xl hover:scale-105 transition-all shadow-xl disabled:opacity-60">
-                    {saving ? 'Saving...' : initial ? 'Update Vehicle' : 'Add to Inventory'}
-                  </button>
-                </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </div>
+              <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-white/10 bg-[#0A0A0A] p-4 sm:flex-row sm:justify-end sm:px-7 sm:py-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl px-6 py-3 text-sm font-semibold text-white/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || uploading}
+                  className="rounded-xl bg-[#D4AF37] px-8 py-3 text-sm font-bold text-black shadow-xl disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  {saving ? 'Saving…' : initial ? 'Save changes' : 'Add vehicle'}
+                </button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </motion.div>
-      </div>
     </div>
   );
 

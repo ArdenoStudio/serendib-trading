@@ -41,7 +41,8 @@ export default function App() {
     }
 
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
-    if (isTouch || shouldReduceMotion) {
+    const isAdmin = pathname.startsWith('/admin');
+    if (isTouch || shouldReduceMotion || isAdmin) {
       window.scrollTo(0, 0);
       return;
     }

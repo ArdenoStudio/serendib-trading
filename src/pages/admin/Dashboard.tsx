@@ -526,7 +526,8 @@ export default function AdminDashboard() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="group flex min-w-0 items-center gap-4 text-left"
+            className="group flex min-w-0 items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-2xl"
+            aria-label="Back to website"
           >
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 transition-colors group-hover:border-[#D4AF37]/50">
               <img src="/serendib-logo-192.png" alt="Serendib Trading" className="h-9 w-auto" />
@@ -549,7 +550,7 @@ export default function AdminDashboard() {
                   type="button"
                   onClick={() => setTab(item.id)}
                   aria-pressed={active}
-                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
+                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
                     active ? 'bg-[#D4AF37] text-black' : 'text-white/45 hover:bg-white/5 hover:text-white'
                   }`}
                 >
@@ -557,7 +558,10 @@ export default function AdminDashboard() {
                   {item.label}
                   <span className={`tabular-nums ${active ? 'text-black/60' : 'text-[#D4AF37]'}`}>{item.count}</span>
                   {item.id === 'leads' && newLeadCount > 0 && (
-                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_16px_rgba(239,68,68,0.8)]" />
+                    <>
+                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_16px_rgba(239,68,68,0.8)]" aria-hidden="true" />
+                      <span className="sr-only">{newLeadCount} new leads</span>
+                    </>
                   )}
                 </button>
               );
@@ -568,7 +572,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-white md:flex"
+              className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white/55 transition-all hover:border-[#D4AF37]/35 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] md:flex"
             >
               <ChevronLeft className="h-4 w-4" />
               Website
@@ -577,9 +581,9 @@ export default function AdminDashboard() {
               type="button"
               onClick={handleManualRefresh}
               aria-label="Refresh dashboard data"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all hover:border-[#D4AF37]/35 hover:text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -588,14 +592,14 @@ export default function AdminDashboard() {
                 navigate('/admin/login');
               }}
               aria-label="Sign out"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-red-400/15 bg-red-500/10 text-red-300 transition-all hover:bg-red-500/20"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-red-400/15 bg-red-500/10 text-red-300 transition-all hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[1500px] gap-2 overflow-x-auto px-4 pb-4 sm:px-6 lg:hidden">
+        <div className="mx-auto flex w-full max-w-[1500px] gap-2 overflow-x-auto px-4 pb-4 sm:px-6 lg:hidden" aria-label="Admin sections">
           {tabs.map((item) => {
             const Icon = item.icon;
             const active = tab === item.id;
@@ -604,7 +608,8 @@ export default function AdminDashboard() {
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] transition-all ${
+                aria-pressed={active}
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
                   active
                     ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
                     : 'border-white/10 bg-white/[0.035] text-white/55'
@@ -805,8 +810,8 @@ export default function AdminDashboard() {
                 <section className="border border-white/10 bg-black/20 p-5">
                   <div className="mb-5 flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Traffic pulse</p>
-                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Latest signal</h3>
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">Traffic</p>
+                      <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-tight text-white">Today</h3>
                     </div>
                     <BarChart2 className="h-5 w-5 text-white/28" />
                   </div>
@@ -906,21 +911,21 @@ export default function AdminDashboard() {
               <div>
                 <div className="mb-3 flex items-center gap-3">
                   <span className="h-px w-10 bg-white/15" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Fleet ledger</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">Inventory</p>
                 </div>
                 <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-5xl">
-                  Inventory control
+                  Cars
                 </h2>
               </div>
 
               <label className="relative w-full lg:max-w-md">
                 <span className="sr-only">Search inventory</span>
-                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search make, model, year, body..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37]"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37] focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                 />
               </label>
             </div>
@@ -1133,12 +1138,12 @@ export default function AdminDashboard() {
 
               <label className="relative w-full">
                 <span className="sr-only">Search leads</span>
-                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
                 <input
                   value={leadSearch}
                   onChange={(event) => setLeadSearch(event.target.value)}
                   placeholder="Search buyer, phone, vehicle..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37]"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.04] py-4 pl-13 pr-5 text-sm font-bold text-white placeholder:text-white/28 transition-all focus:outline-none focus:border-[#D4AF37] focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
                 />
               </label>
             </div>
@@ -1407,12 +1412,12 @@ export default function AdminDashboard() {
                     <Sparkles className="h-8 w-8" />
                     <Clock3 className="h-5 w-5 opacity-60" />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-black/55">Today signal</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-black/55">Today</p>
                   <h3 className="mt-2 text-3xl font-black uppercase leading-none tracking-tight">
                     {traffic[0]?.visitor_count || 0} visitors
                   </h3>
                   <p className="mt-4 text-sm font-bold leading-6 text-black/65">
-                    Latest traffic record from the public showroom, paired with inventory click interest.
+                    People who visited the website, plus clicks on cars.
                   </p>
                   <button
                     type="button"
