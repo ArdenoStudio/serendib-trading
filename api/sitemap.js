@@ -98,6 +98,16 @@ const urlEntry = ({ loc, lastmod, changefreq, priority, imageLoc, imageTitle }) 
 };
 
 export default async function handler(req, res) {
+  const isHealth = (req.query && req.query.health === '1') || (req.url && req.url.includes('health'));
+  if (isHealth) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
+      res.setHeader('Allow', 'GET, HEAD');
+      return res.status(405).send(JSON.stringify({ ok: false, error: 'Method not allowed' }));
+    }
+    return res.status(200).send(JSON.stringify({ ok: true, service: 'serendib-trading', timestamp: new Date().toISOString() }));
+  }
   if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).send('Method not allowed');
