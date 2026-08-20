@@ -10,6 +10,7 @@ import ComparisonTray from './components/ComparisonTray';
 import WhatsAppFloat from './components/WhatsAppFloat';
 import ErrorBoundary from './components/ErrorBoundary';
 import Loader from './components/Loader';
+import { logPageView } from './lib/supabase';
 
 const Home = lazy(() => import('./pages/Home'));
 const Inventory = lazy(() => import('./pages/Inventory'));
@@ -32,12 +33,8 @@ export default function App() {
   const enableAnalytics = !['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   useEffect(() => {
-    // Only pull the Supabase client for page-view RPC when explicitly enabled.
-    // Inventory pages still load Supabase on demand via their own imports.
     if (import.meta.env.VITE_ENABLE_SUPABASE_ANALYTICS === 'true') {
-      void import('./lib/supabase')
-        .then(({ logPageView }) => logPageView())
-        .catch(() => undefined);
+      logPageView().catch(() => undefined);
     }
 
     const isTouch = window.matchMedia('(pointer: coarse)').matches;

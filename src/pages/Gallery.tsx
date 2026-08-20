@@ -147,7 +147,7 @@ export default function Gallery() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 mb-12">
+        <div data-testid="gallery" className="max-w-[1400px] mx-auto px-6 lg:px-10 mb-12">
           <div className="flex flex-wrap justify-center gap-4">
             {[
               { id: 'all', label: 'All', icon: Camera },

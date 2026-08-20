@@ -48,6 +48,9 @@ const routes = [
   { path: '/gallery', heading: /the\s+gallery/i },
   { path: '/calculator', heading: /estimate\s+payments/i },
   { path: '/contact', heading: /contact\s+serendib/i },
+  { path: '/wishlist', heading: /wishlist|saved vehicles/i },
+  { path: '/privacy', heading: /privacy/i },
+  { path: '/terms', heading: /terms/i },
   { path: '/admin/login', heading: /dashboard\s+access/i },
 ];
 
@@ -83,6 +86,70 @@ test('inventory renders listings from the API', async ({ page }) => {
   await expect(page.locator('h1').first()).toContainText(/available\s+inventory/i);
   await expect(page.getByText(/Land Cruiser Prado/i).first()).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('vehicle detail renders for seeded demo id', async ({ page }) => {
+  await page.route('**/api/db/vehicles**', async (route) => {
+    const url = new URL(route.request().url());
+    const id = url.searchParams.get('id');
+    if (id) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'test-1',
+          make: 'Toyota',
+          model: 'Land Cruiser Prado',
+          year: 2022,
+          price: 48500000,
+          mileage: 45000,
+          fuel: 'Diesel',
+          transmission: 'Automatic',
+          bodyType: 'SUV',
+          condition: 'Registered',
+          color: 'White',
+          image: '',
+          gallery: [],
+          description: 'Demo description for e2e.',
+          key_features: ['Sunroof', 'Leather Seats'],
+          is_sold: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: 'test-1',
+          make: 'Toyota',
+          model: 'Land Cruiser Prado',
+          year: 2022,
+          price: 48500000,
+          mileage: 45000,
+          fuel: 'Diesel',
+          transmission: 'Automatic',
+          bodyType: 'SUV',
+          condition: 'Registered',
+          color: 'White',
+          image: '',
+          gallery: [],
+          is_sold: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]),
+    });
+  });
+  await page.route('**/api/db/analytics**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
+  );
+  await page.goto('/car/test-1');
+  await expect(page.locator('h1').first()).toContainText(/land cruiser prado/i);
+  await expect(page.getByText(/listed price/i).first()).toBeVisible();
 });
 
 test('featured arrival hover keeps a stable hit box', async ({ page }, testInfo) => {

@@ -68,6 +68,10 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
       "source": "/car/:id",
       "has": [
         {
@@ -79,7 +83,7 @@
       "destination": "/api/og?id=:id"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/|assets/|images/|serendib-logo|site\\.webmanifest|robots\\.txt|sitemap\\.xml|favicon).*)",
       "destination": "/index.html"
     }
   ]
