@@ -96,7 +96,8 @@ export default async function handler(req, res) {
         Array.isArray(rows) ? rows : [],
         'public, s-maxage=60, stale-while-revalidate=300'
       );
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch vehicles:', err);
       return sendJson(res, 500, { error: 'Failed to fetch vehicles' });
     }
   }
