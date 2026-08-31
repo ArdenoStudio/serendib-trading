@@ -24,6 +24,10 @@ const getClientIp = (req) => {
   if (typeof vercelForwarded === 'string' && vercelForwarded.trim()) {
     return vercelForwarded.split(',')[0].trim();
   }
+  const netlifyIp = req.headers['x-nf-client-connection-ip'] || req.headers['client-ip'];
+  if (typeof netlifyIp === 'string' && netlifyIp.trim()) {
+    return netlifyIp.split(',')[0].trim();
+  }
   const forwardedFor = req.headers['x-forwarded-for'];
   if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
     const firstHop = forwardedFor.split(',')[0].trim();

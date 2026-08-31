@@ -88,13 +88,15 @@ const sameOriginRequest = (req) => {
 };
 
 const getClientIp = (req) => {
-  // Only trust platform-provided IP headers. Vercel overwrites
-  // x-vercel-forwarded-for and x-forwarded-for with the real client IP;
-  // x-real-ip is NOT set by Vercel and can be spoofed by any client, so it
-  // must never be accepted for rate limiting.
+  // Only trust platform-provided IP headers.
   const vercelForwarded = req.headers['x-vercel-forwarded-for'];
   if (typeof vercelForwarded === 'string' && vercelForwarded.trim()) {
     return vercelForwarded.split(',')[0].trim();
+  }
+
+  const netlifyIp = req.headers['x-nf-client-connection-ip'] || req.headers['client-ip'];
+  if (typeof netlifyIp === 'string' && netlifyIp.trim()) {
+    return netlifyIp.split(',')[0].trim();
   }
 
   const forwardedFor = req.headers['x-forwarded-for'];
