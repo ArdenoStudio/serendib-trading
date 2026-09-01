@@ -187,5 +187,5 @@ export default async function (request, context) {
 }
 
 export const config = {
-  path: ['/api/*', '/sitemap.xml', '/car/*'],
+  path: ['/api/*', '/sitemap.xml'],
 };
