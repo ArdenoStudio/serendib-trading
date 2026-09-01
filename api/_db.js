@@ -65,8 +65,12 @@ export const sanitizeHttpsUrl = (value) => {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_HTTPS_URL) {
     return '';
   }
+  const trimmed = value.trim();
+  if (trimmed.startsWith('/api/image') || trimmed.startsWith('/.netlify/functions/api/image')) {
+    return trimmed;
+  }
   try {
-    const parsed = new URL(value);
+    const parsed = new URL(trimmed);
     if (parsed.protocol !== 'https:') return '';
     const host = parsed.hostname.toLowerCase();
     if (
@@ -79,7 +83,7 @@ export const sanitizeHttpsUrl = (value) => {
     ) {
       return '';
     }
-    return value;
+    return trimmed;
   } catch {
     return '';
   }

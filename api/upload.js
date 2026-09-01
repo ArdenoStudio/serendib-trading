@@ -1,207 +1,128 @@
 import { randomUUID } from 'node:crypto';
+import { query } from './_db.js';
 import { getSessionFromRequest } from './auth/_session.js';
 
-const MAX_DATA_URL_BYTES = 5 * 1024 * 1024;
-const MAX_URL_LENGTH = 2048;
-const DATA_URL_PATTERN = /^data:image\/(jpeg|jpg|png|webp|avif);base64,(.+)$/s;
-const EXT_BY_MIME = { jpeg: 'jpg', jpg: 'jpg', png: 'png', webp: 'webp', avif: 'avif' };
-const UPLOAD_BUCKET_MS = 60_000;
-const MAX_UPLOADS_PER_MINUTE = 20;
-const uploadBuckets = new Map();
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB ceiling
+const ALLOWED_MIME_TYPES = new Map([
+  ['image/webp', 'webp'],
+  ['image/jpeg', 'jpg'],
+  ['image/jpg', 'jpg'],
+  ['image/png', 'png'],
+  ['image/avif', 'avif'],
+]);
 
-const send = (res, status, payload) => {
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  return res.status(status).json(payload);
+const validateBase64Payload = (data) => {
+  if (typeof data !== 'string') return null;
+  const match = data.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  const mimeType = match[1].toLowerCase();
+  const ext = ALLOWED_MIME_TYPES.get(mimeType);
+  if (!ext) return null;
+  const base64 = match[2];
+  const approximateSize = (base64.length * 3) / 4;
+  if (approximateSize > MAX_BYTES) return null;
+  return { mimeType, ext, base64 };
 };
 
-const throttle = (key) => {
-  const now = Date.now();
-  const bucket = uploadBuckets.get(key);
-  if (!bucket || now - bucket.startedAt > UPLOAD_BUCKET_MS) {
-    uploadBuckets.set(key, { startedAt: now, count: 1 });
-    return true;
-  }
-  if (bucket.count >= MAX_UPLOADS_PER_MINUTE) return false;
-  bucket.count += 1;
-  return true;
-};
-
-const parseBody = (req) => {
-  let body = req.body;
-  if (typeof body === 'string') {
-    try {
-      body = JSON.parse(body);
-    } catch {
-      body = {};
-    }
-  }
-  return body && typeof body === 'object' ? body : {};
-};
-
-const validateRemoteUrl = (url) => {
-  if (typeof url !== 'string' || url.length === 0 || url.length > MAX_URL_LENGTH) return false;
+const ensureVehicleImagesTable = async () => {
   try {
-    const parsed = new URL(url);
-    // Only plain https image URLs may be stored; data:/blob:/javascript: and
-    // private-network hosts are rejected so the DB can never hold executable
-    // or metadata-exfiltrating content.
-    if (parsed.protocol !== 'https:') return false;
-    if (
-      parsed.hostname === 'localhost' ||
-      parsed.hostname === '127.0.0.1' ||
-      parsed.hostname === '0.0.0.0' ||
-      parsed.hostname.endsWith('.internal') ||
-      parsed.hostname.endsWith('.local')
-    ) {
-      return false;
-    }
-    return true;
-  } catch {
-    return false;
+    await query(`
+      CREATE TABLE IF NOT EXISTS public.vehicle_images (
+        id TEXT PRIMARY KEY,
+        mime_type TEXT NOT NULL DEFAULT 'image/webp',
+        data TEXT NOT NULL,
+        byte_size INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+  } catch (err) {
+    // Non-fatal if table already exists
   }
-};
-
-const uploadToStorage = async (base64Data, mimeType) => {
-  const supabaseUrl = (
-    process.env.SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    ''
-  ).replace(/\/+$/, '');
-
-  const serviceKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.SUPABASE_SECRET_KEY ||
-    process.env.SUPABASE_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    process.env.VITE_SUPABASE_ANON_KEY ||
-    '';
-
-  if (!supabaseUrl || !serviceKey) {
-    console.error('Image storage configuration missing: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not defined.');
-    const error = new Error('Image storage is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing).');
-    error.status = 500;
-    throw error;
-  }
-
-  const buffer = Buffer.from(base64Data, 'base64');
-  if (buffer.byteLength > MAX_DATA_URL_BYTES) {
-    const error = new Error('Image is too large after decoding (max 5 MB).');
-    error.status = 413;
-    throw error;
-  }
-
-  const bucket = 'vehicle-images';
-  const ext = EXT_BY_MIME[mimeType] || 'webp';
-  const objectPath = `vehicles/${randomUUID()}.${ext}`;
-
-  const headers = {
-    Authorization: `Bearer ${serviceKey}`,
-    apikey: serviceKey,
-    'Content-Type': `image/${mimeType}`,
-    'x-upsert': 'true',
-  };
-
-  let res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`, {
-    method: 'POST',
-    headers,
-    body: buffer,
-  });
-
-  // If the bucket doesn't exist or returns 400/404, try creating the public bucket and retry
-  if (!res.ok && (res.status === 404 || res.status === 400)) {
-    const errorBody = await res.clone().text().catch(() => '');
-    if (
-      res.status === 404 ||
-      errorBody.toLowerCase().includes('not found') ||
-      errorBody.toLowerCase().includes('bucket')
-    ) {
-      try {
-        await fetch(`${supabaseUrl}/storage/v1/bucket`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            apikey: serviceKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: bucket,
-            name: bucket,
-            public: true,
-            file_size_limit: 10485760,
-            allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
-          }),
-        });
-
-        // Retry the upload
-        res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`, {
-          method: 'POST',
-          headers,
-          body: buffer,
-        });
-      } catch (bucketErr) {
-        console.error('Bucket creation retry attempt error:', bucketErr);
-      }
-    }
-  }
-
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => '');
-    console.error(`Supabase storage upload failed (${res.status}):`, errorText);
-    const error = new Error(`Image storage upload failed (${res.status}): ${errorText || 'Check Supabase bucket permissions'}`);
-    error.status = res.status >= 400 && res.status < 500 ? res.status : 502;
-    throw error;
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${objectPath}`;
 };
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return send(res, 405, { error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Admin authentication required
   const session = await getSessionFromRequest(req);
   if (!session) {
-    return send(res, 401, { error: 'Unauthorized admin request' });
-  }
-
-  const uploadKey = session.email || 'admin';
-  if (!throttle(uploadKey)) {
-    return send(res, 429, { error: 'Too many uploads. Wait a minute and try again.' });
+    return res.status(401).json({ error: 'Unauthorized admin request' });
   }
 
   try {
-    const body = parseBody(req);
-    const imageUrl = body.imageUrl || body.url || '';
-
-    if (!imageUrl) {
-      return send(res, 400, { error: 'No image provided' });
-    }
-
-    // Case 1: an existing https URL — validate and echo it back.
-    if (!imageUrl.startsWith('data:')) {
-      if (!validateRemoteUrl(imageUrl)) {
-        return send(res, 400, { error: 'Only https image URLs are allowed.' });
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
       }
-      return send(res, 200, { url: imageUrl });
+    }
+    body = body || {};
+
+    await ensureVehicleImagesTable();
+
+    // 1. Direct Base64 Data URL upload (primary admin flow)
+    const base64Payload = validateBase64Payload(body.imageUrl || body.image || body.data || body.file);
+    if (base64Payload) {
+      const { mimeType, ext, base64 } = base64Payload;
+      const buffer = Buffer.from(base64, 'base64');
+      if (buffer.length > MAX_BYTES) {
+        return res.status(400).json({ error: 'Image exceeds the 5 MB limit.' });
+      }
+
+      const filename = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+
+      await query(
+        `INSERT INTO public.vehicle_images (id, mime_type, data, byte_size, created_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, mime_type = EXCLUDED.mime_type, byte_size = EXCLUDED.byte_size`,
+        [filename, mimeType, base64, buffer.length]
+      );
+
+      const publicUrl = `/api/image?id=${encodeURIComponent(filename)}`;
+      return res.status(200).json({ url: publicUrl, filename });
     }
 
-    // Case 2: a base64 data URL — decode and persist to object storage.
-    const match = DATA_URL_PATTERN.exec(imageUrl);
-    if (!match) {
-      return send(res, 400, { error: 'Unsupported image data. Use JPG, PNG, WebP, or AVIF.' });
+    // 2. Fetch remote image and store into Neon (for URL import flow)
+    if (typeof body.url === 'string' && body.url.startsWith('http')) {
+      const remoteUrl = body.url.trim();
+      const remoteRes = await fetch(remoteUrl);
+      if (!remoteRes.ok) {
+        return res.status(400).json({ error: `Could not fetch remote image: HTTP ${remoteRes.status}` });
+      }
+
+      const arrayBuffer = await remoteRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      if (buffer.length > MAX_BYTES) {
+        return res.status(400).json({ error: 'Remote image exceeds the 5 MB limit.' });
+      }
+
+      const contentType = remoteRes.headers.get('content-type') || 'image/webp';
+      const ext = ALLOWED_MIME_TYPES.get(contentType) || 'webp';
+      const filename = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+      const base64 = buffer.toString('base64');
+
+      await query(
+        `INSERT INTO public.vehicle_images (id, mime_type, data, byte_size, created_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, mime_type = EXCLUDED.mime_type, byte_size = EXCLUDED.byte_size`,
+        [filename, contentType, base64, buffer.length]
+      );
+
+      const publicUrl = `/api/image?id=${encodeURIComponent(filename)}`;
+      return res.status(200).json({ url: publicUrl, filename });
     }
-    const mimeType = match[1] === 'jpg' ? 'jpeg' : match[1];
-    const publicUrl = await uploadToStorage(match[2], mimeType);
-    return send(res, 200, { url: publicUrl });
+
+    return res.status(400).json({ error: 'Invalid upload request. Expected base64 image data or URL.' });
   } catch (err) {
-    console.error('Upload endpoint error:', err);
-    const status = err.status || 500;
-    const message = err.message || 'Upload failed.';
-    return send(res, status, { error: message });
+    console.error('Upload handler error:', err);
+    return res.status(500).json({ error: err?.message || 'Failed to upload photo.' });
   }
 }

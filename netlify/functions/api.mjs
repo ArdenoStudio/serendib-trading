@@ -8,6 +8,7 @@ import authLogoutHandler from '../../api/auth/logout.js';
 import authSessionHandler from '../../api/auth/session.js';
 import leadsHandler from '../../api/leads.js';
 import uploadHandler from '../../api/upload.js';
+import imageHandler from '../../api/image.js';
 import sitemapHandler from '../../api/sitemap.js';
 import ogHandler from '../../api/og.js';
 
@@ -25,6 +26,7 @@ const ROUTES = [
   { path: '/api/auth/session', handler: authSessionHandler },
   { path: '/api/leads', handler: leadsHandler },
   { path: '/api/upload', handler: uploadHandler },
+  { path: '/api/image', handler: imageHandler },
   { path: '/api/sitemap', handler: sitemapHandler },
   { path: '/sitemap.xml', handler: sitemapHandler },
   { path: '/api/health', handler: sitemapHandler },
