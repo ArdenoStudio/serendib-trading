@@ -27,6 +27,7 @@ const DEFAULT_ADMIN_EMAILS = [
   'bilalikras1@gmail.com',
   'ardenostudio@gmail.com',
   'suvenseoras@gmail.com',
+  'karunaratneovindu@gmail.com',
 ];
 
 function parseAdminAllowlist() {

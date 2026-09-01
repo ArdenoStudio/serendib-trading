@@ -13,7 +13,8 @@ INSERT INTO public.admin_users (email)
 VALUES
   ('bilalikras1@gmail.com'),
   ('ardenostudio@gmail.com'),
-  ('suvenseoras@gmail.com')
+  ('suvenseoras@gmail.com'),
+  ('karunaratneovindu@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;

@@ -18,7 +18,7 @@ DROP POLICY IF EXISTS "Authenticated users can read site_traffic" ON public.site
 
 CREATE POLICY "Authenticated users can read site_traffic" ON public.site_traffic
     FOR SELECT TO authenticated
-    USING ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com', 'suvenseoras@gmail.com'));
+    USING ((auth.jwt() ->> 'email') IN ('bilalikras1@gmail.com', 'ardenostudio@gmail.com', 'suvenseoras@gmail.com', 'karunaratneovindu@gmail.com'));
 
 -- Function to increment car views
 CREATE OR REPLACE FUNCTION increment_car_view(car_id UUID)
