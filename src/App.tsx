@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useReducedMotion } from 'framer-motion';
 import Lenis from 'lenis';
-import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
@@ -30,7 +29,6 @@ export default function App() {
   const location = useLocation();
   const pathname = location.pathname;
   const shouldReduceMotion = useReducedMotion();
-  const enableAnalytics = !['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   useEffect(() => {
     if (import.meta.env.VITE_ENABLE_SUPABASE_ANALYTICS === 'true') {
@@ -52,7 +50,6 @@ export default function App() {
 
     let rafId: number;
     function raf(time: number) {
-      // Don't waste cycles while the tab is hidden.
       if (!document.hidden) lenis.raf(time);
       rafId = requestAnimationFrame(raf);
     }
@@ -69,7 +66,6 @@ export default function App() {
 
   return (
     <>
-      {enableAnalytics && <Analytics />}
       <ScrollToTop />
       <a
         href="#main-content"
