@@ -155,6 +155,8 @@ export default function Calculator() {
                 <LiquidButton asChild size="xl">
                     <a 
                         href="https://wa.me/94756363427"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center gap-6 text-[14px] font-bold tracking-[0.1em] uppercase text-white"
                     >
                         Message Finance Team

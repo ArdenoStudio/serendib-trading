@@ -75,9 +75,8 @@ export default function App() {
       </a>
       {!isAdmin && <Navbar />}
       {!isAdmin && <ComparisonTray />}
-      {/* Plain wrapper: animating the page shell from opacity 0 delays LCP by
-          ~1s on every route. Route content keeps its own (non-LCP) entrances. */}
-      <div id="main-content" tabIndex={-1}>
+      {/* Main landmark: skip-link target, not animated to avoid LCP delay */}
+      <main id="main-content" tabIndex={-1}>
         <ErrorBoundary key={pathname}>
           <Suspense fallback={<Loader />}>
             <Routes>
@@ -123,7 +122,7 @@ export default function App() {
             </Routes>
           </Suspense>
         </ErrorBoundary>
-      </div>
+      </main>
       {!isAdmin && <WhatsAppFloat />}
     </>
   );

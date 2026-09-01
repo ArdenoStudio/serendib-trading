@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Gauge, Settings2, Heart, BarChart2 } from 'lucide-react';
-import ImageLightbox, { LightboxTrigger } from './ImageLightbox';
+import ImageLightbox from './ImageLightbox';
 import { readStringList, writeStringList } from '../lib/storage';
 import { cleanSpec } from '../lib/utils';
 import { optimizeImageUrl } from '../lib/images';
@@ -90,13 +90,13 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
   };
 
   return (
-    <Link to={`/car/${car.id}`} className={`block group ${className}`}>
-      {/* Stable Link hit box: lift the inner visual only so hover cannot jitter. */}
+    <article className={`block group ${className}`}>
+      {/* Card shell: Link covers content, actions sit outside Link to avoid nested interactive */}
       <div
         className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] shadow-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,transform] duration-200 ease-out motion-reduce:transform-none group-hover:border-[#D4AF37]/40 group-focus-within:outline-none group-focus-within:ring-2 group-focus-within:ring-[#D4AF37] [@media(hover:hover)]:group-hover:-translate-y-2"
       >
         {/* Background Glow on Hover */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
         {/* Compare limit toast */}
         {compareToast && (
@@ -113,6 +113,37 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           onClose={() => setLightboxOpen(false)}
         />
 
+        {/* Quick Actions — sibling of Link, not nested (a11y fix for nested interactive) */}
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-100 translate-x-0 transition-all duration-500 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:translate-x-4 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 focus-within:opacity-100 focus-within:translate-x-0">
+          <button
+            type="button"
+            onClick={toggleWishlist}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={isWishlisted}
+            className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
+              isWishlisted
+                ? 'bg-red-500 border-red-400 text-white shadow-lg'
+                : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={toggleCompare}
+            aria-label={isComparing ? "Remove from comparison" : "Add to comparison"}
+            aria-pressed={isComparing}
+            className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
+              isComparing
+              ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-lg'
+              : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <BarChart2 className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <Link to={`/car/${car.id}`} className="flex h-full flex-col focus:outline-none">
         {/* Image Container - taller aspect on mobile to show more vehicle */}
         <div className="relative aspect-[4/3] md:aspect-[16/11] overflow-hidden bg-[#0d0b09]">
           <img
@@ -135,41 +166,12 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
               }
             }}
           />
-          
-          {/* Lightbox Trigger */}
-          <LightboxTrigger onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLightboxOpen(true); }} />
 
           {/* Cinematic Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90" />
-          <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09] via-transparent to-transparent opacity-90 pointer-events-none" />
+          <div className="absolute inset-0 bg-[#D4AF37]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
           {/* Image Outline for Depth */}
           <div className="absolute inset-0 border border-white/10 pointer-events-none" />
-
-          {/* Quick Actions — always visible on touch; hover-reveal on fine pointers */}
-          <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-100 translate-x-0 transition-all duration-500 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:translate-x-4 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 focus-within:opacity-100 focus-within:translate-x-0">
-            <button
-              onClick={toggleWishlist}
-              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
-                isWishlisted
-                ? 'bg-red-500 border-red-400 text-white shadow-lg'
-                : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
-            </button>
-            <button
-              onClick={toggleCompare}
-              aria-label={isComparing ? "Remove from comparison" : "Add to comparison"}
-              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-[0.96] ${
-                isComparing
-                ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-lg'
-                : 'bg-black/60 border-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <BarChart2 className="w-4 h-4" />
-            </button>
-          </div>
 
           {/* SOLD Badge */}
           {car.is_sold && (
@@ -229,7 +231,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
             <div className="flex flex-col">
               <span className="text-[11px] uppercase tracking-[0.2em] text-white/60 mb-1">Price Guide</span>
               <p className="text-2xl font-black text-white tracking-[-0.05em] tabular-nums">
-                {car.price ? `LKR ${(car.price/1000000).toFixed(1)}M` : 'POA'}
+                {car.price ? `LKR ${(car.price/1000000).toFixed(1)}M` : 'Price on request'}
               </p>
             </div>
             
@@ -241,7 +243,8 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           {/* Corner Accent */}
           <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-24 bg-gradient-to-br from-transparent to-[#D4AF37]/5 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
         </div>
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }

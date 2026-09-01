@@ -712,9 +712,9 @@ export default function Inventory() {
                 </button>
              </div>
 
-             <motion.div 
-                layout
-                className={`grid gap-10 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'}`}
+              <motion.div 
+                 layout
+                 className={`grid gap-6 md:gap-8 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}
              >
                 <AnimatePresence mode="popLayout" initial={false}>
                     {loading && cars.length === 0 ? (
@@ -751,7 +751,7 @@ export default function Inventory() {
                                 >
                                     Retry
                                 </button>
-                                <a href="https://wa.me/94756363427" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
+                                <a href="https://wa.me/94756363427" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
                                     Message Us
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                                 </a>
@@ -772,7 +772,7 @@ export default function Inventory() {
                                     Our next arrivals are being prepared. Message us for early access to new listings.
                                 </p>
                             </div>
-                            <a href="https://wa.me/94756363427" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
+                            <a href="https://wa.me/94756363427" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
                                 Message Us
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                             </a>
@@ -813,7 +813,7 @@ export default function Inventory() {
                                 <button onClick={clearFilters} className="px-10 py-5 bg-white text-black font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-[#D4AF37] hover:scale-105 transition-all">
                                     Clear Filters
                                 </button>
-                                <a href="https://wa.me/94756363427" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
+                                <a href="https://wa.me/94756363427" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 px-10 py-5 border border-white/10 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-[#D4AF37]/40 transition-all">
                                     Message Us
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                                 </a>

@@ -70,7 +70,7 @@ export default function Terms() {
             <h1 className="text-4xl md:text-6xl font-black tracking-[-0.05em] leading-none">
               Terms of Service
             </h1>
-            <p className="text-white/50 text-sm">Last updated: {new Date().getFullYear()}</p>
+            <p className="text-white/50 text-sm">Last updated: 19 August 2026</p>
           </div>
 
           <p className="text-white/70 text-base leading-relaxed">

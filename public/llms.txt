@@ -32,4 +32,4 @@ Customers should browse the inventory, choose a listed vehicle or requested mode
 
 ## Last updated
 
-2026-08-19
+2026-09-01

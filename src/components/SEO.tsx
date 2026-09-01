@@ -82,6 +82,7 @@ export default function SEO({
 
       {/* Canonical */}
       <link rel="canonical" href={fullCanonical} />
+      <link rel="alternate" hrefLang="en" href={fullCanonical} />
       <link rel="alternate" hrefLang="en-LK" href={fullCanonical} />
       <link rel="alternate" hrefLang="x-default" href={fullCanonical} />
       <link rel="me" href={INSTAGRAM_URL} />
@@ -92,6 +93,9 @@ export default function SEO({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={siteDescription} />
       <meta property="og:image" content={fullImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:type" content="image/webp" />
       <meta property="og:image:alt" content={ogImageAlt} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="en_LK" />

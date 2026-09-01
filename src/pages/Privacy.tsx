@@ -78,7 +78,7 @@ export default function Privacy() {
             <h1 className="text-4xl md:text-6xl font-black tracking-[-0.05em] leading-none">
               Privacy Policy
             </h1>
-            <p className="text-white/50 text-sm">Effective: {new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })}</p>
+            <p className="text-white/50 text-sm">Effective: 19 August 2026</p>
           </div>
 
           <p className="text-white/70 text-base leading-relaxed">
