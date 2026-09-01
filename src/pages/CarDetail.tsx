@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settings, ShieldCheck, MapPin, Share2, Award, CheckCircle2 } from 'lucide-react';
 import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
-import { isSupabaseConfigured, logCarView } from '../lib/supabase';
+import { isSupabaseConfigured, logCarView, logCtaClick } from '../lib/supabase';
 import { Car } from '../data/types';
 import {
   allowDemoInventory,
@@ -432,7 +432,7 @@ export default function CarDetail() {
               <div className="space-y-4 pt-4">
                 <button 
                   disabled={car.is_sold}
-                  onClick={() => window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank', 'noopener,noreferrer')}
+                  onClick={() => { logCtaClick('whatsapp_car', { car_id: car.id }); window.open(`https://wa.me/94756363427?text=${encodeURIComponent(whatsappMessage)}`, '_blank', 'noopener,noreferrer'); }}
                   className={`w-full py-5 text-black font-black uppercase tracking-widest text-[13px] rounded-2xl flex items-center justify-center gap-3 transition-all relative overflow-hidden group active:scale-[0.96] ${
                     car.is_sold ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#D4AF37] shadow-[0_20px_40px_rgba(212,175,55,0.2)] hover:scale-[1.02]'
                   }`}
@@ -446,6 +446,7 @@ export default function CarDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   <a 
                     href={car.is_sold ? '#' : "tel:+94756363427"}
+                    onClick={() => !car.is_sold && logCtaClick('call_car', { car_id: car.id })}
                     className={`py-4 border border-white/10 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.96] ${
                        car.is_sold ? 'opacity-30 cursor-not-allowed' : 'bg-white/5 hover:border-white/20'
                     }`}
@@ -512,6 +513,7 @@ export default function CarDetail() {
                       href={whatsappContinueUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => logCtaClick('whatsapp_car', { car_id: car.id })}
                       className="w-full py-4 mt-2 inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-[0.98]"
                     >
                       Continue on WhatsApp
@@ -530,7 +532,7 @@ export default function CarDetail() {
                       <Link to="/privacy" className="text-[#D4AF37] hover:underline">Privacy Policy</Link>.
                     </span>
                   </label>
-                  <button type="submit" disabled={submittingLead} className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
+                  <button type="submit" disabled={submittingLead} onClick={() => logCtaClick('test_drive', { car_id: car.id })} className="w-full py-5 mt-4 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#D4AF37] transition-all shadow-xl active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
                     {submittingLead ? 'Sending Request' : 'Request Appointment'}
                   </button>
                 </form>

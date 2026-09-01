@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedUserIcon } from './ui/animated-user-icon';
 import { INSTAGRAM_URL } from '../lib/socialLinks';
 import { readStringList } from '../lib/storage';
+import { logCtaClick } from '../lib/supabase';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -179,6 +180,7 @@ export default function Navbar() {
               href="https://wa.me/94756363427"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => logCtaClick('whatsapp_nav')}
               className="inline-flex items-center px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-[0.12em] text-black active:scale-95 transition-transform"
               style={{ background: 'linear-gradient(135deg,#E5C158 0%,#D4AF37 100%)' }}
             >

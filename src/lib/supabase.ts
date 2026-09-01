@@ -199,15 +199,26 @@ export const logPageView = async () => {
 };
 
 export const logCarView = async (carId: string) => {
-  if (import.meta.env.VITE_ENABLE_SUPABASE_ANALYTICS !== 'true') return;
   try {
     await fetch('/api/db/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'car_view', car_id: carId }),
+      body: JSON.stringify({ type: 'car_view', car_id: carId, path: window.location.pathname, referrer: document.referrer }),
     });
   } catch (err) {
     console.error('Failed to log car view:', err);
+  }
+};
+
+export const logCtaClick = async (cta: string, meta: Record<string, any> = {}) => {
+  try {
+    await fetch('/api/db/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'cta_click', cta, path: window.location.pathname, referrer: document.referrer, meta }),
+    });
+  } catch (err) {
+    console.error('Failed to log CTA:', err);
   }
 };
 

@@ -6,6 +6,7 @@ import { readStringList, writeStringList } from '../lib/storage';
 import { cleanSpec } from '../lib/utils';
 import { optimizeImageUrl } from '../lib/images';
 import { BrandMark, getBrandLabel, getDisplayModel } from './brand/BrandMark';
+import { logCtaClick } from '../lib/supabase';
 
 function cardImageSrc(url: string) {
   if (url.includes('unsplash.com')) return `${url}&w=600&q=70`;
@@ -58,8 +59,9 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
     e.preventDefault();
     e.stopPropagation();
     const wishlist = readStringList('wishlist');
+    const wasWishlisted = wishlist.includes(car.id);
     let newWishlist;
-    if (wishlist.includes(car.id)) {
+    if (wasWishlisted) {
       newWishlist = wishlist.filter((id: string) => id !== car.id);
     } else {
       newWishlist = [...wishlist, car.id];
@@ -67,6 +69,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
     const normalizedWishlist = writeStringList('wishlist', newWishlist);
     setIsWishlisted(normalizedWishlist.includes(car.id));
     window.dispatchEvent(new Event('wishlistchange'));
+    logCtaClick(wasWishlisted ? 'wishlist_remove' : 'wishlist_add', { car_id: car.id });
   };
 
   const toggleCompare = (e: React.MouseEvent) => {
@@ -143,7 +146,7 @@ export default function CarCard({ car, className = '' }: CarCardProps) {
           </button>
         </div>
 
-        <Link to={`/car/${car.id}`} className="flex h-full flex-col focus:outline-none">
+        <Link to={`/car/${car.id}`} onClick={() => logCtaClick('car_card', { car_id: car.id })} className="flex h-full flex-col focus:outline-none">
         {/* Image Container - taller aspect on mobile to show more vehicle */}
         <div className="relative aspect-[4/3] md:aspect-[16/11] overflow-hidden bg-[#0d0b09]">
           <img

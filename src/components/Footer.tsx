@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Instagram } from 'lucide-react';
 import ArdenoProductionCredit from './ArdenoProductionCredit';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/socialLinks';
+import { logCtaClick } from '../lib/supabase';
 
 export default function Footer() {
   return (
@@ -41,6 +42,7 @@ export default function Footer() {
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => logCtaClick('instagram')}
               className="mt-5 inline-flex w-fit items-center gap-3 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white/70 transition-colors duration-200 hover:border-[#D4AF37]/40 hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
               aria-label="Follow Serendib Trading on Instagram"
             >
@@ -89,7 +91,7 @@ export default function Footer() {
               </li>
               <li className="flex flex-col mt-2 tabular-nums">
                 <span className="text-white font-medium mb-1">Contact</span>
-                <a href="tel:+94756363427" className="hover:text-[#D4AF37] transition-colors active:scale-[0.98] inline-block w-fit">+94 75 636 3427</a>
+                <a href="tel:+94756363427" onClick={() => logCtaClick('call')} className="hover:text-[#D4AF37] transition-colors active:scale-[0.98] inline-block w-fit">+94 75 636 3427</a>
                 <a href="mailto:bilalikras1@gmail.com" className="hover:text-[#D4AF37] transition-colors active:scale-[0.98] inline-block w-fit">bilalikras1@gmail.com</a>
               </li>
             </ul>

@@ -1,3 +1,5 @@
+import { logCtaClick } from '../lib/supabase';
+
 export default function WhatsAppFloat() {
   return (
     <div className="wa-float fixed bottom-4 right-4 z-[80] flex items-center justify-center transition-all duration-300 md:bottom-6 md:right-6 group">
@@ -11,6 +13,7 @@ export default function WhatsAppFloat() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat with Serendib Trading on WhatsApp"
+        onClick={() => logCtaClick('whatsapp_float')}
         className="relative flex size-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_20px_45px_rgba(37,211,102,0.28)] ring-1 ring-white/20 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D4AF37]"
       >
         <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 transition-opacity duration-200 hover:opacity-100" aria-hidden="true" />

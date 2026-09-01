@@ -63,10 +63,25 @@ const validateRemoteUrl = (url) => {
 };
 
 const uploadToStorage = async (base64Data, mimeType) => {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const supabaseUrl = (
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    ''
+  ).replace(/\/+$/, '');
+
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    '';
+
   if (!supabaseUrl || !serviceKey) {
-    const error = new Error('Image storage is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).');
+    console.error('Image storage configuration missing: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not defined.');
+    const error = new Error('Image storage is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing).');
     error.status = 500;
     throw error;
   }
@@ -79,26 +94,68 @@ const uploadToStorage = async (base64Data, mimeType) => {
   }
 
   const bucket = 'vehicle-images';
-  const ext = EXT_BY_MIME[mimeType] || 'jpg';
+  const ext = EXT_BY_MIME[mimeType] || 'webp';
   const objectPath = `vehicles/${randomUUID()}.${ext}`;
 
-  const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/${bucket}/${objectPath}`, {
+  const headers = {
+    Authorization: `Bearer ${serviceKey}`,
+    apikey: serviceKey,
+    'Content-Type': `image/${mimeType}`,
+    'x-upsert': 'true',
+  };
+
+  let res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': `image/${mimeType}`,
-      'x-upsert': 'false',
-    },
+    headers,
     body: buffer,
   });
 
+  // If the bucket doesn't exist or returns 400/404, try creating the public bucket and retry
+  if (!res.ok && (res.status === 404 || res.status === 400)) {
+    const errorBody = await res.clone().text().catch(() => '');
+    if (
+      res.status === 404 ||
+      errorBody.toLowerCase().includes('not found') ||
+      errorBody.toLowerCase().includes('bucket')
+    ) {
+      try {
+        await fetch(`${supabaseUrl}/storage/v1/bucket`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${serviceKey}`,
+            apikey: serviceKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: bucket,
+            name: bucket,
+            public: true,
+            file_size_limit: 10485760,
+            allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+          }),
+        });
+
+        // Retry the upload
+        res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`, {
+          method: 'POST',
+          headers,
+          body: buffer,
+        });
+      } catch (bucketErr) {
+        console.error('Bucket creation retry attempt error:', bucketErr);
+      }
+    }
+  }
+
   if (!res.ok) {
-    const error = new Error(`Image storage upload failed (${res.status}).`);
-    error.status = 502;
+    const errorText = await res.text().catch(() => '');
+    console.error(`Supabase storage upload failed (${res.status}):`, errorText);
+    const error = new Error(`Image storage upload failed (${res.status}): ${errorText || 'Check Supabase bucket permissions'}`);
+    error.status = res.status >= 400 && res.status < 500 ? res.status : 502;
     throw error;
   }
 
-  return `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${objectPath}`;
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${objectPath}`;
 };
 
 export default async function handler(req, res) {
@@ -142,8 +199,9 @@ export default async function handler(req, res) {
     const publicUrl = await uploadToStorage(match[2], mimeType);
     return send(res, 200, { url: publicUrl });
   } catch (err) {
+    console.error('Upload endpoint error:', err);
     const status = err.status || 500;
-    const message = status >= 500 ? 'Upload failed.' : err.message || 'Upload error';
+    const message = err.message || 'Upload failed.';
     return send(res, status, { error: message });
   }
 }

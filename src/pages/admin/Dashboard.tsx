@@ -167,7 +167,9 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<DashboardTab>('overview');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [traffic, setTraffic] = useState<{ date: string; visitor_count: number; page_views: number }[]>([]);
+  const [traffic, setTraffic] = useState<{ date: string; visitor_count: number; page_views: number; cta_clicks?: number; car_views?: number }[]>([]);
+  const [analyticsDetail, setAnalyticsDetail] = useState<{ topPages: { path: string; count: number }[]; topCtas: { name: string; count: number }[]; topCars: { car_id: string; count: number; car?: { make: string; model: string; year: number } }[]; referrers: { referrer: string; count: number }[]; recent: { event_type: string; path: string; cta_name?: string; car_id?: string; created_at: string }[]; uniques: number; days: number } | null>(null);
+  const [analyticsDays, setAnalyticsDays] = useState<7 | 30>(30);
   const [loading, setLoading] = useState(true);
   const [modalVehicle, setModalVehicle] = useState<VehicleFormData | null | undefined>(undefined);
   const [search, setSearch] = useState('');
@@ -203,15 +205,33 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchTraffic = async () => {
+  const fetchTraffic = async (daysOverride?: number) => {
     try {
-      const res = await fetch('/api/db/analytics');
+      const d = daysOverride ?? analyticsDays;
+      const res = await fetch(`/api/db/analytics?format=detailed&days=${d}`);
       if (res.ok) {
         const data = await res.json();
-        setTraffic(Array.isArray(data) ? data : []);
+        if (Array.isArray(data)) {
+          setTraffic(data);
+          setAnalyticsDetail(null);
+        } else if (data && Array.isArray(data.daily)) {
+          setTraffic(data.daily);
+          setAnalyticsDetail({ topPages: data.topPages || [], topCtas: data.topCtas || [], topCars: data.topCars || [], referrers: data.referrers || [], recent: data.recent || [], uniques: data.uniques || 0, days: data.days || d });
+        } else {
+          setTraffic([]);
+        }
       }
     } catch {
-      setTraffic([]);
+      // fallback to legacy array endpoint
+      try {
+        const res2 = await fetch('/api/db/analytics');
+        if (res2.ok) {
+          const data2 = await res2.json();
+          setTraffic(Array.isArray(data2) ? data2 : []);
+        }
+      } catch {
+        setTraffic([]);
+      }
     }
   };
 
@@ -227,7 +247,7 @@ export default function AdminDashboard() {
     }, 60_000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [analyticsDays]);
 
   useEffect(() => {
     if (!notice) return;
@@ -1172,14 +1192,46 @@ export default function AdminDashboard() {
                 <p className="mt-1 text-sm text-white/50">Traffic, demand, and listing quality.</p>
               </div>
               <div className="flex flex-wrap gap-2 text-sm">
-                <span className="rounded-full border border-white/10 px-3 py-1.5 text-white/55">
-                  {isSupabaseConfigured ? 'Last 30 days' : 'Local fallback'}
-                </span>
-                <span className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1.5 text-[#F5D66B]">
-                  Updated {formatDate(analytics.latestTraffic?.date)}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setAnalyticsDays((d) => (d === 7 ? 30 : 7))}
+                  className="rounded-full border border-white/10 px-3 py-1.5 text-white/70 hover:border-[#D4AF37]/40 hover:text-white transition-colors"
+                >
+                  Last {analyticsDays} days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fetchTraffic()}
+                  className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1.5 text-[#F5D66B] hover:bg-[#D4AF37]/20"
+                >
+                  Refresh
+                </button>
+                <span className="rounded-full border border-white/10 px-3 py-1.5 text-white/45">Updated {formatDate(analytics.latestTraffic?.date)}</span>
               </div>
             </div>
+
+            {/* Core + CTA KPIs */}
+            {analyticsDetail && (
+              <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+                {[
+                  { label: 'Unique visitors', value: formatNumber(analyticsDetail.uniques), meta: `${analyticsDays}d distinct ip_hash`, icon: Users },
+                  { label: 'CTA clicks', value: formatNumber((analyticsDetail.topCtas || []).reduce((s, x) => s + x.count, 0)), meta: `${analyticsDetail.topCtas?.[0]?.name || 'no clicks'} top`, icon: Activity },
+                  { label: 'Car views', value: formatNumber((analyticsDetail.topCars || []).reduce((s, x) => s + x.count, 0)), meta: `${analyticsDetail.topCars?.length || 0} models viewed`, icon: Eye },
+                  { label: 'Top page', value: (analyticsDetail.topPages?.[0]?.path || '/').slice(0, 18), meta: `${formatNumber(analyticsDetail.topPages?.[0]?.count || 0)} views`, icon: BarChart2 },
+                  { label: 'Top CTA', value: (analyticsDetail.topCtas?.[0]?.name || '—'), meta: `${formatNumber(analyticsDetail.topCtas?.[0]?.count || 0)} clicks`, icon: TrendingUp },
+                  { label: 'Top referrer', value: (analyticsDetail.referrers?.[0]?.referrer || 'Direct').slice(0, 18), meta: `${formatNumber(analyticsDetail.referrers?.[0]?.count || 0)} sessions`, icon: ArrowUpRight },
+                ].map(({ label, value, meta, icon: Icon }) => (
+                  <article key={label} className={`${panel} p-4`}>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs text-white/55">{label}</span>
+                      <Icon className="size-3.5 text-[#D4AF37]" aria-hidden="true" />
+                    </div>
+                    <p className="truncate text-lg font-semibold tabular-nums text-white" title={String(value)}>{value}</p>
+                    <p className="mt-1 truncate text-xs text-white/40">{meta}</p>
+                  </article>
+                ))}
+              </div>
+            )}
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
               {[
@@ -1312,6 +1364,80 @@ export default function AdminDashboard() {
                 </section>
               </aside>
             </div>
+
+            {analyticsDetail && (
+              <div className="mt-3 grid gap-3 xl:grid-cols-3">
+                <section className={`${panel} p-5`}>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-white">Top pages</h3>
+                    <span className="text-xs text-white/40">{analyticsDetail.days}d page_view</span>
+                  </div>
+                  {analyticsDetail.topPages.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-white/45">No page views yet</p>
+                  ) : (
+                    <SegmentRows items={analyticsDetail.topPages.slice(0, 6).map((p) => ({ label: p.path, count: p.count, pct: (p.count / Math.max(1, analyticsDetail.topPages[0].count)) * 100, meta: `${p.count}` }))} />
+                  )}
+                </section>
+                <section className={`${panel} p-5`}>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-white">Top CTAs</h3>
+                    <span className="text-xs text-white/40">clicks</span>
+                  </div>
+                  {analyticsDetail.topCtas.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-white/45">No CTA clicks yet — share the site to start tracking</p>
+                  ) : (
+                    <SegmentRows items={analyticsDetail.topCtas.slice(0, 6).map((c) => ({ label: c.name, count: c.count, pct: (c.count / Math.max(1, analyticsDetail.topCtas[0].count)) * 100, meta: `${c.count}` }))} />
+                  )}
+                </section>
+                <section className={`${panel} p-5`}>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-white">Referrers / Top cars</h3>
+                    <span className="text-xs text-white/40">{analyticsDetail.referrers.length} sources</span>
+                  </div>
+                  <div className="space-y-5">
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">Referrers</p>
+                      {analyticsDetail.referrers.length === 0 ? <p className="text-sm text-white/40">Direct only</p> : <SegmentRows items={analyticsDetail.referrers.slice(0, 3).map((r) => ({ label: r.referrer.slice(0, 28), count: r.count, pct: (r.count / Math.max(1, analyticsDetail.referrers[0].count)) * 100, meta: `${r.count}` }))} />}
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">Most viewed cars</p>
+                      {analyticsDetail.topCars.length === 0 ? <p className="text-sm text-white/40">No car_view yet</p> : <div className="space-y-2">{analyticsDetail.topCars.slice(0, 3).map((c) => (
+                        <div key={c.car_id} className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2 text-left">
+                          <span className="min-w-0 truncate text-sm text-white/80">{c.car ? `${c.car.year} ${c.car.make} ${c.car.model}` : c.car_id.slice(0, 12)}</span>
+                          <span className="ml-3 shrink-0 tabular-nums text-sm text-[#D4AF37]">{c.count}</span>
+                        </div>
+                      ))}</div>}
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {analyticsDetail && analyticsDetail.recent.length > 0 && (
+              <section className={`${panel} mt-3 p-5`}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-white">Live feed — last 20 events</h3>
+                  <span className="text-xs text-white/40">page_view • car_view • cta_click</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="text-xs uppercase tracking-widest text-white/40">
+                      <tr><th className="pb-2 font-medium">Time</th><th className="pb-2 font-medium">Event</th><th className="pb-2 font-medium">Detail</th><th className="pb-2 font-medium">Path</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {analyticsDetail.recent.map((r, i) => (
+                        <tr key={`${r.created_at}-${i}`} className="text-white/70">
+                          <td className="py-2 pr-3 tabular-nums text-xs whitespace-nowrap">{new Date(r.created_at).toLocaleString('en-LK', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                          <td className="py-2 pr-3"><span className={`rounded-full border px-2 py-0.5 text-xs ${r.event_type === 'cta_click' ? 'border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F5D66B]' : r.event_type === 'car_view' ? 'border-sky-400/30 bg-sky-400/10 text-sky-200' : 'border-white/10 text-white/60'}`}>{r.event_type}</span></td>
+                          <td className="py-2 pr-3 truncate max-w-[160px]">{r.cta_name || r.car_id?.slice(0, 8) || '—'}</td>
+                          <td className="py-2 truncate max-w-[180px] text-white/50">{r.path}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
 
             <div className="mt-3 grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
               <section className={`${panel} p-5`}>

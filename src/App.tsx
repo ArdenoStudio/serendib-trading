@@ -31,9 +31,8 @@ export default function App() {
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (import.meta.env.VITE_ENABLE_SUPABASE_ANALYTICS === 'true') {
-      logPageView().catch(() => undefined);
-    }
+    // Always log page views for Core analytics (lightweight, throttled server-side)
+    logPageView().catch(() => undefined);
 
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
     const isAdmin = pathname.startsWith('/admin');

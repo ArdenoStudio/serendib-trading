@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   query,
   sanitizeText,
@@ -12,6 +13,8 @@ import {
   sanitizeFeatureList,
 } from '../_db.js';
 import { getSessionFromRequest } from '../auth/_session.js';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Public list cards never need gallery JSONB or long descriptions.
@@ -30,6 +33,21 @@ const sendJson = (res, status, data, cacheControl = 'no-store') => {
 };
 
 const sanitizeVehicleId = (value) => sanitizeText(value, 80);
+
+const ensureCarsTable = async () => {
+  try {
+    await query(`
+      ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS "bodyType" TEXT;
+      ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS color TEXT;
+      ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS gallery JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS key_features JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS sold_at TIMESTAMPTZ;
+      ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0;
+    `);
+  } catch (err) {
+    // Non-fatal if table is already current
+  }
+};
 
 const sanitizeVehicleWrite = (body) => ({
   make: sanitizeText(body.make, 80),
@@ -120,13 +138,14 @@ export default async function handler(req, res) {
     body = body || {};
 
     if (method === 'POST') {
+      await ensureCarsTable();
       const vehicle = sanitizeVehicleWrite(body);
 
       if (!vehicle.make || !vehicle.model) {
         return sendJson(res, 400, { error: 'Make, model, and year are required' });
       }
 
-      const id = sanitizeVehicleId(body.id) || `car_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const id = (body.id && UUID_REGEX.test(String(body.id))) ? String(body.id) : randomUUID();
 
       const insertSql = `
         INSERT INTO cars (
@@ -134,9 +153,9 @@ export default async function handler(req, res) {
           "bodyType", color, image, gallery, condition, description,
           key_features, is_sold, sold_at, created_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8,
-          $9, $10, $11, $12, $13, $14,
-          $15, $16, $17, NOW()
+          $1::uuid, $2, $3, $4, $5, $6, $7, $8,
+          $9, $10, $11, $12::jsonb, $13, $14,
+          $15::text[], $16, $17, NOW()
         ) RETURNING *
       `;
 
@@ -155,7 +174,7 @@ export default async function handler(req, res) {
         JSON.stringify(vehicle.gallery),
         vehicle.condition,
         vehicle.description,
-        JSON.stringify(vehicle.key_features),
+        vehicle.key_features,
         vehicle.is_sold,
         vehicle.sold_at,
       ]);
@@ -164,9 +183,11 @@ export default async function handler(req, res) {
     }
 
     if (method === 'PATCH') {
-      const id = sanitizeVehicleId(body.id || (req.query && req.query.id));
-      if (!id) {
-        return sendJson(res, 400, { error: 'Vehicle ID is required' });
+      await ensureCarsTable();
+      const rawId = body.id || (req.query && req.query.id);
+      const id = sanitizeVehicleId(rawId);
+      if (!id || !UUID_REGEX.test(id)) {
+        return sendJson(res, 400, { error: 'Valid UUID Vehicle ID is required' });
       }
 
       const soldOnlyKeys = new Set(['id', 'is_sold', 'sold_at', 'action']);
@@ -181,7 +202,7 @@ export default async function handler(req, res) {
           : null;
 
         const rows = await query(
-          'UPDATE cars SET is_sold = $1, sold_at = $2 WHERE id = $3 RETURNING *',
+          'UPDATE cars SET is_sold = $1, sold_at = $2 WHERE id = $3::uuid RETURNING *',
           [isSold, soldAt, id]
         );
         return sendJson(res, 200, rows[0] || { id, is_sold: isSold, sold_at: soldAt });
@@ -216,13 +237,13 @@ export default async function handler(req, res) {
       }
 
       if (body.gallery !== undefined) {
-        fields.push(`gallery = $${idx++}`);
+        fields.push(`gallery = $${idx++}::jsonb`);
         values.push(JSON.stringify(sanitizeHttpsUrlList(body.gallery)));
       }
 
       if (body.key_features !== undefined) {
-        fields.push(`key_features = $${idx++}`);
-        values.push(JSON.stringify(sanitizeFeatureList(body.key_features)));
+        fields.push(`key_features = $${idx++}::text[]`);
+        values.push(sanitizeFeatureList(body.key_features));
       }
 
       if (fields.length === 0) {
@@ -230,24 +251,26 @@ export default async function handler(req, res) {
       }
 
       values.push(id);
-      const updateSql = `UPDATE cars SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
+      const updateSql = `UPDATE cars SET ${fields.join(', ')} WHERE id = $${idx}::uuid RETURNING *`;
       const rows = await query(updateSql, values);
       return sendJson(res, 200, rows[0]);
     }
 
     if (method === 'DELETE') {
-      const id = sanitizeVehicleId((req.query && req.query.id) || body.id);
-      if (!id) {
-        return sendJson(res, 400, { error: 'Vehicle ID is required' });
+      const rawId = (req.query && req.query.id) || body.id;
+      const id = sanitizeVehicleId(rawId);
+      if (!id || !UUID_REGEX.test(id)) {
+        return sendJson(res, 400, { error: 'Valid UUID Vehicle ID is required' });
       }
 
-      await query('DELETE FROM cars WHERE id = $1', [id]);
+      await query('DELETE FROM cars WHERE id = $1::uuid', [id]);
       return sendJson(res, 200, { ok: true, id });
     }
 
     res.setHeader('Allow', 'GET, POST, PATCH, DELETE, OPTIONS');
     return sendJson(res, 405, { error: 'Method not allowed' });
-  } catch {
-    return sendJson(res, 500, { error: 'Database error' });
+  } catch (err) {
+    console.error('Vehicle endpoint error:', err);
+    return sendJson(res, 500, { error: err?.message || 'Database error' });
   }
 }
