@@ -11,6 +11,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Image ID is required' });
   }
 
+  const etag = `"${id}"`;
+  const ifNoneMatch = req.headers['if-none-match'];
+  if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === id)) {
+    res.setHeader('ETag', etag);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.status(304).end();
+  }
+
   try {
     const rows = await query(
       'SELECT mime_type, data, byte_size FROM public.vehicle_images WHERE id = $1 LIMIT 1',
@@ -26,6 +34,7 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', mime_type || 'image/webp');
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('ETag', etag);
     if (byte_size) {
       res.setHeader('Content-Length', String(buffer.length));
     }

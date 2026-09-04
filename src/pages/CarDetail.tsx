@@ -285,6 +285,9 @@ export default function CarDetail() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.6 }}
                       src={activeImage}
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
                       onError={() => {
                         if (activeImage !== car.image && car.image) {
                           setActiveImage(car.image);

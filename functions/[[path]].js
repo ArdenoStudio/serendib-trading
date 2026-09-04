@@ -205,6 +205,32 @@ export async function onRequest(context) {
     });
   }
 
+  // Edge Cache Check for static vehicle images
+  const isGet = request.method.toUpperCase() === 'GET';
+  let edgeCache = null;
+  let cacheKey = null;
+
+  if (pathname === '/api/image' && isGet) {
+    try {
+      if (typeof caches !== 'undefined' && caches.default) {
+        edgeCache = caches.default;
+        cacheKey = new Request(url.toString(), { method: 'GET' });
+        const cached = await edgeCache.match(cacheKey);
+        if (cached) {
+          const ifNoneMatch = request.headers.get('if-none-match');
+          const cachedEtag = cached.headers.get('etag');
+          if (ifNoneMatch && cachedEtag && (ifNoneMatch === cachedEtag || ifNoneMatch === cachedEtag.replace(/"/g, ''))) {
+            return new Response(null, {
+              status: 304,
+              headers: cached.headers,
+            });
+          }
+          return cached;
+        }
+      }
+    } catch {}
+  }
+
   const { req, res, finish, promise } = createReqRes(request, context, url);
 
   // Parse request body for methods with payload
@@ -224,7 +250,15 @@ export async function onRequest(context) {
   try {
     await route.handler(req, res);
     finish();
-    return await promise;
+    const response = await promise;
+
+    if (pathname === '/api/image' && isGet && response.status === 200 && edgeCache && cacheKey) {
+      try {
+        context.waitUntil(edgeCache.put(cacheKey, response.clone()));
+      } catch {}
+    }
+
+    return response;
   } catch (err) {
     console.error('Cloudflare Pages API Error:', err);
     return new Response(JSON.stringify({ error: err?.message || 'Internal Server Error' }), {
