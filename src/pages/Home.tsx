@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, useScroll, useTransform, cubicBezier, AnimatePresence, useReducedMotion, useMotionValue, useAnimationFrame } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -221,6 +222,9 @@ export default function Home() {
           createWebsiteSchema(),
         ]}
       />
+      <Helmet>
+        <link rel="preload" as="image" href="/images/showroom/serendib-showroom-floor-03.webp" fetchpriority="high" />
+      </Helmet>
       <main>
 
       {/* ===== HERO ===== */}
