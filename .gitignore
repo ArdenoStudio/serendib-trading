@@ -4,17 +4,12 @@ dist/
 coverage/
 playwright-report/
 test-results/
-node_modules/
-build/
-dist/
-coverage/
-playwright-report/
-test-results/
 renders/
 .DS_Store
 *.log
 .env*
 !.env.example
+.dev.vars*
 
 .vercel
 .wrangler/
