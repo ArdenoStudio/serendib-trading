@@ -270,6 +270,20 @@ export default async function handler(req, res) {
       ]
     );
 
+    try {
+      await query(
+        `INSERT INTO site_traffic (event_type, path, cta_name, car_id, metadata, created_at)
+         VALUES ($1, $2, $3, $4, $5::jsonb, NOW())`,
+        [
+          'lead_submission',
+          lead.type === 'Test Drive' ? `/car/${lead.vehicle_id || ''}` : '/contact',
+          lead.type,
+          lead.vehicle_id || null,
+          JSON.stringify({ name: lead.name, vehicle: lead.vehicle_model, type: lead.type }),
+        ]
+      );
+    } catch {}
+
     return send(res, 201, { ok: true });
   } catch (error) {
     const status = error.status || 500;

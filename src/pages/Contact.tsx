@@ -8,6 +8,7 @@ import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { BUSINESS, SHOWROOM_MAPS_URL, createOrganizationSchema } from '../lib/seo';
 import { submitLead } from '../lib/leads';
+import { logCtaClick } from '../lib/supabase';
 
 const sanitizePhone = (value: string) => value.replace(/[^\d+() \-]/g, '').slice(0, 20);
 
@@ -76,6 +77,7 @@ export default function Contact() {
     setWhatsappContinueUrl('');
 
     try {
+      logCtaClick('contact_form');
       await submitLead({
         type: 'General Inquiry',
         name,

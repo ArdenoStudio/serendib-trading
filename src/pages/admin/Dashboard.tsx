@@ -7,26 +7,34 @@ import {
   BarChart2,
   Calendar as CalendarIcon,
   Car,
+  Check,
   CheckCircle2,
   ChevronLeft,
   Clock3,
+  Copy,
   DollarSign,
   Edit2,
+  ExternalLink,
   Eye,
+  Filter,
   Image as ImageIcon,
+  Layers,
   LayoutDashboard,
   LogOut,
   Mail,
+  MessageCircle,
   Phone,
   PieChart,
   Plus,
   RefreshCw,
   Search,
   ShieldCheck,
+  Sparkles,
   Trash2,
   TrendingUp,
   Users,
   WalletCards,
+  Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { invalidateInventoryCache } from '../../lib/inventoryCache';
@@ -62,7 +70,39 @@ type DashboardTab = 'overview' | 'inventory' | 'analytics' | 'leads';
 type InventoryFilter = 'All' | 'Available' | 'Sold' | 'New' | 'Registered' | 'Reconditioned';
 type LeadFilter = 'All' | Lead['status'];
 type Notice = { type: 'success' | 'error'; message: string };
-type AnalyticsSegment = { label: string; count: number; pct: number; value?: number; meta?: string };
+type AnalyticsDays = 1 | 7 | 30 | 90;
+type ChartMetric = 'all' | 'views' | 'visitors' | 'clicks';
+
+interface AnalyticsDetail {
+  days: number;
+  daily?: { date: string; visitor_count: number; page_views: number; cta_clicks?: number; car_views?: number }[];
+  topPages: { path: string; count: number }[];
+  topCtas: { name: string; count: number }[];
+  topCars: {
+    car_id: string;
+    count: number;
+    car?: {
+      id?: string;
+      make: string;
+      model: string;
+      year: number;
+      price?: number;
+      image?: string;
+      is_sold?: boolean;
+    };
+  }[];
+  referrers: { referrer: string; count: number }[];
+  recent: {
+    event_type: string;
+    path: string;
+    cta_name?: string;
+    car_id?: string;
+    referrer?: string;
+    created_at: string;
+    metadata?: any;
+  }[];
+  uniques: number;
+}
 
 const inventoryFilters: InventoryFilter[] = ['All', 'Available', 'Sold', 'New', 'Registered', 'Reconditioned'];
 const leadFilters: LeadFilter[] = ['All', 'New', 'Contacted', 'Closed'];
@@ -74,91 +114,104 @@ const formatNumber = (value: number) => Math.round(value).toLocaleString('en-LK'
 const formatPercent = (value: number) => `${Math.round(value)}%`;
 const formatMillions = (value: number) => `LKR ${(value / 1_000_000).toFixed(1)}M`;
 const formatFullLkr = (value: number) => `LKR ${Math.round(value).toLocaleString('en-LK')}`;
+
 const formatDate = (value?: string | null) => {
   if (!value) return 'Not recorded';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Not recorded';
   return new Intl.DateTimeFormat('en-LK', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 };
+
+const formatRelativeTime = (isoString?: string | null) => {
+  if (!isoString) return 'just now';
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  if (Number.isNaN(diffMs) || diffMs < 0) return 'just now';
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return 'just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
 const getSafeDaysSince = (value?: string | null) => {
   if (!value) return null;
   const time = new Date(value).getTime();
   if (Number.isNaN(time)) return null;
   return Math.max(0, Math.floor((Date.now() - time) / 86_400_000));
 };
-const getVehicleName = (vehicle: Pick<Vehicle, 'year' | 'make' | 'model'>) =>
-  `${vehicle.year} ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`;
 
-function buildCountSegments<T>(items: T[], getLabel: (item: T) => string, totalCount = items.length): AnalyticsSegment[] {
-  const counts = items.reduce<Record<string, number>>((acc, item) => {
-    const label = getLabel(item) || 'Unknown';
-    acc[label] = (acc[label] || 0) + 1;
-    return acc;
-  }, {});
+function formatCtaLabel(name?: string) {
+  if (!name) return 'Inquiry';
+  const map: Record<string, string> = {
+    whatsapp_car: 'WhatsApp (Vehicle)',
+    whatsapp_float: 'WhatsApp (Floating)',
+    whatsapp_nav: 'WhatsApp (Navbar)',
+    call: 'Direct Phone Call',
+    call_car: 'Direct Phone (Car)',
+    test_drive: 'Booked Test Drive',
+    finance_calculator: 'Finance Calculator',
+    contact_form: 'Contact Inquiry Form',
+    car_card: 'Vehicle Card Click',
+    wishlist_add: 'Saved to Wishlist',
+    wishlist_remove: 'Removed from Wishlist',
+    instagram: 'Instagram Profile',
+    share: 'Vehicle Link Shared',
+  };
+  return map[name] || name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-  return Object.entries(counts)
-    .map(([label, count]) => ({
-      label,
-      count,
-      pct: totalCount > 0 ? (count / totalCount) * 100 : 0,
-    }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+function getEventBadgeColor(type: string) {
+  switch (type) {
+    case 'cta_click':
+      return 'border-[#D4AF37]/35 bg-[#D4AF37]/10 text-[#F5D66B]';
+    case 'car_view':
+      return 'border-sky-400/30 bg-sky-400/10 text-sky-200';
+    case 'lead_submission':
+      return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
+    default:
+      return 'border-white/10 bg-white/[0.04] text-white/70';
+  }
 }
 
 const leadStatusStyles: Record<Lead['status'], { badge: string; dot: string; active: string }> = {
   New: {
     badge: 'border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#F5D66B]',
     dot: 'bg-[#D4AF37]',
-    active: 'border-[#D4AF37] bg-[#D4AF37] text-black',
+    active: 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20',
   },
   Contacted: {
     badge: 'border-sky-400/30 bg-sky-400/10 text-sky-200',
     dot: 'bg-sky-300',
-    active: 'border-sky-300 bg-sky-300 text-black',
+    active: 'border-sky-300 bg-sky-300 text-black shadow-lg shadow-sky-400/20',
   },
   Closed: {
     badge: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
     dot: 'bg-emerald-300',
-    active: 'border-emerald-300 bg-emerald-300 text-black',
+    active: 'border-emerald-300 bg-emerald-300 text-black shadow-lg shadow-emerald-400/20',
   },
 };
 
-const panel = 'rounded-2xl border border-white/10 bg-white/[0.03]';
+const glassCard = 'rounded-2xl border border-white/[0.08] bg-[#121110]/80 backdrop-blur-xl shadow-xl shadow-black/40';
+const glassCardHover = `${glassCard} transition-all duration-300 hover:border-white/[0.16] hover:bg-[#151413]/90`;
 const searchField =
-  'w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-[#D4AF37] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]';
+  'w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/40 focus:border-[#D4AF37] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] transition-all';
 const pill = (active: boolean) =>
-  `rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+  `rounded-full border px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
     active
-      ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
-      : 'border-white/10 text-white/70 hover:border-white/25 hover:text-white'
+      ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-md shadow-[#D4AF37]/20'
+      : 'border-white/10 bg-white/[0.02] text-white/70 hover:border-white/20 hover:text-white'
   }`;
-const iconBtn =
-  'inline-flex size-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition-colors hover:border-[#D4AF37]/40 hover:text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]';
 
 function Meter({ pct, barClassName = 'bg-[#D4AF37]' }: { pct: number; barClassName?: string }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-      <div className={`h-full rounded-full ${barClassName}`} style={{ width: `${clampPercent(pct)}%` }} />
-    </div>
-  );
-}
-
-function SegmentRows({ items, empty = 'No data' }: { items: AnalyticsSegment[]; empty?: string }) {
-  if (items.length === 0) {
-    return <p className="py-6 text-center text-sm text-white/45">{empty}</p>;
-  }
-
-  return (
-    <div className="space-y-3">
-      {items.map((segment) => (
-        <div key={segment.label}>
-          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-            <span className="truncate text-white/60">{segment.label}</span>
-            <span className="shrink-0 tabular-nums text-white">{segment.meta ?? segment.count}</span>
-          </div>
-          <Meter pct={segment.pct} />
-        </div>
-      ))}
+    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+      <div
+        className={`h-full rounded-full transition-all duration-700 ease-out ${barClassName}`}
+        style={{ width: `${clampPercent(pct)}%` }}
+      />
     </div>
   );
 }
@@ -168,9 +221,13 @@ export default function AdminDashboard() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [traffic, setTraffic] = useState<{ date: string; visitor_count: number; page_views: number; cta_clicks?: number; car_views?: number }[]>([]);
-  const [analyticsDetail, setAnalyticsDetail] = useState<{ topPages: { path: string; count: number }[]; topCtas: { name: string; count: number }[]; topCars: { car_id: string; count: number; car?: { make: string; model: string; year: number } }[]; referrers: { referrer: string; count: number }[]; recent: { event_type: string; path: string; cta_name?: string; car_id?: string; created_at: string }[]; uniques: number; days: number } | null>(null);
-  const [analyticsDays, setAnalyticsDays] = useState<7 | 30>(30);
+  const [analyticsDetail, setAnalyticsDetail] = useState<AnalyticsDetail | null>(null);
+  const [analyticsDays, setAnalyticsDays] = useState<AnalyticsDays>(30);
+  const [chartMetric, setChartMetric] = useState<ChartMetric>('all');
+  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+  const [copiedSummary, setCopiedSummary] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVehicle, setModalVehicle] = useState<VehicleFormData | null | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>('All');
@@ -206,28 +263,37 @@ export default function AdminDashboard() {
   };
 
   const fetchTraffic = async (daysOverride?: number) => {
+    const d = daysOverride ?? analyticsDays;
     try {
-      const d = daysOverride ?? analyticsDays;
       const res = await fetch(`/api/db/analytics?format=detailed&days=${d}`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (data && Array.isArray(data.daily)) {
+          setTraffic(data.daily);
+          setAnalyticsDetail({
+            days: data.days || d,
+            daily: data.daily,
+            topPages: data.topPages || [],
+            topCtas: data.topCtas || [],
+            topCars: data.topCars || [],
+            referrers: data.referrers || [],
+            recent: data.recent || [],
+            uniques: data.uniques || 0,
+          });
+        } else if (Array.isArray(data)) {
           setTraffic(data);
           setAnalyticsDetail(null);
-        } else if (data && Array.isArray(data.daily)) {
-          setTraffic(data.daily);
-          setAnalyticsDetail({ topPages: data.topPages || [], topCtas: data.topCtas || [], topCars: data.topCars || [], referrers: data.referrers || [], recent: data.recent || [], uniques: data.uniques || 0, days: data.days || d });
         } else {
           setTraffic([]);
+          setAnalyticsDetail(null);
         }
       }
     } catch {
-      // fallback to legacy array endpoint
       try {
-        const res2 = await fetch('/api/db/analytics');
-        if (res2.ok) {
-          const data2 = await res2.json();
-          setTraffic(Array.isArray(data2) ? data2 : []);
+        const fallbackRes = await fetch('/api/db/analytics');
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          setTraffic(Array.isArray(fallbackData) ? fallbackData : []);
         }
       } catch {
         setTraffic([]);
@@ -260,14 +326,15 @@ export default function AdminDashboard() {
     const available = vehicles.filter((v) => !v.is_sold).length;
     const sold = vehicles.filter((v) => v.is_sold).length;
     const totalValue = vehicles.reduce((sum, v) => sum + Number(v.price || 0), 0);
+    const availableValue = vehicles.filter((v) => !v.is_sold).reduce((sum, v) => sum + Number(v.price || 0), 0);
     const avgPrice = total > 0 ? totalValue / total : 0;
     const makes = vehicles.reduce<Record<string, number>>((acc, v) => {
       const make = getBrandLabel(v.make) || 'Unknown';
       acc[make] = (acc[make] || 0) + 1;
       return acc;
     }, {});
-    const makeEntries = Object.entries(makes) as [string, number][];
-    const topMake = makeEntries.sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'N/A';
+    const sortedMakes = Object.entries(makes).sort((a, b) => b[1] - a[1]);
+    const topMake = sortedMakes[0]?.[0] ?? 'N/A';
     const bodyTypes = vehicles.reduce<Record<string, number>>((acc, v) => {
       const bodyType = v.bodyType || 'Unknown';
       acc[bodyType] = (acc[bodyType] || 0) + 1;
@@ -276,7 +343,7 @@ export default function AdminDashboard() {
     const sortedBT = (Object.entries(bodyTypes) as [string, number][]).sort((a, b) => b[1] - a[1]);
     const topViewed = [...vehicles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 4);
 
-    return { total, available, sold, totalValue, avgPrice, topMake, sortedBT, topViewed };
+    return { total, available, sold, totalValue, availableValue, avgPrice, topMake, sortedBT, topViewed };
   }, [vehicles]);
 
   const filtered = useMemo(() => {
@@ -313,17 +380,11 @@ export default function AdminDashboard() {
   }, [leads, leadFilter, leadSearch]);
 
   const dashboardHealth = useMemo(() => {
-    const missingImages = vehicles.filter((vehicle) => !vehicle.image);
-    const incompleteListings = vehicles.filter((vehicle) =>
-      !vehicle.description || !(vehicle.key_features?.length)
-    );
-    const archiveReady = vehicles.filter((vehicle) =>
-      vehicle.is_sold && vehicle.sold_at && daysUntilRemoval(vehicle.sold_at) === 0
-    );
+    const missingImages = vehicles.filter((v) => !v.image);
+    const incompleteListings = vehicles.filter((v) => !v.description || !(v.key_features?.length));
+    const archiveReady = vehicles.filter((v) => v.is_sold && v.sold_at && daysUntilRemoval(v.sold_at) === 0);
     const staleNewLeads = leads.filter((lead) => lead.status === 'New' && daysSince(lead.created_at) > 1);
-    const readiness = vehicles.length > 0
-      ? Math.round(((vehicles.length - incompleteListings.length) / vehicles.length) * 100)
-      : 100;
+    const readiness = vehicles.length > 0 ? Math.round(((vehicles.length - incompleteListings.length) / vehicles.length) * 100) : 100;
 
     return {
       archiveReady,
@@ -332,159 +393,100 @@ export default function AdminDashboard() {
       recentLeads: leads.slice(0, 3),
       readiness,
       staleNewLeads,
-      todayTraffic: traffic[0],
+      todayTraffic: traffic[traffic.length - 1] || traffic[0],
     };
   }, [vehicles, leads, traffic]);
 
   const analytics = useMemo(() => {
-    const liveVehicles = vehicles.filter((vehicle) => !vehicle.is_sold);
-    const soldVehicles = vehicles.filter((vehicle) => vehicle.is_sold);
-    const totalViews = vehicles.reduce((sum, vehicle) => sum + Number(vehicle.views || 0), 0);
-    const viewedVehicles = vehicles.filter((vehicle) => Number(vehicle.views || 0) > 0);
-    const trafficSeries = traffic.slice().reverse();
-    const totalVisitors = traffic.reduce((sum, item) => sum + Number(item.visitor_count || 0), 0);
     const totalPageViews = traffic.reduce((sum, item) => sum + Number(item.page_views || 0), 0);
-    const latestTraffic = traffic[0];
-    const previousTraffic = traffic[1];
-    const visitorDelta = latestTraffic
-      ? Number(latestTraffic.visitor_count || 0) - Number(previousTraffic?.visitor_count || 0)
-      : 0;
-    const pageViewDelta = latestTraffic
-      ? Number(latestTraffic.page_views || 0) - Number(previousTraffic?.page_views || 0)
-      : 0;
-    const bestTrafficDay = traffic.length > 0
-      ? traffic.slice().sort((a, b) => Number(b.page_views || 0) - Number(a.page_views || 0))[0]
-      : null;
+    const totalCtaClicks = traffic.reduce((sum, item) => sum + Number(item.cta_clicks || 0), 0);
+    const totalCarViews = traffic.reduce((sum, item) => sum + Number(item.car_views || 0), 0);
+    const totalVisitors = analyticsDetail?.uniques || traffic.reduce((sum, item) => sum + Number(item.visitor_count || 0), 0);
 
-    const leadStatusCounts = leads.reduce<Record<Lead['status'], number>>(
-      (acc, lead) => {
-        acc[lead.status] += 1;
-        return acc;
+    const conversionRate = totalVisitors > 0 ? clampPercent(((totalCtaClicks + leads.length) / totalVisitors) * 100) : 0;
+    const avgDailyViews = traffic.length > 0 ? Math.round(totalPageViews / Math.max(1, traffic.length)) : 0;
+
+    const maxChartValue = Math.max(
+      1,
+      ...traffic.map((item) =>
+        Math.max(
+          chartMetric === 'clicks' ? 0 : Number(item.page_views || 0),
+          chartMetric === 'views' ? 0 : Number(item.visitor_count || 0),
+          chartMetric === 'visitors' ? 0 : Number(item.cta_clicks || 0),
+        ),
+      ),
+    );
+
+    // Funnel Steps
+    const funnel = [
+      {
+        stage: 'Discovery',
+        desc: 'Page Views across Website',
+        count: totalPageViews,
+        pct: 100,
+        color: 'from-amber-400 to-[#D4AF37]',
       },
-      { New: 0, Contacted: 0, Closed: 0 },
-    );
-    const leadTypeSegments = buildCountSegments<Lead>(leads, (lead) => lead.type);
-    const closedLeadRate = leads.length > 0 ? (leadStatusCounts.Closed / leads.length) * 100 : 0;
-    const followUpRate = leads.length > 0
-      ? ((leadStatusCounts.Contacted + leadStatusCounts.Closed) / leads.length) * 100
-      : 0;
-    const leadsPerHundredVisitors = totalVisitors > 0 ? (leads.length / totalVisitors) * 100 : 0;
-
-    const brandValue = vehicles.reduce<Record<string, { label: string; count: number; value: number }>>((acc, vehicle) => {
-      const label = getBrandLabel(vehicle.make) || 'Unknown';
-      if (!acc[label]) acc[label] = { label, count: 0, value: 0 };
-      acc[label].count += 1;
-      acc[label].value += Number(vehicle.price || 0);
-      return acc;
-    }, {});
-    const brandValueSegments = (Object.values(brandValue) as Array<{ label: string; count: number; value: number }>)
-      .map((item) => ({
-        label: item.label,
-        count: item.count,
-        value: item.value,
-        pct: stats.totalValue > 0 ? (item.value / stats.totalValue) * 100 : 0,
-        meta: formatMillions(item.value),
-      }))
-      .sort((a, b) => (b.value || 0) - (a.value || 0));
-
-    const conditionSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.condition || 'Unknown', vehicles.length);
-    const bodyTypeSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.bodyType || 'Unknown', vehicles.length);
-    const fuelSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.fuel || 'Unknown', vehicles.length);
-    const transmissionSegments = buildCountSegments<Vehicle>(vehicles, (vehicle) => vehicle.transmission || 'Unknown', vehicles.length);
-
-    const priceBands = [
-      { label: '< LKR 10M', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) < 10_000_000).length },
-      { label: 'LKR 10M-20M', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) >= 10_000_000 && Number(vehicle.price || 0) < 20_000_000).length },
-      { label: 'LKR 20M-35M', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) >= 20_000_000 && Number(vehicle.price || 0) < 35_000_000).length },
-      { label: 'LKR 35M+', count: liveVehicles.filter((vehicle) => Number(vehicle.price || 0) >= 35_000_000).length },
-    ].map((band) => ({
-      ...band,
-      pct: liveVehicles.length > 0 ? (band.count / liveVehicles.length) * 100 : 0,
-    }));
-
-    const incompleteLive = liveVehicles.filter((vehicle) =>
-      !vehicle.image || !vehicle.description?.trim() || !(vehicle.key_features?.length)
-    );
-    const highValueIncomplete = incompleteLive
-      .slice()
-      .sort((a, b) => Number(b.price || 0) - Number(a.price || 0))
-      .slice(0, 4);
-    const quietStock = liveVehicles
-      .filter((vehicle) => Number(vehicle.views || 0) === 0)
-      .sort((a, b) => Number(b.price || 0) - Number(a.price || 0))
-      .slice(0, 4);
-    const vehicleAges = liveVehicles
-      .map((vehicle) => ({ vehicle, days: getSafeDaysSince(vehicle.created_at) }))
-      .filter((item): item is { vehicle: Vehicle; days: number } => item.days !== null);
-    const oldestLive = vehicleAges.slice().sort((a, b) => b.days - a.days)[0] ?? null;
-    const avgDaysLive = vehicleAges.length > 0
-      ? vehicleAges.reduce((sum, item) => sum + item.days, 0) / vehicleAges.length
-      : 0;
-
-    const availableValue = liveVehicles.reduce((sum, vehicle) => sum + Number(vehicle.price || 0), 0);
-    const soldValue = soldVehicles.reduce((sum, vehicle) => sum + Number(vehicle.price || 0), 0);
-    const demandCoverage = vehicles.length > 0 ? (viewedVehicles.length / vehicles.length) * 100 : 0;
-    const readinessValueAtRisk = incompleteLive.reduce((sum, vehicle) => sum + Number(vehicle.price || 0), 0);
-    const maxPageViews = Math.max(1, ...traffic.map((item) => Number(item.page_views || 0)));
+      {
+        stage: 'Interest',
+        desc: 'Vehicle Detail Views & Card Clicks',
+        count: totalCarViews,
+        pct: totalPageViews > 0 ? (totalCarViews / totalPageViews) * 100 : 0,
+        color: 'from-sky-400 to-blue-500',
+      },
+      {
+        stage: 'Engagement',
+        desc: 'WhatsApp, Phone & Finance Clicks',
+        count: totalCtaClicks,
+        pct: totalCarViews > 0 ? (totalCtaClicks / totalCarViews) * 100 : 0,
+        color: 'from-yellow-400 to-amber-500',
+      },
+      {
+        stage: 'Conversion',
+        desc: 'Qualified Inquiries & Test Drives',
+        count: leads.length,
+        pct: totalCtaClicks > 0 ? (leads.length / totalCtaClicks) * 100 : 0,
+        color: 'from-emerald-400 to-teal-500',
+      },
+    ];
 
     return {
-      avgDaysLive,
-      availableValue,
-      bestTrafficDay,
-      bodyTypeSegments,
-      brandValueSegments,
-      closedLeadRate,
-      conditionSegments,
-      demandCoverage,
-      followUpRate,
-      fuelSegments,
-      highValueIncomplete,
-      incompleteLive,
-      latestTraffic,
-      leadStatusCounts,
-      leadTypeSegments,
-      leadsPerHundredVisitors,
-      maxPageViews,
-      oldestLive,
-      pageViewDelta,
-      priceBands,
-      quietStock,
-      readinessValueAtRisk,
-      soldValue,
       totalPageViews,
-      totalViews,
+      totalCtaClicks,
+      totalCarViews,
       totalVisitors,
-      trafficSeries,
-      transmissionSegments,
-      visitorDelta,
-      viewedVehicles,
+      conversionRate,
+      avgDailyViews,
+      maxChartValue,
+      funnel,
     };
-  }, [vehicles, leads, traffic, stats.totalValue]);
+  }, [traffic, analyticsDetail, leads, chartMetric]);
 
-  if (loading && vehicles.length === 0) return <Loader />;
+  const handleCopySummary = async () => {
+    const periodLabel = analyticsDays === 1 ? 'Last 24 Hours' : `Last ${analyticsDays} Days`;
+    const topCarName = analyticsDetail?.topCars?.[0]?.car
+      ? `${analyticsDetail.topCars[0].car.year} ${analyticsDetail.topCars[0].car.make} ${analyticsDetail.topCars[0].car.model}`
+      : 'N/A';
+    const text = `📊 SERENDIB TRADING — EXECUTIVE ANALYTICS (${periodLabel})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Total Page Views: ${formatNumber(analytics.totalPageViews)}
+• Unique Visitors: ${formatNumber(analytics.totalVisitors)}
+• Vehicle Views & Clicks: ${formatNumber(analytics.totalCarViews)}
+• High-Intent Inquiries (CTAs): ${formatNumber(analytics.totalCtaClicks)}
+• Conversion Rate: ${analytics.conversionRate.toFixed(1)}%
+• Active Lot Fleet Value: ${formatMillions(stats.availableValue)} (${stats.available} vehicles)
+• Top Demand Car: ${topCarName} (${analyticsDetail?.topCars?.[0]?.count || 0} views)
+• Primary Acquisition Source: ${analyticsDetail?.referrers?.[0]?.referrer || 'Direct'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Report Generated: ${new Date().toLocaleDateString('en-LK', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-  const newLeadCount = leads.filter((lead) => lead.status === 'New').length;
-  const contactedLeadCount = leads.filter((lead) => lead.status === 'Contacted').length;
-  const closedLeadCount = leads.filter((lead) => lead.status === 'Closed').length;
-  const attentionCount =
-    newLeadCount +
-    dashboardHealth.staleNewLeads.length +
-    dashboardHealth.missingImages.length +
-    dashboardHealth.archiveReady.length;
-
-  const tabs = [
-    { id: 'overview' as const, label: 'Overview', icon: Activity, count: attentionCount },
-    { id: 'inventory' as const, label: 'Inventory', icon: LayoutDashboard, count: stats.total },
-    { id: 'leads' as const, label: 'Leads', icon: Users, count: newLeadCount },
-    { id: 'analytics' as const, label: 'Analytics', icon: PieChart, count: traffic.length },
-  ];
-
-  const summaryCards = [
-    { label: 'Cars', value: stats.total.toLocaleString('en-LK'), meta: 'Listed', icon: Car },
-    { label: 'On website', value: stats.available.toLocaleString('en-LK'), meta: 'Available now', icon: ShieldCheck },
-    { label: 'Sold', value: stats.sold.toLocaleString('en-LK'), meta: 'Archived', icon: CheckCircle2 },
-    { label: 'Total value', value: formatMillions(stats.totalValue), meta: formatFullLkr(stats.totalValue), icon: WalletCards },
-  ];
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 3000);
+    } catch {
+      // Fallback if clipboard permission denied
+    }
+  };
 
   const handleDelete = async (v: Vehicle) => {
     const vehicleName = `${v.year} ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)}`;
@@ -504,8 +506,8 @@ export default function AdminDashboard() {
     const vehicleName = `${v.year} ${getBrandLabel(v.make)} ${getDisplayModel(v.make, v.model)}`;
     const confirmed = window.confirm(
       nowSold
-        ? `Mark ${vehicleName} as sold? It will be hidden from the public website.`
-        : `Put ${vehicleName} back on the website?`,
+        ? `Mark ${vehicleName} as sold? It will be archived from the public showroom.`
+        : `Return ${vehicleName} to the live showroom inventory?`,
     );
     if (!confirmed) return;
 
@@ -536,7 +538,7 @@ export default function AdminDashboard() {
       setNotice({ type: 'error', message: `Lead update failed: ${err.error || 'Server error'}` });
       return;
     }
-    setNotice({ type: 'success', message: `Lead marked ${status.toLowerCase()}.` });
+    setNotice({ type: 'success', message: `Lead status updated to ${status.toLowerCase()}.` });
     fetchLeads();
   };
 
@@ -562,38 +564,62 @@ export default function AdminDashboard() {
   };
 
   const handleManualRefresh = async () => {
+    setRefreshing(true);
     setNotice(null);
     await Promise.all([fetchVehicles(), fetchLeads(), fetchTraffic()]);
-    setNotice({ type: 'success', message: 'Dashboard data refreshed.' });
+    setRefreshing(false);
+    setNotice({ type: 'success', message: 'All inventory, leads & analytics data synchronized.' });
   };
 
   const handleSaved = () => {
     invalidateInventoryCache();
     fetchVehicles();
-    setNotice({ type: 'success', message: 'Inventory saved.' });
+    setNotice({ type: 'success', message: 'Vehicle saved successfully to live inventory.' });
   };
 
+  if (loading && vehicles.length === 0) return <Loader />;
+
+  const newLeadCount = leads.filter((lead) => lead.status === 'New').length;
+  const contactedLeadCount = leads.filter((lead) => lead.status === 'Contacted').length;
+  const closedLeadCount = leads.filter((lead) => lead.status === 'Closed').length;
+
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard, count: dashboardHealth.staleNewLeads.length + newLeadCount },
+    { id: 'inventory' as const, label: 'Inventory', icon: Car, count: stats.total },
+    { id: 'analytics' as const, label: 'Analytics Studio', icon: BarChart2, count: analytics.totalPageViews > 0 ? analytics.totalPageViews : undefined, highlight: true },
+    { id: 'leads' as const, label: 'Leads Pipeline', icon: Users, count: newLeadCount },
+  ];
+
   return (
-    <div className="min-h-dvh bg-[#0d0b09] font-sans text-white">
+    <div className="min-h-dvh bg-[#09090b] font-sans text-white antialiased selection:bg-[#D4AF37] selection:text-black">
+      {/* Modern Frosted Header */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#09090b]/85 backdrop-blur-2xl">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          {/* Logo & Status Indicator */}
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="group flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-xl"
+              aria-label="Back to Serendib Trading website"
+            >
+              <span className="flex size-10 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] transition-all group-hover:border-[#D4AF37]/50 group-hover:bg-[#D4AF37]/10">
+                <img src="/serendib-logo-192.png" alt="Serendib Trading" className="h-6 w-auto" />
+              </span>
+              <div>
+                <span className="block text-sm font-bold tracking-tight text-white group-hover:text-[#D4AF37] transition-colors">
+                  Serendib Trading
+                </span>
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/50">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Admin Console
+                </span>
+              </div>
+            </button>
+          </div>
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0d0b09]/90 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="group flex min-w-0 items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-            aria-label="Back to website"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-              <img src="/serendib-logo-192.png" alt="" className="h-7 w-auto" />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-white">Serendib Trading</span>
-              <span className="block text-xs text-white/45">Admin</span>
-            </span>
-          </button>
-
-          <nav className="hidden items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 lg:flex" aria-label="Admin sections">
+          {/* Desktop Navigation Segmented Pill */}
+          <nav className="hidden items-center rounded-2xl border border-white/[0.08] bg-white/[0.03] p-1.5 md:flex" aria-label="Admin tabs">
             {tabs.map((item) => {
               const Icon = item.icon;
               const active = tab === item.id;
@@ -602,57 +628,87 @@ export default function AdminDashboard() {
                   key={item.id}
                   type="button"
                   onClick={() => setTab(item.id)}
-                  aria-pressed={active}
-                  className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
-                    active ? 'bg-[#D4AF37] text-black' : 'text-white/65 hover:bg-white/5 hover:text-white'
+                  className={`relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold tracking-wide transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+                    active ? 'text-black' : 'text-white/70 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <Icon className="size-4" aria-hidden="true" />
-                  {item.label}
-                  <span className={`tabular-nums ${active ? 'text-black/60' : 'text-white/45'}`}>{item.count}</span>
-                  {item.id === 'leads' && newLeadCount > 0 && (
-                    <>
-                      <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-400" aria-hidden="true" />
-                      <span className="sr-only">{newLeadCount} new leads</span>
-                    </>
+                  {active && (
+                    <motion.div
+                      layoutId="activeAdminTab"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#e5c05b] shadow-lg shadow-[#D4AF37]/25"
+                      transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                    />
                   )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Icon className="size-4" />
+                    <span>{item.label}</span>
+                    {typeof item.count === 'number' && item.count > 0 && (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                          active
+                            ? 'bg-black/20 text-black'
+                            : item.id === 'leads' && newLeadCount > 0
+                            ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                            : 'bg-white/10 text-white/60'
+                        }`}
+                      >
+                        {item.count}
+                      </span>
+                    )}
+                  </span>
                 </button>
               );
             })}
           </nav>
 
+          {/* Action Tools */}
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => navigate('/')}
-              className="hidden items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] md:inline-flex"
+              onClick={() => setModalVehicle(null)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#D4AF37] px-3.5 py-2 text-xs font-bold text-black transition-all hover:bg-[#e5c05b] active:scale-95 shadow-md shadow-[#D4AF37]/20"
             >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-              Website
+              <Plus className="size-3.5 stroke-[3]" />
+              <span className="hidden sm:inline">Add Vehicle</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => window.open('/', '_blank')}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-semibold text-white/70 hover:border-white/20 hover:text-white transition-all"
+              title="Open public showroom website"
+            >
+              <span>Showroom</span>
+              <ExternalLink className="size-3" />
+            </button>
+
             <button
               type="button"
               onClick={handleManualRefresh}
-              aria-label="Refresh dashboard data"
-              className={iconBtn}
+              className={`inline-flex size-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/70 hover:border-[#D4AF37]/40 hover:text-[#D4AF37] transition-all ${
+                refreshing ? 'animate-spin text-[#D4AF37]' : ''
+              }`}
+              title="Refresh database records"
             >
-              <RefreshCw className="size-4" aria-hidden="true" />
+              <RefreshCw className="size-4" />
             </button>
+
             <button
               type="button"
               onClick={async () => {
                 if (isSupabaseConfigured) await signOut();
                 navigate('/admin/login');
               }}
-              aria-label="Sign out"
-              className="inline-flex size-10 items-center justify-center rounded-xl border border-red-400/20 bg-red-500/10 text-red-200 hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              className="inline-flex size-9 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/20 transition-all"
+              title="Sign out from admin console"
             >
-              <LogOut className="size-4" aria-hidden="true" />
+              <LogOut className="size-4" />
             </button>
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-6xl gap-2 overflow-x-auto px-4 pb-3 sm:px-6 lg:hidden" aria-label="Admin sections">
+        {/* Mobile Navigation Scroll */}
+        <div className="flex w-full gap-2 overflow-x-auto border-t border-white/[0.05] px-4 py-2 md:hidden">
           {tabs.map((item) => {
             const Icon = item.icon;
             const active = tab === item.id;
@@ -661,988 +717,1172 @@ export default function AdminDashboard() {
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                aria-pressed={active}
-                className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] ${
+                className={`flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition-all ${
                   active
-                    ? 'border-[#D4AF37] bg-[#D4AF37] text-black'
-                    : 'border-white/10 text-white/65'
+                    ? 'border-[#D4AF37] bg-[#D4AF37] text-black shadow-md shadow-[#D4AF37]/20'
+                    : 'border-white/[0.08] bg-white/[0.02] text-white/70'
                 }`}
               >
-                <Icon className="size-4" aria-hidden="true" />
-                {item.label}
+                <Icon className="size-3.5" />
+                <span>{item.label}</span>
+                {typeof item.count === 'number' && item.count > 0 && (
+                  <span className={`text-[10px] ${active ? 'text-black/70' : 'text-white/40'}`}>{item.count}</span>
+                )}
               </button>
             );
           })}
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white text-balance">Dashboard</h1>
-            <p className="mt-1 text-sm text-white/55">Add cars, follow up leads, and check traffic.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setModalVehicle(null)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Add vehicle
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('leads')}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-            >
-              {newLeadCount} new lead{newLeadCount === 1 ? '' : 's'}
-              <ArrowUpRight className="size-4 text-[#D4AF37]" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
-        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <article key={card.label} className={`${panel} p-4`}>
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm text-white/55">{card.label}</span>
-                  <span className="flex size-9 items-center justify-center rounded-lg border border-white/10 text-[#D4AF37]">
-                    <Icon className="size-4" aria-hidden="true" />
-                  </span>
-                </div>
-                <p className="text-2xl font-semibold tabular-nums text-white">{card.value}</p>
-                <p className="mt-1 truncate text-sm text-white/40">{card.meta}</p>
-              </article>
-            );
-          })}
-        </section>
-
+      {/* Main Content Body */}
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+        {/* Notice Alert Banner */}
         <AnimatePresence>
           {notice && (
             <motion.div
-              initial={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className={`mt-5 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className={`mb-6 flex items-center justify-between gap-3 rounded-2xl border px-5 py-3.5 text-sm font-medium ${
                 notice.type === 'error'
-                  ? 'border-red-400/30 bg-red-500/10 text-red-200'
-                  : 'border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F5D66B]'
+                  ? 'border-red-500/30 bg-red-500/10 text-red-200'
+                  : 'border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#F5D66B]'
               }`}
-              role="status"
             >
-              {notice.type === 'error' ? <AlertTriangle className="h-4 w-4 shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0" />}
-              {notice.message}
+              <div className="flex items-center gap-3">
+                {notice.type === 'error' ? <AlertTriangle className="size-5 shrink-0 text-red-400" /> : <CheckCircle2 className="size-5 shrink-0 text-[#D4AF37]" />}
+                <span>{notice.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotice(null)}
+                className="text-white/50 hover:text-white text-xs font-semibold uppercase tracking-wider"
+              >
+                Dismiss
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {tab === 'overview' && (
-          <section className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className={`${panel} p-5`}>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-white">Needs attention</h2>
-                <p className="text-sm text-white/45">{isSupabaseConfigured ? 'Live data' : 'Local fallback'}</p>
+        {/* ══════════════════════════════════════════════════════════════════
+            TAB: ANALYTICS STUDIO (Deep Detailed Analytics Suite)
+        ══════════════════════════════════════════════════════════════════ */}
+        {tab === 'analytics' && (
+          <motion.section
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            className="space-y-6"
+          >
+            {/* Analytics Header & Range Controls */}
+            <div className={`${glassCard} p-6 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between`}>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37]">
+                    <Sparkles className="size-4" />
+                  </span>
+                  <h1 className="text-xl font-bold tracking-tight text-white">Executive Analytics Studio</h1>
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                    Live Stream
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-white/50">
+                  Comprehensive audience reach, customer intention, vehicle impressions & conversion metrics.
+                </p>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {[
-                  {
-                    label: 'New buyer leads',
-                    value: newLeadCount,
-                    meta: 'Waiting for follow-up',
-                    icon: Users,
-                    action: () => setTab('leads'),
-                  },
-                  {
-                    label: 'Stale leads',
-                    value: dashboardHealth.staleNewLeads.length,
-                    meta: 'New for over 24 hours',
-                    icon: Clock3,
-                    action: () => setTab('leads'),
-                  },
-                  {
-                    label: 'Missing photos',
-                    value: dashboardHealth.missingImages.length,
-                    meta: 'Listings need hero images',
-                    icon: ImageIcon,
-                    action: () => setTab('inventory'),
-                  },
-                  {
-                    label: 'Archive ready',
-                    value: dashboardHealth.archiveReady.length,
-                    meta: 'Sold units past 14 days',
-                    icon: CheckCircle2,
-                    action: () => setTab('inventory'),
-                  },
-                ].map(({ label, value, meta, icon: Icon, action }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={action}
-                    className={`${panel} p-4 text-left hover:border-[#D4AF37]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]`}
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-sm text-white/55">{label}</span>
-                      <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
-                    </div>
-                    <p className="text-2xl font-semibold tabular-nums text-white">{value}</p>
-                    <p className="mt-1 truncate text-sm text-white/40">{meta}</p>
-                  </button>
-                ))}
-              </div>
+              {/* Time Range Horizon & Tools */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+                  {([1, 7, 30, 90] as AnalyticsDays[]).map((d) => {
+                    const active = analyticsDays === d;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setAnalyticsDays(d)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                          active
+                            ? 'bg-[#D4AF37] text-black shadow-sm font-bold'
+                            : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        {d === 1 ? '24 Hours' : `${d} Days`}
+                      </button>
+                    );
+                  })}
+                </div>
 
-              <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.95fr]">
-                <section className={`${panel} p-5`}>
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h3 className="text-base font-semibold text-white">Listing quality</h3>
-                    <p className="text-2xl font-semibold tabular-nums text-white">{dashboardHealth.readiness}%</p>
-                  </div>
-                  <Meter pct={dashboardHealth.readiness} />
-                  <div className="mt-4 grid gap-2 text-sm text-white/55 sm:grid-cols-3">
-                    <span>{stats.available} on website</span>
-                    <span>{dashboardHealth.incompleteListings.length} incomplete</span>
-                    <span>{stats.topMake} most listed</span>
-                  </div>
-                </section>
+                <button
+                  type="button"
+                  onClick={handleCopySummary}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-white/80 hover:border-[#D4AF37]/40 hover:text-white transition-all"
+                  title="Copy formatted text report for executive review"
+                >
+                  {copiedSummary ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5 text-[#D4AF37]" />}
+                  <span>{copiedSummary ? 'Copied Report!' : 'Export Summary'}</span>
+                </button>
 
-                <section className={`${panel} p-5`}>
-                  <h3 className="mb-4 text-base font-semibold text-white">Today’s traffic</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-white/10 p-3">
-                      <p className="text-sm text-white/55">Visitors</p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
-                        {dashboardHealth.todayTraffic?.visitor_count || 0}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 p-3">
-                      <p className="text-sm text-white/55">Page views</p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
-                        {dashboardHealth.todayTraffic?.page_views || 0}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm text-white/45 text-pretty">
-                    Last recorded: {formatDate(dashboardHealth.todayTraffic?.date)}. Open Analytics for the week.
-                  </p>
-                </section>
+                <button
+                  type="button"
+                  onClick={() => fetchTraffic()}
+                  className="inline-flex size-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/70 hover:text-white hover:border-white/20 transition-all"
+                  title="Refresh analytics data"
+                >
+                  <RefreshCw className="size-3.5" />
+                </button>
               </div>
             </div>
 
-            <aside className="grid gap-4">
-              <section className={`${panel} p-5`}>
-                <h2 className="text-lg font-semibold text-white">Quick actions</h2>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-                  {[
-                    { label: 'Add vehicle', icon: Plus, action: () => setModalVehicle(null) },
-                    { label: 'Inventory', icon: Car, action: () => setTab('inventory') },
-                    { label: 'Leads', icon: Users, action: () => setTab('leads') },
-                    { label: 'Analytics', icon: PieChart, action: () => setTab('analytics') },
-                    { label: 'View website', icon: ArrowUpRight, action: () => navigate('/inventory') },
-                  ].map(({ label, icon: Icon, action }) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={action}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-4 py-2.5 text-left text-sm text-white/75 hover:border-[#D4AF37]/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-                    >
-                      {label}
-                      <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-white">Recent leads</h2>
-                  <button
-                    type="button"
-                    onClick={() => setTab('leads')}
-                    className="text-sm text-white/55 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-                  >
-                    View all
-                  </button>
-                </div>
-
-                <div className="grid gap-3">
-                  {dashboardHealth.recentLeads.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-white/45">
-                      No incoming leads yet
-                    </div>
-                  ) : (
-                    dashboardHealth.recentLeads.map((lead) => {
-                      const tone = leadStatusStyles[lead.status] ?? leadStatusStyles.New;
-                      return (
-                        <article key={lead.id} className="rounded-xl border border-white/10 p-3">
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <h3 className="truncate text-sm font-semibold text-white">{lead.name}</h3>
-                            <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs ${tone.badge}`}>
-                              <span className={`size-1.5 rounded-full ${tone.dot}`} />
-                              {lead.status}
-                            </span>
-                          </div>
-                          <p className="truncate text-sm text-white/50">
-                            {lead.vehicle_model || lead.type} · {lead.phone}
-                          </p>
-                        </article>
-                      );
-                    })
-                  )}
-                </div>
-              </section>
-            </aside>
-          </section>
-        )}
-
-        {tab === 'inventory' && (
-          <section className="mt-8">
-            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <h2 className="text-lg font-semibold text-white">Cars</h2>
-
-              <label className="relative w-full lg:max-w-md">
-                <span className="sr-only">Search inventory</span>
-                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search make, model, year..."
-                  className={searchField}
-                />
-              </label>
-            </div>
-
-            <div className="mb-4 flex flex-wrap gap-2">
-              {inventoryFilters.map((filter) => {
-                const active = inventoryFilter === filter;
+            {/* 6 Executive Bento KPI Cards */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {[
+                {
+                  label: 'Page Views',
+                  value: formatNumber(analytics.totalPageViews),
+                  meta: `${formatNumber(analytics.avgDailyViews)} / day avg`,
+                  icon: BarChart2,
+                  accent: 'text-[#D4AF37]',
+                  bg: 'bg-[#D4AF37]/10',
+                },
+                {
+                  label: 'Unique Visitors',
+                  value: formatNumber(analytics.totalVisitors),
+                  meta: `${analyticsDays === 1 ? '24h' : `${analyticsDays}d`} audience reach`,
+                  icon: Users,
+                  accent: 'text-sky-400',
+                  bg: 'bg-sky-400/10',
+                },
+                {
+                  label: 'Vehicle Views',
+                  value: formatNumber(analytics.totalCarViews),
+                  meta: `${stats.total > 0 ? (analytics.totalCarViews / stats.total).toFixed(1) : 0} avg / car`,
+                  icon: Eye,
+                  accent: 'text-purple-400',
+                  bg: 'bg-purple-400/10',
+                },
+                {
+                  label: 'High-Intent CTAs',
+                  value: formatNumber(analytics.totalCtaClicks),
+                  meta: 'WhatsApp & Call inquiries',
+                  icon: Zap,
+                  accent: 'text-emerald-400',
+                  bg: 'bg-emerald-400/10',
+                },
+                {
+                  label: 'Conversion Rate',
+                  value: `${analytics.conversionRate.toFixed(1)}%`,
+                  meta: 'Visitors → Inquiries',
+                  icon: TrendingUp,
+                  accent: 'text-amber-400',
+                  bg: 'bg-amber-400/10',
+                },
+                {
+                  label: 'Active Fleet Value',
+                  value: formatMillions(stats.availableValue),
+                  meta: `${stats.available} vehicles available`,
+                  icon: WalletCards,
+                  accent: 'text-[#D4AF37]',
+                  bg: 'bg-[#D4AF37]/10',
+                },
+              ].map((card) => {
+                const Icon = card.icon;
                 return (
-                  <button
-                    key={filter}
-                    type="button"
-                    onClick={() => setInventoryFilter(filter)}
-                    aria-pressed={active}
-                    className={pill(active)}
-                  >
-                    {filter}
-                  </button>
+                  <div key={card.label} className={`${glassCardHover} p-5`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-medium text-white/50">{card.label}</span>
+                      <span className={`flex size-8 items-center justify-center rounded-lg border border-white/[0.08] ${card.bg} ${card.accent}`}>
+                        <Icon className="size-4" />
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold tracking-tight tabular-nums text-white">{card.value}</div>
+                    <p className="mt-1 text-[11px] text-white/40 truncate">{card.meta}</p>
+                  </div>
                 );
               })}
             </div>
 
-            <div className="grid gap-3">
-              {filtered.length === 0 ? (
-                <div className={`${panel} px-6 py-12 text-center`}>
-                  <Car className="mx-auto mb-3 size-8 text-[#D4AF37]" aria-hidden="true" />
-                  <h3 className="text-lg font-semibold text-white">No matching vehicles</h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-white/50">
-                    Try a different search, or add a car.
+            {/* Interactive Trend Chart Section */}
+            <div className={`${glassCard} p-6`}>
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/[0.06] pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold tracking-tight text-white">Audience Activity Timeline</h2>
+                    <span className="text-xs text-white/40">
+                      ({analyticsDays === 1 ? 'Hourly breakdown over last 24h' : `Daily trend over last ${analyticsDays} days`})
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-white/50">
+                    Hover over any point to inspect granular views, unique visitors, and customer actions.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setModalVehicle(null)}
-                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-black"
-                  >
-                    <Plus className="size-4" aria-hidden="true" />
-                    Add vehicle
-                  </button>
                 </div>
-              ) : (
-                filtered.map((vehicle) => {
-                  const sold = vehicle.is_sold;
-                  const removalDays = sold && vehicle.sold_at ? daysUntilRemoval(vehicle.sold_at) : 0;
-                  return (
-                    <article
-                      key={vehicle.id}
-                      className={`grid gap-4 rounded-2xl border p-4 md:grid-cols-[132px_1fr_auto] md:items-center ${
-                        sold ? 'border-red-400/20 bg-red-500/[0.04]' : `${panel}`
+
+                {/* Series Metric Filter */}
+                <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1 text-xs">
+                  {[
+                    { id: 'all', label: 'All Series', dot: 'bg-white' },
+                    { id: 'views', label: 'Views', dot: 'bg-[#D4AF37]' },
+                    { id: 'visitors', label: 'Visitors', dot: 'bg-sky-400' },
+                    { id: 'clicks', label: 'Clicks', dot: 'bg-emerald-400' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setChartMetric(m.id as ChartMetric)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 transition-all ${
+                        chartMetric === m.id ? 'bg-white/10 text-white font-semibold' : 'text-white/50 hover:text-white'
                       }`}
                     >
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-black/40">
-                        <img
-                          src={vehicle.image}
-                          alt={`${vehicle.year} ${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`}
-                          className={`h-full w-full object-cover ${sold ? 'opacity-50 grayscale' : ''}`}
-                        />
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-2 py-1.5 text-xs text-white/80">
-                          <span>{vehicle.condition}</span>
-                          {vehicle.gallery?.length ? (
-                            <span className="inline-flex items-center gap-1 text-[#D4AF37]">
-                              <ImageIcon className="size-3" aria-hidden="true" />
-                              {vehicle.gallery.length}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="mb-1 flex flex-wrap items-center gap-2 text-sm">
-                          <span className="inline-flex items-center gap-1.5 text-[#D4AF37]">
-                            <BrandMark make={vehicle.make} tone="mono" className="size-4 shrink-0" />
-                            {getBrandLabel(vehicle.make)}
-                          </span>
-                          <span className="text-white/45">{vehicle.year}</span>
-                          {sold && <span className="rounded-full border border-red-400/25 bg-red-500/10 px-2 py-0.5 text-xs text-red-200">Sold</span>}
-                        </div>
-                        <h3 className="truncate text-lg font-semibold text-white">
-                          {getDisplayModel(vehicle.make, vehicle.model)}
-                        </h3>
-                        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/55">
-                          <span className="text-white">{formatMillions(vehicle.price)}</span>
-                          <span>{Number(vehicle.mileage) > 0 ? `${Number(vehicle.mileage).toLocaleString('en-LK')} km` : 'Mileage not set'}</span>
-                          <span>{vehicle.fuel || 'Fuel not set'}</span>
-                          <span>{vehicle.bodyType || vehicle.color || 'Details pending'}</span>
-                        </p>
-                        {sold && vehicle.sold_at && (
-                          <p className="mt-2 flex items-center gap-2 text-sm text-amber-200">
-                            <AlertTriangle className="size-3.5" aria-hidden="true" />
-                            {removalDays > 0 ? `Hidden from site in ${removalDays} day${removalDays === 1 ? '' : 's'}` : 'Hidden from the website'}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleSold(vehicle)}
-                          className={`rounded-xl border px-3 py-2 text-sm font-medium ${
-                            sold
-                              ? 'border-red-400/25 bg-red-500/10 text-red-200'
-                              : 'border-white/10 text-white/70 hover:text-white'
-                          }`}
-                        >
-                          {sold ? 'Relist' : 'Mark sold'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEdit(vehicle)}
-                          className="rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/80 hover:text-white"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(vehicle)}
-                          className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-200"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          </section>
-        )}
-
-        {tab === 'leads' && (
-          <section className="mt-8">
-            <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Leads</h2>
-                <p className="mt-1 text-sm text-white/50">Newest first. Open WhatsApp from the same row.</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                {[
-                  ['New', newLeadCount],
-                  ['Contacted', contactedLeadCount],
-                  ['Closed', closedLeadCount],
-                ].map(([label, value]) => (
-                  <div key={label} className={`${panel} min-w-[96px] px-3 py-2.5`}>
-                    <p className="text-xl font-semibold tabular-nums text-white">{value}</p>
-                    <p className="mt-1 text-xs text-white/45">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap gap-2">
-                {leadFilters.map((filter) => {
-                  const active = leadFilter === filter;
-                  return (
-                    <button
-                      key={filter}
-                      type="button"
-                      onClick={() => setLeadFilter(filter)}
-                      aria-pressed={active}
-                      className={pill(active)}
-                    >
-                      {filter}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <label className="relative w-full xl:max-w-md">
-                <span className="sr-only">Search leads</span>
-                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
-                <input
-                  value={leadSearch}
-                  onChange={(event) => setLeadSearch(event.target.value)}
-                  placeholder="Search name, phone, car, or message"
-                  className={searchField}
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-3">
-              {filteredLeads.length === 0 ? (
-                <div className={`${panel} px-6 py-12 text-center`}>
-                  <Users className="mx-auto mb-3 size-8 text-[#D4AF37]" aria-hidden="true" />
-                  <h3 className="text-lg font-semibold text-white">
-                    {leads.length === 0 ? 'No leads yet' : 'No matching leads'}
-                  </h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-white/50">
-                    {leads.length === 0
-                      ? 'New enquiries, test drives, and vehicle requests will appear here.'
-                      : 'Try another filter or search term.'}
-                  </p>
-                </div>
-              ) : (
-                filteredLeads.map((lead) => {
-                  const tone = leadStatusStyles[lead.status] ?? leadStatusStyles.New;
-                  const phoneDigits = lead.phone.replace(/\D/g, '');
-                  return (
-                    <article key={lead.id} className={`${panel} grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto] lg:items-start`}>
-                      <div className="min-w-0">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs ${tone.badge}`}>
-                            <span className={`size-1.5 rounded-full ${tone.dot}`} />
-                            {lead.status}
-                          </span>
-                          <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/55">
-                            {lead.type}
-                          </span>
-                          <span className="text-xs text-white/40">{formatDate(lead.created_at)}</span>
-                        </div>
-
-                        <h3 className="text-base font-semibold text-white">{lead.name}</h3>
-                        <div className="mt-3 grid gap-2 text-sm text-white/55 md:grid-cols-2 xl:grid-cols-4">
-                          <span className="flex items-center gap-2 text-white">
-                            <Phone className="size-3.5 text-[#D4AF37]" aria-hidden="true" />
-                            {lead.phone}
-                          </span>
-                          {lead.vehicle_model && (
-                            <span className="flex items-center gap-2">
-                              <Car className="size-3.5 text-white/30" aria-hidden="true" />
-                              {lead.vehicle_model}
-                            </span>
-                          )}
-                          {lead.date && (
-                            <span className="flex items-center gap-2">
-                              <CalendarIcon className="size-3.5 text-white/30" aria-hidden="true" />
-                              {lead.date}{lead.time ? `, ${lead.time}` : ''}
-                            </span>
-                          )}
-                          {lead.message && (
-                            <span className="flex items-center gap-2 truncate">
-                              <Mail className="size-3.5 shrink-0 text-white/30" aria-hidden="true" />
-                              {lead.message}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                        {(['New', 'Contacted', 'Closed'] as const).map((status) => {
-                          const active = lead.status === status;
-                          return (
-                            <button
-                              key={status}
-                              type="button"
-                              disabled={active}
-                              onClick={() => handleLeadStatus(lead.id, status)}
-                              aria-pressed={active}
-                              className={`rounded-lg border px-3 py-1.5 text-xs font-medium disabled:cursor-default ${
-                                active
-                                  ? leadStatusStyles[status].active
-                                  : 'border-white/10 text-white/50 hover:text-white'
-                              }`}
-                            >
-                              {status}
-                            </button>
-                          );
-                        })}
-                        <a
-                          href={`https://wa.me/${phoneDigits}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-100"
-                        >
-                          <Phone className="size-3.5" aria-hidden="true" />
-                          WhatsApp
-                        </a>
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          </section>
-        )}
-
-        {tab === 'analytics' && (
-          <section className="mt-8">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Analytics</h2>
-                <p className="mt-1 text-sm text-white/50">Traffic, demand, and listing quality.</p>
-              </div>
-              <div className="flex flex-wrap gap-2 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setAnalyticsDays((d) => (d === 7 ? 30 : 7))}
-                  className="rounded-full border border-white/10 px-3 py-1.5 text-white/70 hover:border-[#D4AF37]/40 hover:text-white transition-colors"
-                >
-                  Last {analyticsDays} days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fetchTraffic()}
-                  className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1.5 text-[#F5D66B] hover:bg-[#D4AF37]/20"
-                >
-                  Refresh
-                </button>
-                <span className="rounded-full border border-white/10 px-3 py-1.5 text-white/45">Updated {formatDate(analytics.latestTraffic?.date)}</span>
-              </div>
-            </div>
-
-            {/* Core + CTA KPIs */}
-            {analyticsDetail && (
-              <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-                {[
-                  { label: 'Unique visitors', value: formatNumber(analyticsDetail.uniques), meta: `${analyticsDays}d distinct ip_hash`, icon: Users },
-                  { label: 'CTA clicks', value: formatNumber((analyticsDetail.topCtas || []).reduce((s, x) => s + x.count, 0)), meta: `${analyticsDetail.topCtas?.[0]?.name || 'no clicks'} top`, icon: Activity },
-                  { label: 'Car views', value: formatNumber((analyticsDetail.topCars || []).reduce((s, x) => s + x.count, 0)), meta: `${analyticsDetail.topCars?.length || 0} models viewed`, icon: Eye },
-                  { label: 'Top page', value: (analyticsDetail.topPages?.[0]?.path || '/').slice(0, 18), meta: `${formatNumber(analyticsDetail.topPages?.[0]?.count || 0)} views`, icon: BarChart2 },
-                  { label: 'Top CTA', value: (analyticsDetail.topCtas?.[0]?.name || '—'), meta: `${formatNumber(analyticsDetail.topCtas?.[0]?.count || 0)} clicks`, icon: TrendingUp },
-                  { label: 'Top referrer', value: (analyticsDetail.referrers?.[0]?.referrer || 'Direct').slice(0, 18), meta: `${formatNumber(analyticsDetail.referrers?.[0]?.count || 0)} sessions`, icon: ArrowUpRight },
-                ].map(({ label, value, meta, icon: Icon }) => (
-                  <article key={label} className={`${panel} p-4`}>
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs text-white/55">{label}</span>
-                      <Icon className="size-3.5 text-[#D4AF37]" aria-hidden="true" />
-                    </div>
-                    <p className="truncate text-lg font-semibold tabular-nums text-white" title={String(value)}>{value}</p>
-                    <p className="mt-1 truncate text-xs text-white/40">{meta}</p>
-                  </article>
-                ))}
-              </div>
-            )}
-
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-              {[
-                { icon: Activity, label: '7D visitors', value: formatNumber(analytics.totalVisitors), meta: analytics.visitorDelta || traffic.length > 1 ? `${analytics.visitorDelta >= 0 ? '+' : ''}${formatNumber(analytics.visitorDelta)} prior day` : 'No prior day' },
-                { icon: BarChart2, label: '7D page views', value: formatNumber(analytics.totalPageViews), meta: analytics.pageViewDelta || traffic.length > 1 ? `${analytics.pageViewDelta >= 0 ? '+' : ''}${formatNumber(analytics.pageViewDelta)} prior day` : 'No prior day' },
-                { icon: Users, label: 'Lead close rate', value: formatPercent(analytics.closedLeadRate), meta: `${closedLeadCount} closed of ${leads.length}` },
-                { icon: Eye, label: 'Demand coverage', value: formatPercent(analytics.demandCoverage), meta: `${analytics.viewedVehicles.length}/${stats.total} units viewed` },
-                { icon: CheckCircle2, label: 'Readiness', value: `${dashboardHealth.readiness}%`, meta: `${analytics.incompleteLive.length} live gaps` },
-                { icon: DollarSign, label: 'Live value', value: formatMillions(analytics.availableValue), meta: `${stats.available} available units` },
-              ].map(({ icon: Icon, label, value, meta }) => (
-                <article key={label} className={`${panel} p-4`}>
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm text-white/55">{label}</span>
-                    <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-xl font-semibold tabular-nums text-white">{value}</h3>
-                  <p className="mt-1 min-h-[20px] text-xs text-white/40">{meta}</p>
-                </article>
-              ))}
-            </div>
-
-            <div className="mt-3 grid gap-3 xl:grid-cols-[1.55fr_1fr]">
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Vehicle clicks</h3>
-                  <Eye className="size-4 text-white/30" aria-hidden="true" />
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  {stats.topViewed.length === 0 ? (
-                    <p className="col-span-full py-8 text-center text-sm text-white/45">Waiting for view data</p>
-                  ) : (
-                    stats.topViewed.map((vehicle, index) => (
-                      <div key={vehicle.id} className="grid grid-cols-[72px_1fr_auto] items-center gap-3 rounded-xl border border-white/10 p-3">
-                        <div className="relative aspect-square overflow-hidden rounded-lg bg-black/40">
-                          <img src={vehicle.image} alt={`${getBrandLabel(vehicle.make)} ${getDisplayModel(vehicle.make, vehicle.model)}`} className="h-full w-full object-cover" />
-                          <span className="absolute left-1.5 top-1.5 rounded bg-[#D4AF37] px-1.5 py-0.5 text-[10px] font-semibold text-black">
-                            {index + 1}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <BrandMark
-                              make={vehicle.make}
-                              tone="mono"
-                              className="size-5 shrink-0 text-white/50"
-                            />
-                            <h4 className="truncate text-sm font-medium text-white">
-                              {getBrandLabel(vehicle.make)} {getDisplayModel(vehicle.make, vehicle.model)}
-                            </h4>
-                          </div>
-                          <p className="mt-1 text-xs text-white/40">{formatMillions(vehicle.price)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-semibold tabular-nums text-[#D4AF37]">{vehicle.views || 0}</p>
-                          <p className="text-xs text-white/40">Clicks</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="mt-6 border-t border-white/10 pt-5">
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-white">Last 7 days</h3>
-                    <BarChart2 className="size-4 text-white/30" aria-hidden="true" />
-                  </div>
-
-                  <div className="flex h-40 items-end gap-2">
-                    {traffic.length === 0 ? (
-                      <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-white/10 text-center text-sm text-white/45">
-                        Tracking started, waiting for data
-                      </div>
-                    ) : (
-                      traffic
-                        .slice()
-                        .reverse()
-                        .map((item) => (
-                          <div key={item.date} className="flex h-full flex-1 flex-col justify-end gap-2">
-                            <div className="relative flex min-h-0 flex-1 items-end overflow-hidden rounded-md bg-white/[0.06]">
-                              <div
-                                className="w-full rounded-md bg-[#D4AF37]/70"
-                                style={{ height: `${((item.page_views || 0) / analytics.maxPageViews) * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-center text-[11px] text-white/45">
-                              {new Date(item.date).toLocaleDateString('en-LK', { weekday: 'short' })}
-                            </span>
-                          </div>
-                        ))
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              <aside className="grid gap-3">
-                <section className={`${panel} p-5`}>
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-white">Body types</h3>
-                    <PieChart className="size-4 text-white/30" aria-hidden="true" />
-                  </div>
-                  {stats.sortedBT.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-white/45">No stock data</p>
-                  ) : (
-                    <SegmentRows
-                      items={stats.sortedBT.map(([bodyType, count]) => ({
-                        label: bodyType,
-                        count,
-                        pct: stats.total > 0 ? (count / stats.total) * 100 : 0,
-                        meta: `${count} units`,
-                      }))}
-                    />
-                  )}
-                </section>
-
-                <section className={`${panel} p-5`}>
-                  <p className="text-sm text-white/50">Today</p>
-                  <h3 className="mt-1 text-2xl font-semibold tabular-nums text-white">
-                    {traffic[0]?.visitor_count || 0} visitors
-                  </h3>
-                  <p className="mt-2 text-sm text-white/45">People who visited the website, plus clicks on cars.</p>
-                  <button
-                    type="button"
-                    onClick={() => setTab('leads')}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-                  >
-                    Review leads
-                    <ArrowUpRight className="size-4 text-[#D4AF37]" aria-hidden="true" />
-                  </button>
-                </section>
-              </aside>
-            </div>
-
-            {analyticsDetail && (
-              <div className="mt-3 grid gap-3 xl:grid-cols-3">
-                <section className={`${panel} p-5`}>
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-white">Top pages</h3>
-                    <span className="text-xs text-white/40">{analyticsDetail.days}d page_view</span>
-                  </div>
-                  {analyticsDetail.topPages.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-white/45">No page views yet</p>
-                  ) : (
-                    <SegmentRows items={analyticsDetail.topPages.slice(0, 6).map((p) => ({ label: p.path, count: p.count, pct: (p.count / Math.max(1, analyticsDetail.topPages[0].count)) * 100, meta: `${p.count}` }))} />
-                  )}
-                </section>
-                <section className={`${panel} p-5`}>
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-white">Top CTAs</h3>
-                    <span className="text-xs text-white/40">clicks</span>
-                  </div>
-                  {analyticsDetail.topCtas.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-white/45">No CTA clicks yet — share the site to start tracking</p>
-                  ) : (
-                    <SegmentRows items={analyticsDetail.topCtas.slice(0, 6).map((c) => ({ label: c.name, count: c.count, pct: (c.count / Math.max(1, analyticsDetail.topCtas[0].count)) * 100, meta: `${c.count}` }))} />
-                  )}
-                </section>
-                <section className={`${panel} p-5`}>
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-white">Referrers / Top cars</h3>
-                    <span className="text-xs text-white/40">{analyticsDetail.referrers.length} sources</span>
-                  </div>
-                  <div className="space-y-5">
-                    <div>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">Referrers</p>
-                      {analyticsDetail.referrers.length === 0 ? <p className="text-sm text-white/40">Direct only</p> : <SegmentRows items={analyticsDetail.referrers.slice(0, 3).map((r) => ({ label: r.referrer.slice(0, 28), count: r.count, pct: (r.count / Math.max(1, analyticsDetail.referrers[0].count)) * 100, meta: `${r.count}` }))} />}
-                    </div>
-                    <div>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">Most viewed cars</p>
-                      {analyticsDetail.topCars.length === 0 ? <p className="text-sm text-white/40">No car_view yet</p> : <div className="space-y-2">{analyticsDetail.topCars.slice(0, 3).map((c) => (
-                        <div key={c.car_id} className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2 text-left">
-                          <span className="min-w-0 truncate text-sm text-white/80">{c.car ? `${c.car.year} ${c.car.make} ${c.car.model}` : c.car_id.slice(0, 12)}</span>
-                          <span className="ml-3 shrink-0 tabular-nums text-sm text-[#D4AF37]">{c.count}</span>
-                        </div>
-                      ))}</div>}
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {analyticsDetail && analyticsDetail.recent.length > 0 && (
-              <section className={`${panel} mt-3 p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Live feed — last 20 events</h3>
-                  <span className="text-xs text-white/40">page_view • car_view • cta_click</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="text-xs uppercase tracking-widest text-white/40">
-                      <tr><th className="pb-2 font-medium">Time</th><th className="pb-2 font-medium">Event</th><th className="pb-2 font-medium">Detail</th><th className="pb-2 font-medium">Path</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {analyticsDetail.recent.map((r, i) => (
-                        <tr key={`${r.created_at}-${i}`} className="text-white/70">
-                          <td className="py-2 pr-3 tabular-nums text-xs whitespace-nowrap">{new Date(r.created_at).toLocaleString('en-LK', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                          <td className="py-2 pr-3"><span className={`rounded-full border px-2 py-0.5 text-xs ${r.event_type === 'cta_click' ? 'border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F5D66B]' : r.event_type === 'car_view' ? 'border-sky-400/30 bg-sky-400/10 text-sky-200' : 'border-white/10 text-white/60'}`}>{r.event_type}</span></td>
-                          <td className="py-2 pr-3 truncate max-w-[160px]">{r.cta_name || r.car_id?.slice(0, 8) || '—'}</td>
-                          <td className="py-2 truncate max-w-[180px] text-white/50">{r.path}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
-
-            <div className="mt-3 grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Lead funnel</h3>
-                  <Users className="size-4 text-white/30" aria-hidden="true" />
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
-                  <div className="grid gap-4">
-                    {(['New', 'Contacted', 'Closed'] as Lead['status'][]).map((status) => {
-                      const count = analytics.leadStatusCounts[status];
-                      const pct = leads.length > 0 ? (count / leads.length) * 100 : 0;
-                      const tone = leadStatusStyles[status];
-                      return (
-                        <div key={status}>
-                          <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-                            <span className="inline-flex items-center gap-2 text-white/60">
-                              <span className={`size-1.5 rounded-full ${tone.dot}`} />
-                              {status}
-                            </span>
-                            <span className="tabular-nums text-white">{count}</span>
-                          </div>
-                          <Meter pct={pct} barClassName={tone.dot} />
-                        </div>
-                      );
-                    })}
-
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      {[
-                        { label: 'Follow-up', value: formatPercent(analytics.followUpRate), meta: 'Contacted or closed' },
-                        { label: 'Close rate', value: formatPercent(analytics.closedLeadRate), meta: `${closedLeadCount} wins` },
-                        { label: 'Lead yield', value: analytics.leadsPerHundredVisitors.toFixed(1), meta: 'Per 100 visitors' },
-                      ].map((item) => (
-                        <div key={item.label} className="rounded-xl border border-white/10 p-3">
-                          <p className="text-xs text-white/45">{item.label}</p>
-                          <p className="mt-2 text-lg font-semibold tabular-nums text-white">{item.value}</p>
-                          <p className="mt-1 truncate text-xs text-white/35">{item.meta}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 p-4">
-                    <p className="mb-3 text-sm font-medium text-white">Lead types</p>
-                    <SegmentRows items={analytics.leadTypeSegments} empty="No lead types yet" />
-                  </div>
-                </div>
-              </section>
-
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Action queue</h3>
-                  <AlertTriangle className="size-4 text-white/30" aria-hidden="true" />
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {[
-                    { label: 'New leads', value: analytics.leadStatusCounts.New, meta: 'Need first response', icon: Users, action: () => setTab('leads') },
-                    { label: 'Stale leads', value: dashboardHealth.staleNewLeads.length, meta: 'Over 24 hours new', icon: Clock3, action: () => setTab('leads') },
-                    { label: 'Missing photos', value: dashboardHealth.missingImages.length, meta: 'Hero image gaps', icon: ImageIcon, action: () => setTab('inventory') },
-                    { label: 'Incomplete live', value: analytics.incompleteLive.length, meta: formatMillions(analytics.readinessValueAtRisk), icon: CheckCircle2, action: () => setTab('inventory') },
-                    { label: 'Quiet stock', value: analytics.quietStock.length, meta: 'No recorded clicks', icon: Eye, action: () => setTab('inventory') },
-                    { label: 'Archive ready', value: dashboardHealth.archiveReady.length, meta: 'Sold past 14 days', icon: Trash2, action: () => setTab('inventory') },
-                  ].map(({ label, value, meta, icon: Icon, action }) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={action}
-                      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 text-left hover:border-[#D4AF37]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm text-white">{label}</span>
-                        <span className="mt-0.5 block truncate text-xs text-white/40">{meta}</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="text-lg font-semibold tabular-nums text-white">{value}</span>
-                        <Icon className="size-4 text-[#D4AF37]" aria-hidden="true" />
-                      </span>
+                      <span className={`size-1.5 rounded-full ${m.dot}`} />
+                      <span>{m.label}</span>
                     </button>
                   ))}
                 </div>
-              </section>
+              </div>
+
+              {/* Responsive SVG Chart */}
+              {traffic.length === 0 ? (
+                <div className="flex h-56 w-full flex-col items-center justify-center rounded-xl border border-dashed border-white/10 text-center">
+                  <BarChart2 className="size-8 text-white/20 mb-2" />
+                  <p className="text-sm font-medium text-white/60">No traffic recorded in this timeframe yet</p>
+                  <p className="text-xs text-white/40 mt-1">Browse the public site or share vehicle links to start aggregating metrics.</p>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="h-64 w-full">
+                    <svg
+                      viewBox="0 0 800 240"
+                      className="h-full w-full overflow-visible"
+                      preserveAspectRatio="none"
+                    >
+                      <defs>
+                        {/* Gold Gradient */}
+                        <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.0" />
+                        </linearGradient>
+                        {/* Sky Blue Gradient */}
+                        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
+                        </linearGradient>
+                        {/* Emerald Gradient */}
+                        <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#34d399" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#34d399" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Grid Lines */}
+                      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                        const y = 200 - ratio * 180;
+                        return (
+                          <line
+                            key={ratio}
+                            x1="0"
+                            y1={y}
+                            x2="800"
+                            y2={y}
+                            stroke="rgba(255,255,255,0.06)"
+                            strokeDasharray="4 4"
+                          />
+                        );
+                      })}
+
+                      {/* Render Lines & Areas based on traffic series */}
+                      {(() => {
+                        const count = traffic.length;
+                        const stepX = count > 1 ? 800 / (count - 1) : 400;
+
+                        const pointsViews = traffic.map((item, i) => {
+                          const x = count > 1 ? i * stepX : 400;
+                          const y = 200 - (Number(item.page_views || 0) / analytics.maxChartValue) * 180;
+                          return { x, y };
+                        });
+
+                        const pointsVisitors = traffic.map((item, i) => {
+                          const x = count > 1 ? i * stepX : 400;
+                          const y = 200 - (Number(item.visitor_count || 0) / analytics.maxChartValue) * 180;
+                          return { x, y };
+                        });
+
+                        const pointsClicks = traffic.map((item, i) => {
+                          const x = count > 1 ? i * stepX : 400;
+                          const y = 200 - (Number(item.cta_clicks || 0) / analytics.maxChartValue) * 180;
+                          return { x, y };
+                        });
+
+                        const makePath = (pts: { x: number; y: number }[]) =>
+                          pts.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
+
+                        const makeArea = (pts: { x: number; y: number }[]) => {
+                          if (pts.length === 0) return '';
+                          const line = makePath(pts);
+                          const first = pts[0];
+                          const last = pts[pts.length - 1];
+                          return `${line} L ${last.x} 200 L ${first.x} 200 Z`;
+                        };
+
+                        return (
+                          <>
+                            {/* Page Views Area & Line (Gold) */}
+                            {(chartMetric === 'all' || chartMetric === 'views') && (
+                              <>
+                                <path d={makeArea(pointsViews)} fill="url(#goldGrad)" />
+                                <path
+                                  d={makePath(pointsViews)}
+                                  fill="none"
+                                  stroke="#D4AF37"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </>
+                            )}
+
+                            {/* Visitors Area & Line (Sky Blue) */}
+                            {(chartMetric === 'all' || chartMetric === 'visitors') && (
+                              <>
+                                <path d={makeArea(pointsVisitors)} fill="url(#skyGrad)" />
+                                <path
+                                  d={makePath(pointsVisitors)}
+                                  fill="none"
+                                  stroke="#38bdf8"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </>
+                            )}
+
+                            {/* Clicks Area & Line (Emerald) */}
+                            {(chartMetric === 'all' || chartMetric === 'clicks') && (
+                              <>
+                                <path d={makeArea(pointsClicks)} fill="url(#emeraldGrad)" />
+                                <path
+                                  d={makePath(pointsClicks)}
+                                  fill="none"
+                                  stroke="#34d399"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </>
+                            )}
+
+                            {/* Hover Vertical Guide Indicator */}
+                            {hoveredPointIndex !== null && hoveredPointIndex < traffic.length && (
+                              <line
+                                x1={count > 1 ? hoveredPointIndex * stepX : 400}
+                                y1="10"
+                                x2={count > 1 ? hoveredPointIndex * stepX : 400}
+                                y2="200"
+                                stroke="#D4AF37"
+                                strokeWidth="1.5"
+                                strokeDasharray="3 3"
+                              />
+                            )}
+                          </>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+
+                  {/* Interactive Hover Columns Overlay */}
+                  <div className="absolute inset-0 flex">
+                    {traffic.map((item, idx) => (
+                      <div
+                        key={item.date}
+                        onMouseEnter={() => setHoveredPointIndex(idx)}
+                        onMouseLeave={() => setHoveredPointIndex(null)}
+                        className="flex-1 cursor-pointer"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Floating Inspection Tooltip */}
+                  {hoveredPointIndex !== null && traffic[hoveredPointIndex] && (
+                    <div
+                      className="pointer-events-none absolute -top-4 rounded-xl border border-white/20 bg-black/90 p-3 shadow-2xl backdrop-blur-md transition-all text-xs"
+                      style={{
+                        left: `${((hoveredPointIndex + 0.5) / traffic.length) * 100}%`,
+                        transform: 'translate(-50%, -100%)',
+                      }}
+                    >
+                      <p className="font-bold text-white border-b border-white/10 pb-1 mb-1.5 whitespace-nowrap">
+                        {analyticsDays === 1
+                          ? new Date(traffic[hoveredPointIndex].date).toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' })
+                          : new Date(traffic[hoveredPointIndex].date).toLocaleDateString('en-LK', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </p>
+                      <div className="space-y-1 tabular-nums whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="size-2 rounded-full bg-[#D4AF37]" />
+                          <span className="text-white/60">Page Views:</span>
+                          <span className="font-bold text-white ml-auto">{traffic[hoveredPointIndex].page_views}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="size-2 rounded-full bg-sky-400" />
+                          <span className="text-white/60">Unique Visitors:</span>
+                          <span className="font-bold text-white ml-auto">{traffic[hoveredPointIndex].visitor_count}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="size-2 rounded-full bg-emerald-400" />
+                          <span className="text-white/60">CTA Clicks:</span>
+                          <span className="font-bold text-white ml-auto">{traffic[hoveredPointIndex].cta_clicks || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* X-Axis Date Labels */}
+                  <div className="mt-3 flex justify-between text-[11px] text-white/40 tabular-nums">
+                    <span>
+                      {analyticsDays === 1
+                        ? '24 Hours Ago'
+                        : new Date(traffic[0]?.date).toLocaleDateString('en-LK', { month: 'short', day: 'numeric' })}
+                    </span>
+                    {traffic.length > 2 && (
+                      <span>
+                        {new Date(traffic[Math.floor(traffic.length / 2)]?.date).toLocaleDateString('en-LK', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    )}
+                    <span>
+                      {analyticsDays === 1
+                        ? 'Now'
+                        : new Date(traffic[traffic.length - 1]?.date).toLocaleDateString('en-LK', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="mt-3 grid gap-3 xl:grid-cols-[1fr_1fr_0.9fr]">
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Brand concentration</h3>
-                  <WalletCards className="size-4 text-white/30" aria-hidden="true" />
+            {/* 2-Column: 4-Stage Conversion Funnel & High-Intent Action Breakdown */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* 4-Stage Funnel Card */}
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-base font-bold tracking-tight text-white">4-Stage Conversion Funnel</h2>
+                    <p className="text-xs text-white/50">Audience flow from initial visit to qualified sales leads.</p>
+                  </div>
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+                    <Layers className="size-4" />
+                  </span>
                 </div>
 
-                {analytics.brandValueSegments.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-white/45">No stock data</p>
+                <div className="space-y-4">
+                  {analytics.funnel.map((step, idx) => (
+                    <div key={step.stage} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="flex size-5 items-center justify-center rounded-md bg-white/[0.08] text-[10px] font-bold text-white">
+                            {idx + 1}
+                          </span>
+                          <span className="font-semibold text-white">{step.stage}</span>
+                          <span className="text-white/40 hidden sm:inline">• {step.desc}</span>
+                        </div>
+                        <span className="font-bold tabular-nums text-white text-sm">
+                          {formatNumber(step.count)}
+                        </span>
+                      </div>
+                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${step.color} transition-all duration-700`}
+                          style={{ width: `${Math.max(4, clampPercent(step.pct))}%` }}
+                        />
+                      </div>
+                      {idx > 0 && (
+                        <div className="mt-1.5 flex justify-end text-[10px] text-white/45">
+                          {step.pct.toFixed(1)}% conversion from previous stage
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* High-Intent Customer Actions */}
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-base font-bold tracking-tight text-white">Customer Inquiries & Intent</h2>
+                    <p className="text-xs text-white/50">Direct sales inquiries, phone calls, and calculator clicks.</p>
+                  </div>
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-400">
+                    <MessageCircle className="size-4" />
+                  </span>
+                </div>
+
+                {!analyticsDetail || analyticsDetail.topCtas.length === 0 ? (
+                  <p className="py-12 text-center text-xs text-white/40">No customer CTA interactions logged yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {analytics.brandValueSegments.slice(0, 6).map((segment) => (
-                      <div key={segment.label}>
-                        <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-                          <span className="flex min-w-0 items-center gap-2 text-white/70">
-                            <BrandMark make={segment.label} tone="mono" className="size-4 shrink-0 text-[#D4AF37]" />
-                            <span className="truncate">{segment.label}</span>
-                          </span>
-                          <span className="shrink-0 tabular-nums text-white">{segment.meta}</span>
+                    {analyticsDetail.topCtas.slice(0, 7).map((cta) => {
+                      const maxCta = Math.max(1, analyticsDetail.topCtas[0].count);
+                      const pct = (cta.count / maxCta) * 100;
+                      return (
+                        <div key={cta.name} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                          <div className="flex items-center justify-between text-xs mb-1.5">
+                            <span className="font-medium text-white/80">{formatCtaLabel(cta.name)}</span>
+                            <span className="font-bold tabular-nums text-[#D4AF37]">{cta.count} clicks</span>
+                          </div>
+                          <Meter pct={pct} barClassName="bg-gradient-to-r from-[#D4AF37] to-amber-300" />
                         </div>
-                        <Meter pct={segment.pct} />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Top Performing Vehicles Leaderboard */}
+            <div className={`${glassCard} p-6`}>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-white">Showroom Vehicles Demand Leaderboard</h2>
+                  <p className="text-xs text-white/50">Most explored and clicked vehicles ranked by buyer interest.</p>
+                </div>
+                <span className="flex size-8 items-center justify-center rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+                  <Car className="size-4" />
+                </span>
+              </div>
+
+              {!analyticsDetail || analyticsDetail.topCars.length === 0 ? (
+                <div className="py-12 text-center text-xs text-white/40">
+                  Vehicle view tracking initialized. Explore car listings to see top performers.
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {analyticsDetail.topCars.slice(0, 4).map((item, idx) => {
+                    const car = item.car;
+                    const maxCarViews = Math.max(1, analyticsDetail.topCars[0].count);
+                    const sharePct = (item.count / maxCarViews) * 100;
+                    return (
+                      <div
+                        key={item.car_id}
+                        className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3.5 transition-all hover:border-[#D4AF37]/40 hover:bg-white/[0.04]"
+                      >
+                        {/* Rank Badge */}
+                        <div className="absolute top-5 left-5 z-10">
+                          <span className={`rounded-lg px-2 py-1 text-[10px] font-bold shadow-md ${
+                            idx === 0
+                              ? 'bg-[#D4AF37] text-black'
+                              : 'bg-black/80 text-white/90 border border-white/20'
+                          }`}>
+                            #{idx + 1}
+                          </span>
+                        </div>
+
+                        {/* Image Thumbnail */}
+                        <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-black/50 mb-3">
+                          <img
+                            src={car?.image || '/images/showroom/serendib-showroom-floor-02.webp'}
+                            alt=""
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                          <div className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-bold text-[#D4AF37] border border-white/10">
+                            {car?.price ? formatMillions(car.price) : 'Price on request'}
+                          </div>
+                        </div>
+
+                        {/* Title & Info */}
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-semibold text-white group-hover:text-[#D4AF37] transition-colors">
+                            {car ? `${car.year} ${car.make} ${car.model}` : item.car_id.slice(0, 16)}
+                          </h3>
+                          <div className="mt-2 flex items-center justify-between text-xs text-white/50">
+                            <span>{item.count} total clicks</span>
+                            <button
+                              type="button"
+                              onClick={() => window.open(`/car/${item.car_id}`, '_blank')}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#D4AF37] hover:underline"
+                            >
+                              <span>View</span>
+                              <ArrowUpRight className="size-3" />
+                            </button>
+                          </div>
+                          <div className="mt-2">
+                            <Meter pct={sharePct} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 3-Column: Traffic Referrers, Top Visited Pages & Real-time Live Feed */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Traffic Referrer Channels */}
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white">Acquisition Referrers</h3>
+                  <span className="text-[11px] text-white/40">Sources</span>
+                </div>
+                {!analyticsDetail || analyticsDetail.referrers.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-white/40">Direct visits only</p>
+                ) : (
+                  <div className="space-y-3">
+                    {analyticsDetail.referrers.slice(0, 5).map((r) => (
+                      <div key={r.referrer} className="rounded-xl border border-white/[0.06] p-3">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="truncate font-medium text-white/80">{r.referrer}</span>
+                          <span className="font-bold tabular-nums text-white">{r.count}</span>
+                        </div>
+                        <Meter pct={(r.count / Math.max(1, analyticsDetail.referrers[0].count)) * 100} />
                       </div>
                     ))}
                   </div>
                 )}
-
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-white/10 p-3">
-                    <p className="text-xs text-white/45">Sold value</p>
-                    <p className="mt-2 text-lg font-semibold tabular-nums text-white">{formatMillions(analytics.soldValue)}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 p-3">
-                    <p className="text-xs text-white/45">Avg days live</p>
-                    <p className="mt-2 text-lg font-semibold tabular-nums text-white">{formatNumber(analytics.avgDaysLive)}</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Stock mix</h3>
-                  <PieChart className="size-4 text-white/30" aria-hidden="true" />
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  {[
-                    { title: 'Body types', segments: analytics.bodyTypeSegments },
-                    { title: 'Fuel', segments: analytics.fuelSegments },
-                    { title: 'Condition', segments: analytics.conditionSegments },
-                    { title: 'Transmission', segments: analytics.transmissionSegments },
-                  ].map((group) => (
-                    <div key={group.title}>
-                      <p className="mb-3 text-sm font-medium text-white">{group.title}</p>
-                      <SegmentRows items={group.segments.slice(0, 4)} />
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className={`${panel} p-5`}>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-white">Price bands</h3>
-                  <TrendingUp className="size-4 text-white/30" aria-hidden="true" />
-                </div>
-
-                <SegmentRows
-                  items={analytics.priceBands.map((band) => ({
-                    ...band,
-                    meta: `${band.count} units`,
-                  }))}
-                />
-
-                <div className="mt-5 grid gap-2">
-                  <div className="rounded-xl border border-white/10 p-3">
-                    <p className="text-xs text-white/45">Oldest live unit</p>
-                    <p className="mt-2 truncate text-lg font-semibold text-white">
-                      {analytics.oldestLive ? `${analytics.oldestLive.days} days` : 'N/A'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 p-3">
-                    <p className="text-xs text-white/45">Total clicks</p>
-                    <p className="mt-2 text-lg font-semibold tabular-nums text-white">{formatNumber(analytics.totalViews)}</p>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <section className={`${panel} mt-3 p-5`}>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <h3 className="text-lg font-semibold text-white">Listings to fix first</h3>
-                <Edit2 className="size-4 text-white/30" aria-hidden="true" />
               </div>
 
-              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                {analytics.highValueIncomplete.length === 0 ? (
-                  <p className="col-span-full py-8 text-center text-sm text-white/45">No live quality gaps</p>
+              {/* Top Pages Visited */}
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white">Top Routes & Pages</h3>
+                  <span className="text-[11px] text-white/40">Views</span>
+                </div>
+                {!analyticsDetail || analyticsDetail.topPages.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-white/40">No page views recorded</p>
                 ) : (
-                  analytics.highValueIncomplete.map((vehicle) => (
-                    <button
-                      key={vehicle.id}
-                      type="button"
-                      onClick={() => openEdit(vehicle)}
-                      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-white/10 px-3 py-3 text-left hover:border-[#D4AF37]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-white">{getVehicleName(vehicle)}</span>
-                        <span className="mt-1 block text-xs text-white/40">
-                          {!vehicle.image ? 'Missing image' : !vehicle.description?.trim() ? 'Missing description' : 'Missing features'}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-sm text-[#D4AF37]">{formatMillions(vehicle.price)}</span>
-                    </button>
-                  ))
+                  <div className="space-y-3">
+                    {analyticsDetail.topPages.slice(0, 5).map((p) => (
+                      <div key={p.path} className="rounded-xl border border-white/[0.06] p-3">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="truncate font-medium text-white/80">{p.path}</span>
+                          <span className="font-bold tabular-nums text-[#D4AF37]">{p.count}</span>
+                        </div>
+                        <Meter pct={(p.count / Math.max(1, analyticsDetail.topPages[0].count)) * 100} barClassName="bg-sky-400" />
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </section>
-          </section>
+
+              {/* Real-time Live Event Feed */}
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-emerald-400 animate-ping" />
+                    <h3 className="text-sm font-bold tracking-tight text-white">Live Activity Stream</h3>
+                  </div>
+                  <span className="text-[11px] text-white/40">Latest 15</span>
+                </div>
+
+                {!analyticsDetail || analyticsDetail.recent.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-white/40">Waiting for live activity...</p>
+                ) : (
+                  <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                    {analyticsDetail.recent.slice(0, 15).map((r, i) => (
+                      <div
+                        key={`${r.created_at}-${i}`}
+                        className="flex items-start justify-between gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] p-2.5 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${getEventBadgeColor(r.event_type)}`}>
+                              {r.event_type}
+                            </span>
+                            <span className="truncate text-white/50 text-[10px]">{r.path}</span>
+                          </div>
+                          <p className="truncate font-medium text-white/90">
+                            {r.cta_name ? formatCtaLabel(r.cta_name) : r.car_id ? `Car #${r.car_id.slice(0, 8)}` : 'Visitor Browsing'}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[10px] text-white/40 tabular-nums">
+                          {formatRelativeTime(r.created_at)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            TAB: OVERVIEW
+        ══════════════════════════════════════════════════════════════════ */}
+        {tab === 'overview' && (
+          <motion.section
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            className="space-y-6"
+          >
+            {/* Top Overview Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { label: 'Listed Vehicles', value: stats.total, meta: 'Total in showroom system', icon: Car },
+                { label: 'Live on Website', value: stats.available, meta: 'Available for purchase', icon: ShieldCheck },
+                { label: 'Sold Units', value: stats.sold, meta: 'Archived inventory', icon: CheckCircle2 },
+                { label: 'Fleet Inventory Value', value: formatMillions(stats.totalValue), meta: formatFullLkr(stats.totalValue), icon: WalletCards },
+              ].map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div key={card.label} className={`${glassCardHover} p-5`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold text-white/50">{card.label}</span>
+                      <span className="flex size-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[#D4AF37]">
+                        <Icon className="size-4" />
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold tracking-tight text-white tabular-nums">{card.value}</div>
+                    <p className="mt-1 text-xs text-white/40 truncate">{card.meta}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Needs Attention Alert Queue */}
+            <div className={`${glassCard} p-6`}>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-white">Showroom Action Queue</h2>
+                  <p className="text-xs text-white/50">Items needing manager response or listing review.</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/60">
+                  {dashboardHealth.readiness}% Catalog Readiness
+                </span>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    label: 'New Customer Leads',
+                    value: newLeadCount,
+                    meta: 'Awaiting customer response',
+                    icon: Users,
+                    action: () => setTab('leads'),
+                  },
+                  {
+                    label: 'Stale Leads (>24h)',
+                    value: dashboardHealth.staleNewLeads.length,
+                    meta: 'Follow-up overdue',
+                    icon: Clock3,
+                    action: () => setTab('leads'),
+                  },
+                  {
+                    label: 'Missing Hero Photos',
+                    value: dashboardHealth.missingImages.length,
+                    meta: 'Listings need photos',
+                    icon: ImageIcon,
+                    action: () => setTab('inventory'),
+                  },
+                  {
+                    label: 'Archived Sold Ready',
+                    value: dashboardHealth.archiveReady.length,
+                    meta: 'Sold over 14 days ago',
+                    icon: CheckCircle2,
+                    action: () => setTab('inventory'),
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={item.action}
+                      className="group flex flex-col justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-all hover:border-[#D4AF37]/40 hover:bg-white/[0.04]"
+                    >
+                      <div className="flex items-center justify-between w-full mb-2">
+                        <span className="text-xs font-semibold text-white/60">{item.label}</span>
+                        <Icon className="size-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div className="text-2xl font-bold tracking-tight text-white tabular-nums">{item.value}</div>
+                      <p className="mt-1 text-[11px] text-white/40">{item.meta}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Analytics & Recent Leads Previews */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white">Recent Customer Inquiries</h3>
+                  <button
+                    type="button"
+                    onClick={() => setTab('leads')}
+                    className="text-xs font-semibold text-[#D4AF37] hover:underline"
+                  >
+                    View All Leads &rarr;
+                  </button>
+                </div>
+                {leads.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-white/40">No customer inquiries recorded yet.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {leads.slice(0, 4).map((lead) => (
+                      <div key={lead.id} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-white">{lead.name}</span>
+                            <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${leadStatusStyles[lead.status]?.badge}`}>
+                              {lead.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/50 mt-0.5">{lead.phone} • {lead.type}</p>
+                        </div>
+                        <a
+                          href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-200 hover:bg-emerald-400/20"
+                        >
+                          <Phone className="size-3" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className={`${glassCard} p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white">Inventory Brand Breakdown</h3>
+                  <button
+                    type="button"
+                    onClick={() => setTab('inventory')}
+                    className="text-xs font-semibold text-[#D4AF37] hover:underline"
+                  >
+                    Manage Cars &rarr;
+                  </button>
+                </div>
+                {stats.sortedBT.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-white/40">No vehicles in stock.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {stats.sortedBT.slice(0, 5).map(([bodyType, count]) => (
+                      <div key={bodyType} className="rounded-xl border border-white/[0.06] p-3">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-medium text-white/80">{bodyType}</span>
+                          <span className="font-bold tabular-nums text-white">{count} units</span>
+                        </div>
+                        <Meter pct={stats.total > 0 ? (count / stats.total) * 100 : 0} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            TAB: INVENTORY MANAGEMENT
+        ══════════════════════════════════════════════════════════════════ */}
+        {tab === 'inventory' && (
+          <motion.section
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            className="space-y-6"
+          >
+            {/* Search & Filter Bar */}
+            <div className={`${glassCard} p-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between`}>
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by make, model, year, body type, or color..."
+                  className={searchField}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {inventoryFilters.map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setInventoryFilter(f)}
+                    className={pill(inventoryFilter === f)}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Vehicles Listing Grid */}
+            {filtered.length === 0 ? (
+              <div className={`${glassCard} p-12 text-center`}>
+                <Car className="mx-auto size-10 text-white/20 mb-3" />
+                <h3 className="text-base font-bold text-white">No Matching Vehicles Found</h3>
+                <p className="mt-1 text-xs text-white/50 max-w-md mx-auto">
+                  Try adjusting your search criteria or add a new vehicle listing to the showroom lot.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setModalVehicle(null)}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#D4AF37] px-4 py-2 text-xs font-bold text-black"
+                >
+                  <Plus className="size-3.5 stroke-[3]" />
+                  <span>Add Vehicle</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filtered.map((vehicle) => {
+                  const sold = vehicle.is_sold;
+                  return (
+                    <div
+                      key={vehicle.id}
+                      className={`group relative overflow-hidden rounded-2xl border p-4 transition-all ${
+                        sold
+                          ? 'border-red-500/20 bg-red-500/[0.02]'
+                          : 'border-white/[0.08] bg-[#121110]/80 hover:border-white/[0.18]'
+                      } flex flex-col gap-4 sm:flex-row sm:items-center`}
+                    >
+                      {/* Photo Thumbnail */}
+                      <div className="relative aspect-[16/10] w-full sm:w-48 shrink-0 overflow-hidden rounded-xl bg-black/60">
+                        <img
+                          src={vehicle.image || '/images/showroom/serendib-showroom-floor-02.webp'}
+                          alt=""
+                          className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                            sold ? 'opacity-40 grayscale' : ''
+                          }`}
+                        />
+                        {sold && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                            <span className="rounded-lg bg-red-500/90 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-white">
+                              Sold
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white/80">
+                          {vehicle.condition}
+                        </div>
+                      </div>
+
+                      {/* Info & Specs */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-xs font-semibold text-[#D4AF37]">
+                            {getBrandLabel(vehicle.make)}
+                          </span>
+                          <span className="text-xs text-white/40">• {vehicle.year}</span>
+                          {vehicle.views ? (
+                            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/60">
+                              {vehicle.views} views
+                            </span>
+                          ) : null}
+                        </div>
+                        <h3 className="text-base font-bold text-white truncate">
+                          {getDisplayModel(vehicle.make, vehicle.model)}
+                        </h3>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/60">
+                          <span className="font-bold text-white text-sm">{formatMillions(vehicle.price)}</span>
+                          <span>{vehicle.mileage ? `${Number(vehicle.mileage).toLocaleString('en-LK')} km` : 'Mileage N/A'}</span>
+                          <span>{vehicle.fuel || 'Fuel N/A'}</span>
+                          <span>{vehicle.transmission || 'Transmission N/A'}</span>
+                          <span>{vehicle.bodyType || 'Body N/A'}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 sm:self-center shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSold(vehicle)}
+                          className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                            sold
+                              ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20'
+                              : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/20 hover:text-white'
+                          }`}
+                        >
+                          {sold ? 'Relist' : 'Mark Sold'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(vehicle)}
+                          className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-white/80 hover:border-[#D4AF37]/50 hover:text-[#D4AF37] transition-all"
+                        >
+                          <Edit2 className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(vehicle)}
+                          className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 hover:border-red-500/40 hover:bg-red-500/20 transition-all"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            TAB: LEADS PIPELINE
+        ══════════════════════════════════════════════════════════════════ */}
+        {tab === 'leads' && (
+          <motion.section
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            className="space-y-6"
+          >
+            {/* Lead Status Metric Chips */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: 'New Enquiries', count: newLeadCount, style: leadStatusStyles.New },
+                { label: 'Contacted in Progress', count: contactedLeadCount, style: leadStatusStyles.Contacted },
+                { label: 'Closed / Finalized', count: closedLeadCount, style: leadStatusStyles.Closed },
+              ].map((item) => (
+                <div key={item.label} className={`${glassCard} p-4 flex items-center justify-between`}>
+                  <div>
+                    <span className="text-xs text-white/50">{item.label}</span>
+                    <div className="text-2xl font-bold tracking-tight text-white tabular-nums mt-0.5">{item.count}</div>
+                  </div>
+                  <span className={`size-3 rounded-full ${item.style.dot}`} />
+                </div>
+              ))}
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className={`${glassCard} p-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between`}>
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+                <input
+                  type="text"
+                  value={leadSearch}
+                  onChange={(e) => setLeadSearch(e.target.value)}
+                  placeholder="Search buyer name, contact number, requested car, or inquiry note..."
+                  className={searchField}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {leadFilters.map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setLeadFilter(f)}
+                    className={pill(leadFilter === f)}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Leads Cards */}
+            {filteredLeads.length === 0 ? (
+              <div className={`${glassCard} p-12 text-center`}>
+                <Users className="mx-auto size-10 text-white/20 mb-3" />
+                <h3 className="text-base font-bold text-white">No Customer Leads Found</h3>
+                <p className="mt-1 text-xs text-white/50 max-w-md mx-auto">
+                  New vehicle inquiries, test drive requests, and contact submissions will populate here in real-time.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {filteredLeads.map((lead) => {
+                  const phoneDigits = lead.phone.replace(/\D/g, '');
+                  const statusStyle = leadStatusStyles[lead.status] || leadStatusStyles.New;
+                  return (
+                    <div
+                      key={lead.id}
+                      className={`${glassCard} p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between`}
+                    >
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-base font-bold text-white">{lead.name}</span>
+                          <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold ${statusStyle.badge}`}>
+                            {lead.status}
+                          </span>
+                          <span className="rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] text-white/60">
+                            {lead.type}
+                          </span>
+                          <span className="text-xs text-white/40 tabular-nums">
+                            {formatDate(lead.created_at)} ({formatRelativeTime(lead.created_at)})
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/60">
+                          <span className="text-white font-medium flex items-center gap-1">
+                            <Phone className="size-3 text-[#D4AF37]" />
+                            {lead.phone}
+                          </span>
+                          {lead.vehicle_model && (
+                            <span className="flex items-center gap-1">
+                              <Car className="size-3 text-white/40" />
+                              {lead.vehicle_model}
+                            </span>
+                          )}
+                          {lead.date && (
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon className="size-3 text-white/40" />
+                              {lead.date} {lead.time ? `at ${lead.time}` : ''}
+                            </span>
+                          )}
+                        </div>
+
+                        {lead.message && (
+                          <p className="text-xs text-white/70 bg-white/[0.02] border border-white/[0.05] rounded-lg p-2.5 mt-2">
+                            "{lead.message}"
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Status Buttons & Direct WhatsApp Action */}
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {(['New', 'Contacted', 'Closed'] as const).map((s) => {
+                          const active = lead.status === s;
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              disabled={active}
+                              onClick={() => handleLeadStatus(lead.id, s)}
+                              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                                active
+                                  ? statusStyle.active
+                                  : 'border-white/10 bg-white/[0.02] text-white/50 hover:text-white hover:border-white/20'
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          );
+                        })}
+
+                        <a
+                          href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(
+                            `Hi ${lead.name}, regarding your inquiry with Serendib Trading for ${lead.vehicle_model || 'a vehicle'}:`,
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3.5 py-1.5 text-xs font-bold text-emerald-200 hover:bg-emerald-400/20 shadow-sm transition-all"
+                        >
+                          <Phone className="size-3.5" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.section>
         )}
       </main>
 
+      {/* Vehicle Add/Edit Modal */}
       <AnimatePresence>
         {modalVehicle !== undefined && (
           <VehicleModal

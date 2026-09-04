@@ -113,22 +113,36 @@ export default async function handler(req, res) {
     try {
       await ensureSiteTrafficTable();
 
-      const days = Math.min(90, Math.max(7, parseInt(String(req.query?.days || '30'), 10) || 30));
-      const range = `NOW() - ($1::text || ' days')::interval`;
+      const days = Math.min(90, Math.max(1, parseInt(String(req.query?.days || '30'), 10) || 30));
+      const is24h = days === 1;
+
+      const dailyQueryPromise = is24h
+        ? query(
+            `SELECT TO_CHAR(DATE_TRUNC('hour', created_at), 'YYYY-MM-DD"T"HH24:00:00') AS date,
+                    COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS page_views,
+                    COUNT(DISTINCT ip_hash) FILTER (WHERE event_type = 'page_view')::int AS visitor_count,
+                    COUNT(*) FILTER (WHERE event_type = 'cta_click')::int AS cta_clicks,
+                    COUNT(*) FILTER (WHERE event_type = 'car_view')::int AS car_views
+             FROM site_traffic
+             WHERE created_at >= NOW() - INTERVAL '24 hours'
+             GROUP BY DATE_TRUNC('hour', created_at)
+             ORDER BY DATE_TRUNC('hour', created_at) ASC`
+          )
+        : query(
+            `SELECT created_at::date::text AS date,
+                    COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS page_views,
+                    COUNT(DISTINCT ip_hash) FILTER (WHERE event_type = 'page_view')::int AS visitor_count,
+                    COUNT(*) FILTER (WHERE event_type = 'cta_click')::int AS cta_clicks,
+                    COUNT(*) FILTER (WHERE event_type = 'car_view')::int AS car_views
+             FROM site_traffic
+             WHERE created_at >= NOW() - ($1::text || ' days')::interval
+             GROUP BY created_at::date
+             ORDER BY created_at::date ASC`,
+            [String(days)]
+          );
 
       const [daily, topPages, topCtas, topCars, referrers, recent, uniques] = await Promise.all([
-        query(
-          `SELECT created_at::date AS date,
-                  COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS page_views,
-                  COUNT(DISTINCT ip_hash) FILTER (WHERE event_type = 'page_view')::int AS visitor_count,
-                  COUNT(*) FILTER (WHERE event_type = 'cta_click')::int AS cta_clicks,
-                  COUNT(*) FILTER (WHERE event_type = 'car_view')::int AS car_views
-           FROM site_traffic
-           WHERE created_at >= NOW() - ($1::text || ' days')::interval
-           GROUP BY created_at::date
-           ORDER BY created_at::date DESC`,
-          [String(days)]
-        ),
+        dailyQueryPromise,
         query(
           `SELECT path, COUNT(*)::int AS count
            FROM site_traffic
@@ -140,13 +154,14 @@ export default async function handler(req, res) {
           `SELECT cta_name AS name, COUNT(*)::int AS count
            FROM site_traffic
            WHERE event_type = 'cta_click' AND created_at >= NOW() - ($1::text || ' days')::interval
-           GROUP BY cta_name ORDER BY count DESC LIMIT 10`,
+           GROUP BY cta_name ORDER BY count DESC LIMIT 12`,
           [String(days)]
         ),
         query(
           `SELECT car_id, COUNT(*)::int AS count
            FROM site_traffic
-           WHERE event_type = 'car_view' AND car_id IS NOT NULL AND created_at >= NOW() - ($1::text || ' days')::interval
+           WHERE (event_type = 'car_view' OR (event_type = 'cta_click' AND car_id IS NOT NULL))
+             AND car_id IS NOT NULL AND created_at >= NOW() - ($1::text || ' days')::interval
            GROUP BY car_id ORDER BY count DESC LIMIT 8`,
           [String(days)]
         ),
@@ -154,12 +169,12 @@ export default async function handler(req, res) {
           `SELECT COALESCE(NULLIF(referrer,''), 'Direct') AS referrer, COUNT(*)::int AS count
            FROM site_traffic
            WHERE event_type = 'page_view' AND created_at >= NOW() - ($1::text || ' days')::interval
-           GROUP BY referrer ORDER BY count DESC LIMIT 6`,
+           GROUP BY referrer ORDER BY count DESC LIMIT 8`,
           [String(days)]
         ),
         query(
-          `SELECT event_type, path, cta_name, car_id, referrer, created_at
-           FROM site_traffic ORDER BY created_at DESC LIMIT 20`
+          `SELECT event_type, path, cta_name, car_id, referrer, created_at, metadata
+           FROM site_traffic ORDER BY created_at DESC LIMIT 30`
         ),
         query(
           `SELECT COUNT(DISTINCT ip_hash)::int AS uniques
@@ -175,13 +190,13 @@ export default async function handler(req, res) {
         return res.status(200).json(Array.isArray(daily) ? daily : []);
       }
 
-      // Enrich topCars with make/model if possible (best-effort)
+      // Enrich topCars with make/model, price, image, is_sold
       let enrichedTopCars = Array.isArray(topCars) ? topCars : [];
       if (enrichedTopCars.length > 0) {
         try {
           const ids = enrichedTopCars.map((r) => r.car_id).filter(Boolean);
           if (ids.length > 0) {
-            const cars = await query(`SELECT id, make, model, year FROM cars WHERE id = ANY($1::text[])`, [ids]);
+            const cars = await query(`SELECT id, make, model, year, price, image, is_sold FROM cars WHERE id = ANY($1::text[])`, [ids]);
             const map = new Map((Array.isArray(cars) ? cars : []).map((c) => [c.id, c]));
             enrichedTopCars = enrichedTopCars.map((r) => ({
               ...r,
@@ -277,12 +292,32 @@ export default async function handler(req, res) {
     if (body.type === 'cta_click') {
       const cta = String(body.cta || body.name || 'unknown').slice(0, 80).toLowerCase();
       const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
-      const allowed = new Set(['whatsapp_float','whatsapp_car','whatsapp_nav','call','call_car','instagram','contact_form','test_drive','view_inventory','explore_vehicles','about','finance','gallery','wishlist_add','wishlist_remove','car_card','share']);
+      const allowed = new Set([
+        'whatsapp_float',
+        'whatsapp_car',
+        'whatsapp_nav',
+        'call',
+        'call_car',
+        'instagram',
+        'contact_form',
+        'test_drive',
+        'view_inventory',
+        'explore_vehicles',
+        'about',
+        'finance',
+        'finance_calculator',
+        'gallery',
+        'wishlist_add',
+        'wishlist_remove',
+        'car_card',
+        'share',
+      ]);
       const ctaName = allowed.has(cta) ? cta : cta.slice(0, 80);
+      const carId = body.car_id || meta.car_id ? String(body.car_id || meta.car_id).slice(0, 80) : null;
       try {
         await query(
           'INSERT INTO site_traffic (event_type, path, user_agent, referrer, cta_name, car_id, ip_hash, metadata, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,NOW())',
-          ['cta_click', path, userAgent, referrer, ctaName, body.car_id ? String(body.car_id).slice(0,80) : null, ipHash, JSON.stringify({ ...meta, cta: ctaName }).slice(0,2000)]
+          ['cta_click', path, userAgent, referrer, ctaName, carId, ipHash, JSON.stringify({ ...meta, cta: ctaName, car_id: carId }).slice(0, 2000)]
         );
       } catch {}
       return res.status(200).json({ ok: true });

@@ -9,6 +9,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { LiquidButton } from './ui/liquid-glass-button';
+import { logCtaClick } from '../lib/supabase';
 
 export default function LoanCalculator() {
   const [price, setPrice] = useState(15000000);
@@ -196,6 +197,7 @@ export default function LoanCalculator() {
                     href="https://wa.me/94756363427"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => logCtaClick('finance_calculator')}
                     className="flex items-center justify-center gap-4 w-full text-[14px] font-bold tracking-[0.1em] uppercase text-white"
                 >
                     <Wallet className="w-4 h-4" />
