@@ -234,10 +234,12 @@ export default function Contact() {
                     <input 
                       type="text" 
                       required 
+                      id="name"
+                      name="name"
+                      autoComplete="name"
                       value={formData.name} 
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
                       className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
-                      id="name"
                       placeholder="Full Name"
                     />
                     <label 
@@ -251,10 +253,12 @@ export default function Contact() {
                     <input 
                       type="tel" 
                       required 
+                      id="phone"
+                      name="phone"
+                      autoComplete="tel"
                       value={formData.phone} 
                       onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })} 
                       className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
-                      id="phone"
                       placeholder="Contact No"
                       maxLength={20}
                       pattern="[0-9+() \-]{7,20}"
@@ -272,10 +276,11 @@ export default function Contact() {
                   <textarea 
                     rows={4} 
                     required 
+                    id="message"
+                    name="message"
                     value={formData.message} 
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })} 
                     className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent resize-none"
-                    id="message"
                     placeholder="Message"
                   />
                   <label 

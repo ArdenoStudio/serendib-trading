@@ -299,6 +299,9 @@ export default function Inventory() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#D4AF37] transition-colors" />
                 <input 
                   type="text"
+                  id="inventory-search-input"
+                  name="inventory-search"
+                  autoComplete="off"
                   aria-label="Search vehicles"
                   placeholder="Search manufacturer, model or year..."
                   value={searchQuery}
