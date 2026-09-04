@@ -138,11 +138,22 @@ function createReqRes(request, context, url) {
 }
 
 export async function onRequest(context) {
+  const request = context.request;
+  const url = new URL(request.url);
+  const hostname = url.hostname.toLowerCase();
+
+  // Canonical redirect: If accessed via *.pages.dev, redirect permanently to https://serendibtrading.lk
+  if (hostname.endsWith('.pages.dev')) {
+    const target = new URL(request.url);
+    target.hostname = 'serendibtrading.lk';
+    target.protocol = 'https:';
+    target.port = '';
+    return Response.redirect(target.toString(), 301);
+  }
+
   // Sync Cloudflare environment variables to process.env
   syncEnv(context.env);
 
-  const request = context.request;
-  const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/$/, '') || '/';
   const userAgent = request.headers.get('user-agent') || '';
 

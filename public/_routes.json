@@ -1,9 +1,14 @@
 {
   "version": 1,
   "include": [
-    "/api/*",
-    "/sitemap.xml",
-    "/car/*"
+    "/*"
   ],
-  "exclude": []
+  "exclude": [
+    "/assets/*",
+    "/brand-logos/*",
+    "/car-types/*",
+    "/images/*",
+    "/site.webmanifest",
+    "/serendib-logo-*.png"
+  ]
 }
