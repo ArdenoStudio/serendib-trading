@@ -35,7 +35,16 @@ const originFor = (req) => {
 
   try {
     const configuredHost = new URL(configured).host.toLowerCase();
-    if (host === configuredHost || host.endsWith('.vercel.app') || host.endsWith('.netlify.app')) {
+    const cleanHost = host.replace(/:\d+$/, '');
+    const cleanConfigured = configuredHost.replace(/:\d+$/, '');
+    if (
+      cleanHost === cleanConfigured ||
+      cleanHost === `www.${cleanConfigured}` ||
+      cleanConfigured === `www.${cleanHost}` ||
+      cleanHost.endsWith('.pages.dev') ||
+      cleanHost.endsWith('.vercel.app') ||
+      cleanHost.endsWith('.netlify.app')
+    ) {
       const proto = req.headers['x-forwarded-proto'] || 'https';
       return `${proto}://${host}`;
     }
@@ -46,7 +55,10 @@ const originFor = (req) => {
   return configured;
 };
 
-const readShell = async () => {
+const readShell = async (req) => {
+  if (req && typeof req._shellHtml === 'string' && req._shellHtml.length > 0) {
+    return req._shellHtml;
+  }
   for (const candidate of SHELL_CANDIDATES) {
     try {
       return fs.readFileSync(candidate, 'utf8');
@@ -132,7 +144,7 @@ export default async function handler(req, res) {
   const id = (req.query && req.query.id) || '';
   const origin = originFor(req);
 
-  const html = await readShell();
+  const html = await readShell(req);
 
   if (!html) {
     res.setHeader('Location', `${origin}/car/${encodeURIComponent(id)}`);

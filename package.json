@@ -9,6 +9,8 @@
     "build:app": "vite build",
     "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview",
+    "pages:dev": "wrangler pages dev dist",
+    "pages:deploy": "wrangler pages deploy dist",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
     "test:e2e": "npm run build:app && playwright test",

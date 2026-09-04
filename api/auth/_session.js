@@ -12,7 +12,7 @@ function getSecretKey() {
     // publicly-known value, otherwise anyone can forge an admin session.
     throw new Error(
       'AUTH_SECRET environment variable is required (at least 32 characters). ' +
-        'Set a strong random value in Vercel before enabling admin login.'
+        'Set a strong random value in Cloudflare Pages before enabling admin login.'
     );
   }
   return new TextEncoder().encode(secret);

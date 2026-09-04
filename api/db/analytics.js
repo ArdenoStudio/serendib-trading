@@ -26,6 +26,10 @@ const throttle = (key) => {
 };
 
 const getClientIp = (req) => {
+  const cfIp = req.headers['cf-connecting-ip'];
+  if (typeof cfIp === 'string' && cfIp.trim()) {
+    return cfIp.trim();
+  }
   const vercelForwarded = req.headers['x-vercel-forwarded-for'];
   if (typeof vercelForwarded === 'string' && vercelForwarded.trim()) {
     return vercelForwarded.split(',')[0].trim();
@@ -47,23 +51,21 @@ const sameOriginRequest = (req) => {
   const host = typeof hostHeader === 'string' ? hostHeader.split(',')[0].trim().toLowerCase() : '';
   if (!host) return false;
 
-  const origin = req.headers.origin;
-  if (typeof origin === 'string' && origin.length > 0) {
-    try {
-      return new URL(origin).host.toLowerCase() === host;
-    } catch {
-      return false;
-    }
-  }
+  const normalizeHost = (h) => h.replace(/^www\./, '').replace(/:\d+$/, '');
+  const cleanHost = normalizeHost(host);
 
-  const referer = req.headers.referer;
-  if (typeof referer === 'string' && referer.length > 0) {
+  const check = (raw) => {
+    if (typeof raw !== 'string' || !raw) return false;
     try {
-      return new URL(referer).host.toLowerCase() === host;
+      const rawHost = normalizeHost(new URL(raw).host.toLowerCase());
+      return rawHost === cleanHost || rawHost.endsWith('.pages.dev') || cleanHost.endsWith('.pages.dev');
     } catch {
       return false;
     }
-  }
+  };
+
+  if (req.headers.origin && check(req.headers.origin)) return true;
+  if (req.headers.referer && check(req.headers.referer)) return true;
 
   return false;
 };

@@ -4,6 +4,12 @@ dist/
 coverage/
 playwright-report/
 test-results/
+node_modules/
+build/
+dist/
+coverage/
+playwright-report/
+test-results/
 renders/
 .DS_Store
 *.log
@@ -11,6 +17,9 @@ renders/
 !.env.example
 
 .vercel
+.wrangler/
+_worker.bundle
+
 
 # Local tooling / agent config that must never be committed or shipped
 Deepseek-API/

@@ -39,7 +39,16 @@ const originFor = (req) => {
 
   try {
     const configuredHost = new URL(configured).host.toLowerCase();
-    if (host === configuredHost || host.endsWith('.vercel.app') || host.endsWith('.netlify.app')) {
+    const cleanHost = host.replace(/:\d+$/, '');
+    const cleanConfigured = configuredHost.replace(/:\d+$/, '');
+    if (
+      cleanHost === cleanConfigured ||
+      cleanHost === `www.${cleanConfigured}` ||
+      cleanConfigured === `www.${cleanHost}` ||
+      cleanHost.endsWith('.pages.dev') ||
+      cleanHost.endsWith('.vercel.app') ||
+      cleanHost.endsWith('.netlify.app')
+    ) {
       const proto = req.headers['x-forwarded-proto'] || 'https';
       return `${proto}://${host}`.replace(/\/$/, '');
     }

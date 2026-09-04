@@ -34,13 +34,11 @@ This repository powers our flagship digital showroom: a cinematic, gold-on-black
 |---|---|---|
 | **Frontend** | React 19 · TypeScript · Vite 6 | Cinematic SPA with route-level code splitting |
 | **Design** | Tailwind CSS 4 · framer-motion · lenis | Gold-on-black luxury theme, 60fps motion |
-| **Backend** | Vercel Serverless Functions (`api/`) | Leads, auth, inventory, analytics, sitemap, OG cards |
+| **Backend** | Cloudflare Pages Functions (`functions/` + `api/`) | Leads, auth, inventory, analytics, sitemap, OG cards |
 | **Database (records)** | **Neon Postgres** via `DATABASE_URL` | Live inventory, leads, traffic — the only source of truth for listings |
 | **Identity** | Google OAuth → signed JWT session | Admin access, allow-listed emails only |
-| **Media (photos)** | **Supabase Storage** (`vehicle-images`) | Image files only. Neon stores public URLs, never the bytes |
-| **Observability** | Vercel Analytics · optional page/car view logging | Gentle, privacy-respecting insight |
-
-> **Do not keep moving the database.** Neon holds the rows. Supabase holds the pictures. When photos “disappear”, the listings are still in Neon — the public image URLs (`*.supabase.co/storage/...`) are just over quota. Restore or upgrade Supabase Storage (or put files on R2 and set `VITE_IMAGE_CDN_BASE_URL`). Do not copy listings back into Supabase Postgres to “get the pics back”.
+| **Media (photos)** | **Neon / Supabase Storage** (`vehicle-images`) | Image files stored via `/api/upload` and served from `/api/image` |
+| **CDN & DNS** | Cloudflare Pages (Edge network) | Global edge caching, security headers, custom domain SSL |
 
 ---
 
@@ -52,52 +50,60 @@ This repository powers our flagship digital showroom: a cinematic, gold-on-black
 # 1 · Install the dependencies
 npm install
 
-# 2 · Prepare the environment
-cp .env.example .env.local    # then fill in the values (table below)
-
-# 3 · Run the full stack (API + SPA)
-vercel dev
+# 2 · Run the full stack with Cloudflare Pages Functions
+npm run pages:dev
 ```
-
-> **Note for connoisseurs:** `vite dev` / `vite preview` serve the SPA shell only — the serverless API lives under `vercel dev`. Without it, API calls fail gracefully and the site shows its refined empty states.
 
 ---
 
-## The Keys — Environment Variables
+## The Keys — Environment Variables (Cloudflare Pages)
+
+Set these under **Cloudflare Pages Dashboard → Project → Settings → Environment variables** (Production & Preview):
 
 | Variable | Required | Serves |
 |---|---|---|
-| `DATABASE_URL` | ✅ | Neon Postgres connection (serverless API) — **keep this as the only DB** |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | Admin Google OAuth |
-| `AUTH_SECRET` | ✅ ≥32 chars | JWT session signing — **fails closed if missing** |
-| `LEAD_RATE_LIMIT_SALT` | ✅ ≥16 chars | Lead-form rate limiting — **fails closed if missing** |
-| `SITE_URL` / `VITE_SITE_URL` | ✅ | Canonical, sitemap, OG & OAuth origins — `https://serendibtrading.lk` |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | ✅ for uploads | Admin image uploads → Supabase Storage. Not a second database. |
-| `VITE_IMAGE_CDN_BASE_URL` | optional | Custom image CDN origin (Cloudflare R2) if Storage quota is the bottleneck |
-
-All are configured in Vercel (Production / Preview / Development).
+| `DATABASE_URL` | ✅ | Neon Postgres connection string |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | Admin Google OAuth Credentials |
+| `AUTH_SECRET` | ✅ ≥32 chars | JWT session signing secret |
+| `LEAD_RATE_LIMIT_SALT` | ✅ ≥16 chars | Lead-form rate limiting salt |
+| `ALLOWED_ADMIN_EMAILS` | optional | Comma-separated allowlist of admin emails |
+| `SITE_URL` / `VITE_SITE_URL` | ✅ | Canonical, sitemap, OG & OAuth origins (`https://serendibtrading.lk`) |
+| `NODE_ENV` | ✅ | `production` |
 
 ---
 
-## The Ritual — Checks
+## Google Cloud Console OAuth Setup
 
-```bash
-npm run lint          # TypeScript audit (tsc --noEmit)
-npm run build         # vite build → Playwright Chromium install → prerender / & /inventory
-npm run test:e2e      # Playwright — 18 tests, API stubbed for the preview sandbox
-```
+In [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → Credentials → OAuth 2.0 Client IDs**:
 
-The build never fails on a missing browser — it gracefully falls back to the SPA shell.
+1. **Authorized JavaScript origins**:
+   - `https://serendibtrading.lk`
+   - `https://www.serendibtrading.lk`
+   - `https://<your-project>.pages.dev`
+   - `http://localhost:3000`
+   - `http://127.0.0.1:8788`
+
+2. **Authorized redirect URIs**:
+   - `https://serendibtrading.lk/api/auth/callback`
+   - `https://www.serendibtrading.lk/api/auth/callback`
+   - `https://<your-project>.pages.dev/api/auth/callback`
+   - `http://localhost:3000/api/auth/callback`
+   - `http://127.0.0.1:8788/api/auth/callback`
 
 ---
 
 ## The Unveiling — Deployment
 
-```bash
-vercel --prod
-```
+Deploy to Cloudflare Pages:
 
-The `serendibtrading.lk` domain is aliased to the production deployment.
+```bash
+# Option A: Deploy via Wrangler CLI
+npm run pages:deploy
+
+# Option B: Connect GitHub repository to Cloudflare Pages
+# Build Command: npm run build
+# Build Output Directory: dist
+```
 
 ---
 

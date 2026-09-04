@@ -30,7 +30,16 @@ const originFor = (req) => {
 
   try {
     const configuredHost = new URL(configured).host.toLowerCase();
-    if (host === configuredHost || host.endsWith('.vercel.app') || host.endsWith('.netlify.app')) {
+    const cleanHost = host.replace(/:\d+$/, '');
+    const cleanConfigured = configuredHost.replace(/:\d+$/, '');
+    if (
+      cleanHost === cleanConfigured ||
+      cleanHost === `www.${cleanConfigured}` ||
+      cleanConfigured === `www.${cleanHost}` ||
+      cleanHost.endsWith('.pages.dev') ||
+      cleanHost.endsWith('.vercel.app') ||
+      cleanHost.endsWith('.netlify.app')
+    ) {
       const proto = req.headers['x-forwarded-proto'] || 'https';
       return `${proto}://${host}`;
     }
@@ -61,7 +70,7 @@ export default async function handler(req, res) {
         <body style="font-family: system-ui; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
           <div style="max-width: 500px; padding: 30px; background: #111; border: 1px solid #333; border-radius: 16px;">
             <h2 style="color: #D4AF37; margin-top: 0;">Google OAuth Required</h2>
-            <p>GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables must be configured in Vercel or local environment.</p>
+            <p>GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables must be configured in Cloudflare Pages or local environment.</p>
             <p style="color: #888; font-size: 13px;">Redirect URI to register in Google Cloud Console: <code>${redirectUri}</code></p>
             <a href="/admin/login" style="color: #D4AF37;">Return to Login</a>
           </div>
