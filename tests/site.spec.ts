@@ -327,13 +327,16 @@ test('vehicle detail shows a simple spinner while loading', async ({ page }) => 
 });
 
 test.describe('iOS compositor-safe homepage', () => {
-  test.use({ ...devices['iPhone SE'] });
-
-  test.beforeEach((_fixtures, testInfo) => {
-    test.skip(testInfo.project.name !== 'mobile', 'Run once under the mobile project');
+  test.use({
+    userAgent: devices['iPhone SE'].userAgent,
+    viewport: devices['iPhone SE'].viewport,
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: devices['iPhone SE'].deviceScaleFactor,
   });
 
-  test('hero photo has no Ken Burns filters', async ({ page }) => {
+  test('hero photo has no Ken Burns filters', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'Run once under the mobile project');
     await stubVehicles(page);
     await page.goto('/');
     const img = page.getByTestId('hero-showroom-photo');
@@ -341,7 +344,8 @@ test.describe('iOS compositor-safe homepage', () => {
     await expect(img).not.toHaveClass(/brightness-|contrast-|saturate-/);
   });
 
-  test('featured arrivals scroll natively instead of a JS marquee', async ({ page }) => {
+  test('featured arrivals scroll natively instead of a JS marquee', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'Run once under the mobile project');
     await stubVehicles(page);
     await page.goto('/');
     await page.getByRole('heading', { name: /featured arrivals/i }).scrollIntoViewIfNeeded();
