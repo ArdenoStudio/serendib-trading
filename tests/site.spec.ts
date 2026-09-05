@@ -33,6 +33,9 @@ const stubVehicles = async (page: import('@playwright/test').Page) => {
       ]),
     })
   );
+  await page.route('**/api/db/analytics**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
+  );
 };
 
 test('static HTML shell uses the production domain', () => {
