@@ -8,7 +8,7 @@ export default function Loader({ fullScreen = true }: LoaderProps) {
     <div
       className={
         fullScreen
-          ? 'flex min-h-screen items-center justify-center bg-[#0d0b09]'
+          ? 'flex min-h-dvh items-center justify-center bg-[#0d0b09]'
           : 'flex items-center justify-center py-24'
       }
       role="status"

@@ -25,6 +25,7 @@ import { fetchInventoryList, invalidateInventoryCache } from '../lib/inventoryCa
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { createInventoryItemListSchema } from '../lib/seo';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
+import { useBodyScrollLock } from '../lib/bodyScrollLock';
 export default function Inventory() {
   const [searchParams] = useSearchParams();
   const initialSearchQuery = searchParams.get('q') || searchParams.get('model') || '';
@@ -112,15 +113,14 @@ export default function Inventory() {
   }, [searchParams]);
 
   // Mobile filter drawer: lock background scroll + close on Escape.
+  useBodyScrollLock(isMobileFilterOpen);
   useEffect(() => {
     if (!isMobileFilterOpen) return undefined;
-    document.body.style.overflow = 'hidden';
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsMobileFilterOpen(false);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
-      document.body.style.overflow = '';
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [isMobileFilterOpen]);
@@ -217,7 +217,7 @@ export default function Inventory() {
       <main>
 
       {/* --- PREMIUM HERO SECTION --- */}
-      <section className="relative flex min-h-[560px] items-center justify-center overflow-hidden md:h-[65vh]">
+      <section className="relative flex min-h-[560px] items-center justify-center overflow-hidden md:h-[65dvh]">
         {/* Background Layers */}
         <div className="absolute inset-0 z-0">
           <motion.div 
@@ -306,7 +306,7 @@ export default function Inventory() {
                   placeholder="Search manufacturer, model or year..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#1a1715] border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold focus:outline-none focus:border-[#D4AF37]/40 focus:ring-1 focus:ring-[#D4AF37]/20 transition-all placeholder:text-gray-600"
+                  className="w-full bg-[#1a1715] border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-base font-bold focus:outline-none focus:border-[#D4AF37]/40 focus:ring-1 focus:ring-[#D4AF37]/20 transition-all placeholder:text-gray-600 lg:text-sm"
                 />
               </div>
 
@@ -848,14 +848,15 @@ export default function Inventory() {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Filter vehicles"
-                    className="absolute bottom-0 inset-x-0 h-[85vh] bg-[#0d0b09] rounded-t-[40px] border-t border-[#D4AF37]/20 p-8 flex flex-col overflow-hidden"
+                    className="absolute bottom-0 inset-x-0 h-[85dvh] max-h-full bg-[#0d0b09] rounded-t-[40px] border-t border-[#D4AF37]/20 px-8 pt-8 flex flex-col overflow-hidden"
+                    style={{ paddingBottom: 'max(1.5rem, var(--safe-bottom))' }}
                   >
                         <div className="flex items-center justify-between mb-10">
                             <h3 className="text-2xl font-black uppercase tracking-tighter text-[#D4AF37]">Vehicle <span className="text-white">Filters</span></h3>
                             <button onClick={() => setIsMobileFilterOpen(false)} aria-label="Close filters" className="p-3 bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto space-y-12 pb-12">
+                        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-12 pb-12" data-scroll-lock-scrollable>
                             <div className="space-y-10">
                                 {/* Manufacturer */}
                                 <div className="space-y-4">
@@ -892,7 +893,8 @@ export default function Inventory() {
                                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl max-h-60 overflow-y-auto"
+                                                        className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl max-h-60 overflow-y-auto overscroll-contain"
+                                                        data-scroll-lock-scrollable
                                                     >
                                                         <button onClick={() => { handleFilterChange('make', ''); setIsMakeOpen(false); }} className={`w-full text-left px-5 py-3 rounded-xl text-xs font-black transition-all ${ filters.make === '' ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:bg-white/5' }`}>
                                                             <span className="flex items-center gap-3">
@@ -945,7 +947,8 @@ export default function Inventory() {
                                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                        className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl max-h-60 overflow-y-auto"
+                                                        className="absolute left-0 mt-3 w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl max-h-60 overflow-y-auto overscroll-contain"
+                                                        data-scroll-lock-scrollable
                                                     >
                                                         <button onClick={() => { handleFilterChange('bodyType', ''); setIsBodyTypeOpen(false); }} className={`w-full text-left px-5 py-3 rounded-xl text-xs font-black transition-all ${ filters.bodyType === '' ? 'text-[#D4AF37] bg-[#D4AF37]/10' : 'text-white/80 hover:bg-white/5' }`}>All Styles</button>
                                                         {filterOptions.bodyTypes.map(m => (
@@ -1024,7 +1027,7 @@ export default function Inventory() {
                             </div>
                         </div>
 
-                        <div className="pt-6 grid grid-cols-2 gap-4">
+                        <div className="shrink-0 pt-6 grid grid-cols-2 gap-4">
                             <button onClick={clearFilters} className="py-5 font-black uppercase text-[10px] tracking-widest border border-white/10 rounded-2xl">Reset</button>
                             <button onClick={() => setIsMobileFilterOpen(false)} className="py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-widest rounded-2xl">Show Results</button>
                         </div>

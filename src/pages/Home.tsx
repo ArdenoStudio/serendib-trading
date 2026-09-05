@@ -75,6 +75,7 @@ export default function Home() {
   const marqueeSetRef = useRef<HTMLDivElement>(null);
   const [marqueeSetWidth, setMarqueeSetWidth] = useState(0);
   const [marqueePaused, setMarqueePaused] = useState(false);
+  const [marqueeOffscreen, setMarqueeOffscreen] = useState(false);
   const marqueeX = useMotionValue(0);
 
   useEffect(() => {
@@ -88,11 +89,22 @@ export default function Home() {
     return () => window.removeEventListener('resize', measure);
   }, [cars.length]);
 
+  useEffect(() => {
+    const node = marqueeSetRef.current?.closest('[data-testid="featured-arrivals-marquee"]');
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setMarqueeOffscreen(!entry?.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [cars.length]);
+
   // Drive the marquee manually so speed stays constant and hover pauses
   // instantly. Pause is driven ONLY by hover (below) — no observers or
   // visibility listeners so the state never fights itself.
   useAnimationFrame((_, delta) => {
-    if (marqueePaused || shouldReduceMotion || document.hidden || marqueeSetWidth === 0) return;
+    if (marqueePaused || marqueeOffscreen || shouldReduceMotion || document.hidden || marqueeSetWidth === 0) return;
     const speed = 55; // px per second
     let next = marqueeX.get() - (speed * delta) / 1000;
     if (next <= -marqueeSetWidth) next += marqueeSetWidth; // seamless wrap by one set
@@ -574,7 +586,7 @@ export default function Home() {
           <button 
             aria-label="View all vehicle makes"
             onClick={() => navigate('/inventory')}
-            className="group px-10 py-4 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-white hover:border-[#D4AF37]/50 hover:bg-white/10 transition-all duration-500 flex items-center gap-4 will-change-transform"
+            className="group min-h-12 px-10 py-4 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-white hover:border-[#D4AF37]/50 hover:bg-white/10 transition-all duration-500 flex items-center gap-4"
           >
             <span>View All Makes</span>
             <span className="text-[#D4AF37] group-hover:translate-x-2 transition-transform duration-300">&rarr;</span>
@@ -607,7 +619,7 @@ export default function Home() {
         {/* Horizontal Marquee Container */}
         <div
           data-testid="featured-arrivals-marquee"
-          className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-12"
+          className="w-full overflow-hidden py-12"
           onMouseEnter={() => setMarqueePaused(true)}
           onMouseLeave={() => setMarqueePaused(false)}
         >

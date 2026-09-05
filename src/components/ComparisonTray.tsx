@@ -9,22 +9,14 @@ import { optimizeImageUrl } from '../lib/images';
 import { LiquidButton } from './ui/liquid-glass-button';
 import { readStringList, writeStringList } from '../lib/storage';
 import { getBrandLabel, getDisplayModel } from './brand/BrandMark';
+import { useBodyScrollLock } from '../lib/bodyScrollLock';
 
 export default function ComparisonTray() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [vehicles, setVehicles] = useState<Car[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,7 +77,7 @@ export default function ComparisonTray() {
   return (
     <>
       {/* Floating Tray Trigger */}
-      <div className="compare-float fixed bottom-12 left-6 md:left-12 z-[60]">
+      <div className="compare-float fixed bottom-[max(3rem,calc(var(--safe-bottom)+2.5rem))] left-[max(1.5rem,var(--safe-left))] md:left-12 z-[60]">
         <motion.div
            initial={{ y: 100, opacity: 0 }}
            animate={{ y: 0, opacity: 1 }}
@@ -126,7 +118,7 @@ export default function ComparisonTray() {
               animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, scale: 0.9, y: 40, filter: 'blur(20px)' }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-7xl h-full max-h-[90vh] bg-white/[0.01] border border-white/10 rounded-[24px] md:rounded-[48px] overflow-hidden relative shadow-2xl flex flex-col"
+              className="w-full max-w-7xl h-full max-h-[90dvh] bg-white/[0.01] border border-white/10 rounded-[24px] md:rounded-[48px] overflow-hidden relative shadow-2xl flex flex-col"
             >
               {/* Top Controls */}
               <div className="absolute top-6 right-6 md:top-10 md:right-10 z-20">
@@ -140,8 +132,9 @@ export default function ComparisonTray() {
               </div>
 
               <div 
-                className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-20 space-y-8 md:space-y-16"
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar p-6 md:p-20 space-y-8 md:space-y-16"
                 data-lenis-prevent="true"
+                data-scroll-lock-scrollable
                 onWheel={(e) => e.stopPropagation()}
                 onScroll={(e) => e.stopPropagation()}
               >

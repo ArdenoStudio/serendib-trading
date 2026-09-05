@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Upload, Sparkles, ImagePlus, Trash2, Tag, Plus } from 'lucide-react';
 import { uploadVehicleImage, parseVehicleText, fetchDynamicKnowledge, learnFromVehicle } from '../../lib/supabase';
 import { isBlobUrl } from '../../lib/images';
+import { useBodyScrollLock } from '../../lib/bodyScrollLock';
 
 export interface VehicleFormData {
   id?: string;
@@ -92,9 +93,9 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
     fetchDynamicKnowledge().then(setDynamicKB);
   }, []);
 
+  useBodyScrollLock(true);
+
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeButtonRef.current?.focus();
 
@@ -124,7 +125,6 @@ export default function VehicleModal({ initial, onClose, onSaved }: Props) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
       previous?.focus();
     };

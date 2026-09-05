@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn } from 'lucide-react';
+import { useBodyScrollLock } from '../lib/bodyScrollLock';
 
 interface ImageLightboxProps {
   src: string;
@@ -14,6 +15,8 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
+  useBodyScrollLock(Boolean(isOpen && src));
+
   useEffect(() => {
     if (!isOpen || !src) return;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
@@ -25,14 +28,12 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
       }
     };
     document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
     window.setTimeout(() => closeButtonRef.current?.focus(), 0);
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
       previousFocusRef.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, src]);
 
   if (!isOpen || !src) return null;
 
@@ -62,7 +63,7 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
             transition={{ delay: 0.08 }}
             onClick={onClose}
             aria-label="Close image viewer"
-            className="absolute top-5 right-5 z-20 w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition-all"
+            className="absolute top-[max(1.25rem,var(--safe-top))] right-[max(1.25rem,var(--safe-right))] z-20 w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition-all"
           >
             <X className="w-5 h-5" />
           </motion.button>
@@ -72,7 +73,7 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[11px] font-bold uppercase tracking-[0.3em] text-white/40 text-center whitespace-nowrap"
+            className="absolute bottom-[max(1.5rem,calc(var(--safe-bottom)+0.75rem))] left-1/2 -translate-x-1/2 text-[11px] font-bold uppercase tracking-[0.3em] text-white/40 text-center whitespace-nowrap px-4"
           >
             {alt} &nbsp;·&nbsp; Click anywhere to close
           </motion.p>
@@ -83,13 +84,13 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 max-w-[90vw] max-h-[85vh]"
+            className="relative z-10 max-w-[90vw] max-h-[85dvh]"
             onClick={(e) => e.stopPropagation()}
           >
             <img
               src={src}
               alt={alt}
-              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
+              className="max-w-full max-h-[85dvh] object-contain rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
               decoding="async"
             />
             {/* Gold corner accent */}

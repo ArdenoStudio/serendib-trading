@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Heart, Instagram, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +6,7 @@ import { AnimatedUserIcon } from './ui/animated-user-icon';
 import { INSTAGRAM_URL } from '../lib/socialLinks';
 import { readStringList } from '../lib/storage';
 import { logCtaClick } from '../lib/supabase';
+import { useBodyScrollLock } from '../lib/bodyScrollLock';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -16,12 +17,17 @@ const navLinks = [
   { to: '/about', label: 'About' },
 ];
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
 export default function Navbar() {
   const location = useLocation();
   const pathname = location.pathname;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const syncWishlist = () => setWishlistCount(readStringList('wishlist').length);
@@ -43,21 +49,45 @@ export default function Navbar() {
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
+  useBodyScrollLock(mobileOpen);
+
   // Flag the open mobile menu on <body> so floating overlays can hide,
-  // and lock background scroll while the full-screen nav is open.
+  // and inert the page so AT/pointer don't hit content behind the dialog.
   useEffect(() => {
     document.body.classList.toggle('mobile-nav-open', mobileOpen);
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    const main = document.getElementById('main-content');
+    if (mobileOpen) main?.setAttribute('inert', '');
+    else main?.removeAttribute('inert');
     return () => {
       document.body.classList.remove('mobile-nav-open');
-      document.body.style.overflow = '';
+      main?.removeAttribute('inert');
     };
   }, [mobileOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;
+    const panel = overlayRef.current;
+    const toggle = menuButtonRef.current;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMobileOpen(false);
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab' || !panel || !toggle) return;
+      const items = [
+        toggle,
+        ...Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)),
+      ].filter((el) => el.tabIndex !== -1);
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -190,10 +220,12 @@ export default function Navbar() {
 
           {/* ── Mobile hamburger ── */}
           <button
+            ref={menuButtonRef}
             className="md:hidden w-11 h-11 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-lg"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             <AnimatePresence mode="wait" initial={false}>
               {mobileOpen ? (
@@ -215,88 +247,110 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            ref={overlayRef}
+            id="mobile-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
-            className="fixed inset-0 z-40 flex flex-col bg-[#0d0b09] md:hidden"
+            className="fixed inset-0 z-40 flex h-[100dvh] max-h-full flex-col overflow-hidden bg-[#0d0b09] md:hidden"
+            style={{
+              paddingLeft: 'max(2rem, var(--safe-left))',
+              paddingRight: 'max(2rem, var(--safe-right))',
+            }}
           >
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#D4AF37]/8 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <img src="/serendib-logo-navbar.png" alt="" aria-hidden="true" className="w-64 opacity-[0.04]" />
             </div>
 
-            <div className="relative z-10 flex flex-col h-full px-8 pt-24 pb-12">
-              <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-[#D4AF37]/60 mb-10">Navigation</p>
+            <div
+              className="relative z-10 shrink-0"
+              style={{ height: `calc(${scrolled ? '72px' : '88px'} + var(--safe-top))` }}
+              aria-hidden="true"
+            />
 
-              <nav aria-label="Mobile navigation">
-                <ul className="flex flex-col gap-1">
-                  {[...navLinks, { to: '/wishlist', label: wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist' }].map((link, i) => {
-                    const isActive = pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to));
-                    return (
-                      <motion.li
-                        key={link.to}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.055, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            <p className="relative z-10 shrink-0 text-[10px] font-bold uppercase tracking-[0.5em] text-[#D4AF37]/60 pb-4">
+              Navigation
+            </p>
+
+            <nav
+              aria-label="Mobile navigation"
+              data-scroll-lock-scrollable
+              className="relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            >
+              <ul className="flex flex-col gap-1 pb-4">
+                {[...navLinks, { to: '/wishlist', label: wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist' }].map((link, i) => {
+                  const isActive = pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to));
+                  return (
+                    <motion.li
+                      key={link.to}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.055, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      <Link
+                        to={link.to}
+                        onClick={closeMobile}
+                        className="flex min-h-12 items-baseline justify-between py-3.5 border-b border-white/5 group active:opacity-60 transition-opacity"
                       >
-                        <Link
-                          to={link.to}
-                          onClick={closeMobile}
-                          className="flex items-baseline justify-between py-4 border-b border-white/5 group active:opacity-60 transition-opacity"
+                        <span
+                          className="text-3xl font-black uppercase tracking-tight leading-none transition-colors duration-200 sm:text-4xl"
+                          style={{ color: isActive ? '#D4AF37' : 'rgba(255,255,255,0.85)' }}
                         >
-                          <span
-                            className="text-4xl font-black uppercase tracking-tight leading-none transition-colors duration-200"
-                            style={{ color: isActive ? '#D4AF37' : 'rgba(255,255,255,0.85)' }}
-                          >
-                            {link.label}
-                          </span>
-                          <span className="text-[#D4AF37]/30 text-lg group-hover:text-[#D4AF37] transition-colors">→</span>
-                        </Link>
-                      </motion.li>
-                    );
-                  })}
-                </ul>
-              </nav>
+                          {link.label}
+                        </span>
+                        <span className="text-[#D4AF37]/30 text-lg group-hover:text-[#D4AF37] transition-colors" aria-hidden="true">→</span>
+                      </Link>
+                    </motion.li>
+                  );
+                })}
+              </ul>
+            </nav>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32, duration: 0.4 }}
-                className="mt-auto flex flex-col gap-3 pt-8"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32, duration: 0.4 }}
+              className="relative z-10 mt-auto flex shrink-0 flex-col gap-3 border-t border-white/5 bg-[#0d0b09] pt-4"
+              style={{ paddingBottom: 'max(1rem, calc(var(--safe-bottom) + 0.5rem))' }}
+            >
+              <a
+                href="https://wa.me/94756363427"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={closeMobile}
+                data-testid="mobile-nav-primary-cta"
+                className="flex min-h-12 w-full items-center justify-center py-4 text-center text-[13px] font-black uppercase tracking-[0.12em] rounded-2xl text-black active:scale-[0.98] transition-transform"
+                style={{ background: 'linear-gradient(135deg,#E5C158 0%,#D4AF37 100%)' }}
               >
-                <a
-                  href="https://wa.me/94756363427"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={closeMobile}
-                  className="w-full py-4 text-center text-[13px] font-black uppercase tracking-[0.12em] rounded-2xl text-black active:scale-[0.98] transition-transform"
-                  style={{ background: 'linear-gradient(135deg,#E5C158 0%,#D4AF37 100%)' }}
-                >
-                  Get In Touch
-                </a>
+                Get In Touch
+              </a>
+              <div className="grid grid-cols-2 gap-3">
                 <a
                   href={INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={closeMobile}
-                  className="w-full py-4 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-white/65 border border-white/10 rounded-2xl active:scale-[0.98] transition-transform"
+                  className="flex min-h-12 items-center justify-center py-3.5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-white/65 border border-white/10 rounded-2xl active:scale-[0.98] transition-transform"
                 >
                   Instagram
                 </a>
                 <Link
                   to="/admin/login"
                   onClick={closeMobile}
-                  className="w-full py-4 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 border border-white/10 rounded-2xl active:scale-[0.98] transition-transform"
+                  className="flex min-h-12 items-center justify-center py-3.5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 border border-white/10 rounded-2xl active:scale-[0.98] transition-transform"
                 >
                   Admin
                 </Link>
-              </motion.div>
-
-              <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.3em] text-white/20 text-center">
+              </div>
+              <p className="pt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/20 text-center">
                 Serendib Trading &bull; Dehiwala
               </p>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

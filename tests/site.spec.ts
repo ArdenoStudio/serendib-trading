@@ -225,6 +225,74 @@ test('branded splash loader is gone', () => {
   expect(loader).toContain('animate-spin');
 });
 
+const phoneViewports = [
+  { name: 'iPhone SE', width: 375, height: 667 },
+  { name: 'iPhone 14', width: 390, height: 844 },
+  { name: 'iPhone SE landscape', width: 667, height: 375 },
+  { name: 'Pixel 5', width: 393, height: 851 },
+  { name: 'Galaxy compact', width: 360, height: 740 },
+];
+
+test('mobile nav keeps the primary CTA on-screen and does not pan the page behind', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'Overlay is md:hidden');
+
+  await stubVehicles(page);
+
+  for (const phone of phoneViewports) {
+    await page.setViewportSize({ width: phone.width, height: phone.height });
+    await page.goto('/');
+    await page.evaluate(() => window.scrollTo(0, 240));
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+
+    await page.getByRole('button', { name: /open menu/i }).click();
+    const overlay = page.locator('#mobile-navigation');
+    await expect(overlay).toBeVisible();
+    await expect(page.locator('html')).toHaveClass(/scroll-lock/);
+
+    const cta = overlay.getByTestId('mobile-nav-primary-cta');
+    await expect(cta).toBeVisible();
+
+    const box = (await cta.boundingBox())!;
+    expect(box, `${phone.name}: Get In Touch should have a box`).toBeTruthy();
+    expect(box.y, `${phone.name}: CTA top stays in the viewport`).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height, `${phone.name}: CTA bottom stays in the viewport`).toBeLessThanOrEqual(phone.height + 1);
+    expect(box.height, `${phone.name}: CTA is tappable`).toBeGreaterThanOrEqual(44);
+
+    const scrollOnceLocked = await page.evaluate(() => window.scrollY);
+    const nav = overlay.getByRole('navigation', { name: /mobile navigation/i });
+    await nav.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    await page.mouse.wheel(0, 600);
+    const scrollAfterWheel = await page.evaluate(() => window.scrollY);
+    expect(scrollAfterWheel, `${phone.name}: overlay pan must not move the page`).toBe(scrollOnceLocked);
+
+    await page.getByRole('button', { name: /close menu/i }).click();
+    await expect(overlay).toHaveCount(0);
+    const scrollAfterClose = await page.evaluate(() => window.scrollY);
+    expect(
+      Math.abs(scrollAfterClose - scrollBefore),
+      `${phone.name}: closing the menu restores page scroll`,
+    ).toBeLessThan(2);
+  }
+});
+
+test('mobile homepage View All Makes is reachable and tappable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'Phone-only layout check');
+
+  await stubVehicles(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const makes = page.getByRole('button', { name: /view all vehicle makes/i });
+  await makes.scrollIntoViewIfNeeded();
+  await expect(makes).toBeVisible();
+  const box = (await makes.boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  await makes.click();
+  await expect(page).toHaveURL(/\/inventory/);
+});
+
 test('vehicle detail shows a simple spinner while loading', async ({ page }) => {
   await page.route('**/api/db/vehicles**', async (route) => {
     await new Promise((resolveDelay) => setTimeout(resolveDelay, 2_000));

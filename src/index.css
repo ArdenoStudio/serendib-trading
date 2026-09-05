@@ -57,11 +57,16 @@
     scroll-behavior: smooth;
     /* Prevent overscroll bounce on mobile for a more app-like feel */
     overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   html, body, #root {
     max-width: 100%;
+    /* `clip` does not force the other axis to become a scroll container
+       (unlike `hidden`), so overlays can own vertical pan on iOS. */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* Chrome/Safari Scrollbar */
@@ -110,6 +115,27 @@
     --safe-right: env(safe-area-inset-right, 0px);
   }
 
+  /* iOS/Android overlay lock: position-fixed body keeps the page from
+     rubber-banding underneath dialogs and the mobile nav. */
+  html.scroll-lock,
+  html.scroll-lock body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  body.scroll-lock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  [data-scroll-lock-scrollable] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
   /* Focus styles */
   input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible {
     outline: 2px solid #D4AF37;
@@ -136,6 +162,16 @@
 a, button, [role="button"], input, select, textarea, label, summary {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* iOS Safari zooms any focused field under 16px. Keep coarse-pointer
+   form controls at 16px so inventory/contact/detail forms don't jump. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* GPU layer hint for elements that will animate */
@@ -166,15 +202,10 @@ a, button, [role="button"], input, select, textarea, label, summary {
     mix-blend-mode: normal !important;
   }
 
-  /* Reduce motion on mobile for better battery life */
+  /* Keep looping status animations; only slow the decorative marquee. */
   @media (prefers-reduced-motion: no-preference) {
-    *, *::before, *::after {
-      animation-duration: 0.8s !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.2s !important;
-    }
     .animate-marquee {
-      animation-duration: 60s !important; /* Slower is less CPU intensive */
+      animation-duration: 60s !important;
     }
   }
 
@@ -198,6 +229,14 @@ a, button, [role="button"], input, select, textarea, label, summary {
 }
 
 @layer utilities {
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .h-screen {
+    height: 100vh;
+    height: 100dvh;
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

@@ -12,7 +12,7 @@ export default function Footer() {
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 1 }}
-      className="bg-[#0A0A0A] border-t border-white/10 pt-12 pb-6 text-gray-400"
+      className="bg-[#0A0A0A] border-t border-white/10 pt-12 pb-[max(6rem,calc(var(--safe-bottom)+5.5rem))] text-gray-400 md:pb-10"
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
         {/* 4-Column Grid */}
