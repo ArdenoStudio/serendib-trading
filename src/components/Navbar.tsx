@@ -316,7 +316,7 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.32, duration: 0.4 }}
               className="relative z-10 mt-auto flex shrink-0 flex-col gap-3 border-t border-white/5 bg-[#0d0b09] pt-4"
-              style={{ paddingBottom: 'max(1rem, calc(var(--safe-bottom) + 0.5rem))' }}
+              style={{ paddingBottom: 'max(1.25rem, calc(var(--safe-bottom) + 0.75rem))' }}
             >
               <a
                 href="https://wa.me/94756363427"
@@ -347,7 +347,7 @@ export default function Navbar() {
                   Admin
                 </Link>
               </div>
-              <p className="pt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/20 text-center">
+              <p className="hidden pt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/20 text-center [@media(min-height:720px)]:block">
                 Serendib Trading &bull; Dehiwala
               </p>
             </motion.div>
