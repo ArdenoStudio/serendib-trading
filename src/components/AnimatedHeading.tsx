@@ -11,8 +11,8 @@ interface AnimatedHeadingProps {
 export default function AnimatedHeading({ children, className = '', eyebrow, align = 'left' }: AnimatedHeadingProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, filter: 'blur(20px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       className={`mb-12 ${align === 'center' ? 'flex flex-col items-center text-center' : 'flex flex-col items-start'} ${className}`}

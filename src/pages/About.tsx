@@ -12,6 +12,7 @@ import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import FAQAccordion, { serendibFaqs } from '../components/FAQAccordion';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
+import { isAppleTouchDevice } from '../lib/device';
 import { createFAQSchema, createOrganizationSchema } from '../lib/seo';
 
 export default function About() {
@@ -55,7 +56,7 @@ export default function About() {
           <img
             src={SHOWROOM_IMAGES[0].src}
             alt="Serendib Trading showroom vehicle display"
-            className="w-full h-full object-cover brightness-[0.68] contrast-[1.05]"
+            className={`w-full h-full object-cover ${isAppleTouchDevice() ? '' : 'brightness-[0.68] contrast-[1.05]'}`}
             decoding="async"
             loading="eager"
           />

@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ExternalLink, Instagram } from 'lucide-react';
 
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
+import { isAppleTouchDevice } from '../lib/device';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/socialLinks';
 import { cn } from '../lib/utils';
 
@@ -23,17 +24,19 @@ const profileStats = [
 export default function InstagramShowcase() {
   const [activeSlide, setActiveSlide] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const isAppleTouch = isAppleTouchDevice();
+  const freezeSlideshow = isAppleTouch || Boolean(shouldReduceMotion);
   const currentSlide = showroomSlides[activeSlide];
 
   useEffect(() => {
-    if (shouldReduceMotion) return;
+    if (freezeSlideshow) return;
 
     const timer = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % showroomSlides.length);
     }, 4200);
 
     return () => window.clearInterval(timer);
-  }, [shouldReduceMotion]);
+  }, [freezeSlideshow]);
 
   return (
     <section
@@ -115,21 +118,32 @@ export default function InstagramShowcase() {
 
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
           <div className="relative h-[240px] overflow-hidden sm:h-[320px] lg:h-[390px]">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.img
-                key={currentSlide.src}
+            {isAppleTouch ? (
+              <img
                 src={currentSlide.src}
                 alt={currentSlide.alt}
                 loading="lazy"
                 decoding="async"
                 className="absolute inset-0 size-full object-cover"
                 style={{ objectPosition: currentSlide.objectPosition || 'center center' }}
-                initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.01 }}
-                transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
               />
-            </AnimatePresence>
+            ) : (
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.img
+                  key={currentSlide.src}
+                  src={currentSlide.src}
+                  alt={currentSlide.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 size-full object-cover"
+                  style={{ objectPosition: currentSlide.objectPosition || 'center center' }}
+                  initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.01 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
+                />
+              </AnimatePresence>
+            )}
 
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5 md:p-7">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">

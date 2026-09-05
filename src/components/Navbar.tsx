@@ -105,14 +105,16 @@ export default function Navbar() {
         }`}
         aria-label="Main navigation"
       >
-        <div className={`max-w-[1400px] mx-auto px-6 lg:px-10 flex items-center justify-between relative transition-[height] duration-500 ${scrolled ? 'h-[72px]' : 'h-[88px]'}`}>
+        <div className={`max-w-[1400px] mx-auto px-6 lg:px-10 flex items-center justify-between relative md:transition-[height] md:duration-500 h-[72px] ${scrolled ? 'md:h-[72px]' : 'md:h-[88px]'}`}>
 
           {/* ── Brand ── */}
           <Link
             to="/"
             onClick={closeMobile}
-            className={`group relative flex shrink-0 items-center overflow-hidden transition-[height,width] duration-500 ${
-              scrolled ? 'h-12 w-[156px] sm:w-[184px]' : 'h-[68px] w-[82px] md:h-[78px] md:w-[94px]'
+            className={`group relative flex shrink-0 items-center overflow-hidden md:transition-[height,width] md:duration-500 ${
+              scrolled
+                ? 'h-12 w-[156px] sm:w-[184px]'
+                : 'h-12 w-[82px] md:h-[78px] md:w-[94px]'
             }`}
             aria-label="Serendib Trading home"
           >
@@ -120,9 +122,9 @@ export default function Navbar() {
               {scrolled ? (
                 <motion.span
                   key="wordmark"
-                  initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, y: -8, filter: 'blur(6px)' }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col leading-none"
                 >
@@ -139,9 +141,9 @@ export default function Navbar() {
                   src="/serendib-logo-navbar.png"
                   alt=""
                   aria-hidden="true"
-                  initial={{ opacity: 0, scale: 0.94, filter: 'blur(6px)' }}
-                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, scale: 0.94, filter: 'blur(6px)' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                   className="h-full w-full object-contain transition-opacity duration-300 group-hover:opacity-85"
                 />
@@ -269,7 +271,7 @@ export default function Navbar() {
 
             <div
               className="relative z-10 shrink-0"
-              style={{ height: `calc(${scrolled ? '72px' : '88px'} + var(--safe-top))` }}
+              style={{ height: 'calc(72px + var(--safe-top))' }}
               aria-hidden="true"
             />
 

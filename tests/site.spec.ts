@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, devices } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -324,4 +324,29 @@ test('vehicle detail shows a simple spinner while loading', async ({ page }) => 
   await page.goto('/car/test-1');
   await expect(page.getByRole('status', { name: 'Loading' })).toBeVisible();
   await expect(page.getByText('ORCHESTRATING EXCELLENCE')).toHaveCount(0);
+});
+
+test.describe('iOS compositor-safe homepage', () => {
+  test.use({ ...devices['iPhone SE'] });
+
+  test.beforeEach((_fixtures, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'Run once under the mobile project');
+  });
+
+  test('hero photo has no Ken Burns filters', async ({ page }) => {
+    await stubVehicles(page);
+    await page.goto('/');
+    const img = page.getByTestId('hero-showroom-photo');
+    await expect(img).toBeVisible();
+    await expect(img).not.toHaveClass(/brightness-|contrast-|saturate-/);
+  });
+
+  test('featured arrivals scroll natively instead of a JS marquee', async ({ page }) => {
+    await stubVehicles(page);
+    await page.goto('/');
+    await page.getByRole('heading', { name: /featured arrivals/i }).scrollIntoViewIfNeeded();
+    const marquee = page.getByTestId('featured-arrivals-marquee');
+    await expect(marquee).toBeVisible();
+    await expect(marquee).toHaveCSS('overflow-x', 'auto');
+  });
 });

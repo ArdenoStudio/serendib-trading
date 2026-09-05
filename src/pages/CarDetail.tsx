@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settings, ShieldCheck, MapPin, Share2, Award, CheckCircle2 } from 'lucide-react';
 import Footer from '../components/Footer';
 import CarCard from '../components/CarCard';
@@ -269,37 +268,29 @@ export default function CarDetail() {
           
           {/* LEFT: VISUALS SECTION (7 cols) */}
           <div className="lg:col-span-7 space-y-8">
-            <motion.button
+            <button
               type="button"
-              layoutId={`car-image-${car.id}`}
               onClick={() => setLightboxImage(activeImage)}
               aria-label="Zoom vehicle photo"
               className="w-full aspect-[16/11] bg-[#0d0b09] rounded-3xl overflow-hidden border border-white/5 relative group shadow-2xl cursor-zoom-in"
             >
-              <AnimatePresence mode="wait">
-                  {activeImage && (
-                    <motion.img
-                      key={activeImage}
-                      initial={{ opacity: 0, scale: 1.02 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.6 }}
-                      src={activeImage}
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                      onError={() => {
-                        if (activeImage !== car.image && car.image) {
-                          setActiveImage(car.image);
-                        } else {
-                          setActiveImage('/images/showroom/serendib-showroom-floor-02.webp');
-                        }
-                      }}
-                      alt={`${car.year} ${getBrandLabel(car.make)} ${car.model}`}
-                      className="w-full h-full object-cover object-center origin-center scale-[0.94] will-change-transform"
-                    />
-                  )}
-              </AnimatePresence>
+              {activeImage && (
+                <img
+                  src={activeImage}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  onError={() => {
+                    if (activeImage !== car.image && car.image) {
+                      setActiveImage(car.image);
+                    } else {
+                      setActiveImage('/images/showroom/serendib-showroom-floor-02.webp');
+                    }
+                  }}
+                  alt={`${car.year} ${getBrandLabel(car.make)} ${car.model}`}
+                  className="w-full h-full object-cover object-center"
+                />
+              )}
               {/* Zoom indicator on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                 <div className="px-4 py-2 bg-black/60 backdrop-blur-sm rounded-full border border-white/20 text-white text-[11px] font-bold uppercase tracking-widest">
@@ -321,7 +312,7 @@ export default function CarDetail() {
               </div>
               {/* Image Depth Outline */}
               <div className="absolute inset-0 border border-white/10 pointer-events-none rounded-[40px]" />
-            </motion.button>
+            </button>
 
             {/* Thumbnails Gallery */}
             <div className="grid grid-cols-4 gap-6">
@@ -338,7 +329,7 @@ export default function CarDetail() {
                     isActive ? 'border-[#D4AF37] p-1' : 'border-white/5 opacity-50 hover:opacity-100'
                   }`}
                 >
-                  <img src={thumbSrc} alt={i === 0 ? `${car.year} ${getBrandLabel(car.make)} ${car.model} main photo` : `${car.year} ${getBrandLabel(car.make)} ${car.model} photo ${i + 1}`} loading="lazy" decoding="async" onError={(e) => { const el = e.currentTarget; if (!el.dataset.fallback) { el.dataset.fallback = '1'; if (img && el.src !== img) el.src = img; } }} className="w-full h-full object-cover object-center origin-center scale-[0.94] rounded-[20px] group-hover:scale-[1.02] transition-transform duration-700" />
+                  <img src={thumbSrc} alt={i === 0 ? `${car.year} ${getBrandLabel(car.make)} ${car.model} main photo` : `${car.year} ${getBrandLabel(car.make)} ${car.model} photo ${i + 1}`} loading="lazy" decoding="async" onError={(e) => { const el = e.currentTarget; if (!el.dataset.fallback) { el.dataset.fallback = '1'; if (img && el.src !== img) el.src = img; } }} className="w-full h-full object-cover object-center rounded-[20px] [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-300 [@media(hover:hover)]:group-hover:scale-[1.02]" />
                   {isActive && <div className="absolute inset-0 bg-[#D4AF37]/10" />}
                   {/* Zoom hint on hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/40">

@@ -114,9 +114,9 @@ export default function ComparisonTray() {
             />
 
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 40, filter: 'blur(20px)' }}
-              animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.9, y: 40, filter: 'blur(20px)' }}
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="w-full max-w-7xl h-full max-h-[90dvh] bg-white/[0.01] border border-white/10 rounded-[24px] md:rounded-[48px] overflow-hidden relative shadow-2xl flex flex-col"
             >

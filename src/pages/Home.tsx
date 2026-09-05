@@ -16,6 +16,7 @@ import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 import { optimizeImageUrl } from '../lib/images';
+import { isAppleTouchDevice } from '../lib/device';
 
 export default function Home() {
   const [cars, setCars] = useState<Car[]>(getInitialInventory);
@@ -55,20 +56,22 @@ export default function Home() {
   });
 
   const shouldReduceMotion = useReducedMotion();
+  const isAppleTouch = isAppleTouchDevice();
+  const freezeHeroMotion = isAppleTouch || Boolean(shouldReduceMotion);
   const [isTouch, setIsTouch] = React.useState(false);
   React.useEffect(() => {
     setIsTouch(window.matchMedia('(pointer: coarse)').matches);
   }, []);
 
   useEffect(() => {
-    if (shouldReduceMotion) return;
+    if (freezeHeroMotion) return;
 
     const timer = window.setInterval(() => {
       setActiveHeroSlide((current) => (current + 1) % HERO_SHOWROOM_SLIDES.length);
     }, 5200);
 
     return () => window.clearInterval(timer);
-  }, [shouldReduceMotion]);
+  }, [freezeHeroMotion]);
 
   // Featured-arrivals marquee: measure one card set so the loop wraps seamlessly
   // at any card count / breakpoint instead of relying on a magic pixel offset.
@@ -104,7 +107,16 @@ export default function Home() {
   // instantly. Pause is driven ONLY by hover (below) — no observers or
   // visibility listeners so the state never fights itself.
   useAnimationFrame((_, delta) => {
-    if (marqueePaused || marqueeOffscreen || shouldReduceMotion || document.hidden || marqueeSetWidth === 0) return;
+    if (
+      isAppleTouch ||
+      marqueePaused ||
+      marqueeOffscreen ||
+      shouldReduceMotion ||
+      document.hidden ||
+      marqueeSetWidth === 0
+    ) {
+      return;
+    }
     const speed = 55; // px per second
     let next = marqueeX.get() - (speed * delta) / 1000;
     if (next <= -marqueeSetWidth) next += marqueeSetWidth; // seamless wrap by one set
@@ -253,32 +265,47 @@ export default function Home() {
           <motion.div
             className="absolute inset-0 origin-center"
             style={{
-              ...(isTouch || shouldReduceMotion ? {} : { scale: bgScale, willChange: "transform" })
+              ...(isTouch || freezeHeroMotion ? {} : { scale: bgScale, willChange: "transform" })
             }}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.img
-                key={currentHeroSlide.src}
+            {isAppleTouch ? (
+              <img
+                data-testid="hero-showroom-photo"
                 src={currentHeroSlide.src}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover brightness-[0.98] contrast-[1.08] saturate-[1.03]"
+                className="absolute inset-0 h-full w-full object-cover"
                 style={{ objectPosition: currentHeroSlide.objectPosition || 'center center' }}
                 decoding="async"
                 fetchPriority="high"
-                loading={activeHeroSlide === 0 ? 'eager' : 'lazy'}
-                initial={{ opacity: 0.001, scale: shouldReduceMotion ? 1 : 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
-                transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+                loading="eager"
               />
-            </AnimatePresence>
+            ) : (
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.img
+                  key={currentHeroSlide.src}
+                  data-testid="hero-showroom-photo"
+                  src={currentHeroSlide.src}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover brightness-[0.98] contrast-[1.08] saturate-[1.03]"
+                  style={{ objectPosition: currentHeroSlide.objectPosition || 'center center' }}
+                  decoding="async"
+                  fetchPriority="high"
+                  loading={activeHeroSlide === 0 ? 'eager' : 'lazy'}
+                  initial={{ opacity: 0.001, scale: shouldReduceMotion ? 1 : 1.04 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 1.015 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </AnimatePresence>
+            )}
           </motion.div>
 
           {/* Cinematic gradient overlays with dynamic opacity instead of blur */}
           <motion.div
             className="absolute inset-0 bg-black/45 md:bg-black/35 z-[1]"
-            style={(!isTouch && !shouldReduceMotion) ? { opacity: overlayOpacity } : { opacity: 0.38 }}
+            style={(!isTouch && !shouldReduceMotion && !isAppleTouch) ? { opacity: overlayOpacity } : { opacity: 0.38 }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/82 via-black/18 to-black/95 z-[2]" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/78 via-black/36 to-black/10 z-[2]" />
@@ -335,7 +362,7 @@ export default function Home() {
             initial={{ opacity: 0.001, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={{ opacity: textOpacity }}
+            style={isAppleTouch || isTouch ? undefined : { opacity: textOpacity }}
             className="flex w-full max-w-[calc(100vw-3rem)] flex-col relative z-10 md:max-w-[920px]"
           >
             {/* Top Status Bar: Eyebrow */}
@@ -619,7 +646,11 @@ export default function Home() {
         {/* Horizontal Marquee Container */}
         <div
           data-testid="featured-arrivals-marquee"
-          className="w-full overflow-hidden py-12"
+          className={
+            isAppleTouch || shouldReduceMotion
+              ? 'w-full overflow-x-auto overscroll-x-contain py-12 [-webkit-overflow-scrolling:touch]'
+              : 'w-full overflow-hidden py-12'
+          }
           onMouseEnter={() => setMarqueePaused(true)}
           onMouseLeave={() => setMarqueePaused(false)}
         >
@@ -636,6 +667,10 @@ export default function Home() {
                   <a href="https://wa.me/94756363427" className="text-[#D4AF37] hover:underline" rel="noopener noreferrer" target="_blank"> message us</a> for early access.
                 </p>
               )}
+            </div>
+          ) : isAppleTouch || shouldReduceMotion ? (
+            <div className="flex w-max gap-8 px-6">
+              {marqueeCars.map((car, i) => renderFeaturedCard(car, `set1-${car.id}-${i}`))}
             </div>
           ) : (
             <motion.div className="flex w-max" style={{ x: marqueeX }}>

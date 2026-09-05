@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
 import Footer from '../components/Footer';
 import LoanCalculator from '../components/LoanCalculator';
 import { LiquidButton } from '../components/ui/liquid-glass-button';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { isAppleTouchDevice, isCoarsePointer } from '../lib/device';
 import { 
     Coins, 
     TrendingUp, 
@@ -18,12 +18,8 @@ export default function Calculator() {
   const scale = useTransform(scrollYProgress, [0, 0.4], [1, 1.1]);
 
   const shouldReduceMotion = useReducedMotion();
-  const [isTouch, setIsTouch] = useState(false);
-  useEffect(() => {
-    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
-  }, []);
-
-  const noParallax = isTouch || shouldReduceMotion;
+  const isAppleTouch = isAppleTouchDevice();
+  const noParallax = isAppleTouch || isCoarsePointer() || Boolean(shouldReduceMotion);
 
   return (
     <div className="min-h-screen font-sans bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
@@ -47,10 +43,11 @@ export default function Calculator() {
       
       {/* Cinematic Hero / Background */}
       <section className="relative h-[65dvh] md:h-[75dvh] flex items-center justify-center overflow-hidden">
-        <motion.div style={noParallax ? { opacity } : { opacity, scale }} className="absolute inset-0 z-0">
+        <motion.div style={noParallax ? undefined : { opacity, scale }} className="absolute inset-0 z-0">
           <img 
             src="/images/dashboard.png" 
-            className="w-full h-full object-cover brightness-[0.3]" 
+            className={`w-full h-full object-cover ${isAppleTouch ? '' : 'brightness-[0.3]'}`}
+            style={isAppleTouch ? { opacity: 0.35 } : undefined}
             alt="Luxury Interior Cockpit"
             decoding="async"
             loading="eager"

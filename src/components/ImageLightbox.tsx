@@ -80,10 +80,10 @@ export default function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightb
 
           {/* Image */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="relative z-10 max-w-[90vw] max-h-[85dvh]"
             onClick={(e) => e.stopPropagation()}
           >

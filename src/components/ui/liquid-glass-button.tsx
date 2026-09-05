@@ -2,6 +2,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
+import { isAppleTouchDevice } from "@/lib/device"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -100,6 +101,7 @@ function LiquidButton({
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot : "button"
+  const appleTouch = isAppleTouchDevice()
 
   return (
     <div className={cn(
@@ -112,8 +114,8 @@ function LiquidButton({
       transition-all 
       dark:shadow-[0_0_8px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3.5px_rgba(255,255,255,0.09),inset_-3px_-3px_0.5px_-3.5px_rgba(255,255,255,0.85),inset_1px_1px_1px_-0.5px_rgba(255,255,255,0.6),inset_-1px_-1px_1px_-0.5px_rgba(255,255,255,0.6),inset_0_0_6px_6px_rgba(255,255,255,0.12),inset_0_0_2px_2px_rgba(255,255,255,0.06),0_0_12px_rgba(0,0,0,0.15)] pointer-events-none" />
       <div
-        className="absolute top-0 left-0 isolate -z-10 h-full w-full overflow-hidden rounded-full pointer-events-none"
-        style={{ backdropFilter: 'url("#container-glass")' }}
+        className="liquid-glass-filter absolute top-0 left-0 isolate -z-10 h-full w-full overflow-hidden rounded-full pointer-events-none"
+        style={appleTouch ? undefined : { backdropFilter: 'url("#container-glass")' }}
       />
 
       {/* Interactive Element */}
@@ -125,7 +127,7 @@ function LiquidButton({
         {children}
       </Comp>
 
-      <GlassFilter />
+      {!appleTouch && <GlassFilter />}
     </div>
   )
 }
