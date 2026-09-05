@@ -247,7 +247,7 @@ export default function Home() {
         ]}
       />
       <Helmet>
-        <link rel="preload" as="image" href="/images/showroom/serendib-showroom-floor-03.webp" fetchpriority="high" />
+        <link rel="preload" as="image" href="/images/showroom/serendib-showroom-floor-03.webp" fetchPriority="high" />
       </Helmet>
       <main>
 
