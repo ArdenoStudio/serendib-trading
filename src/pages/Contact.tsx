@@ -7,10 +7,8 @@ import { LiquidButton } from '../components/ui/liquid-glass-button';
 import SEO from '../components/SEO';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
 import { BUSINESS, SHOWROOM_MAPS_URL, createOrganizationSchema } from '../lib/seo';
-import { submitLead } from '../lib/leads';
+import { submitLead, sanitizePhone, isValidPhone } from '../lib/leads';
 import { logCtaClick } from '../lib/supabase';
-
-const sanitizePhone = (value: string) => value.replace(/[^\d+() \-]/g, '').slice(0, 20);
 
 const MAP_EMBED_SRC =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.346850239077!2d79.86608731477255!3d6.849007995050114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25b201a0a5555%3A0x7d2862e3d3e21376!2s47%2FA%20S.%20De%20S.%20Jayasinghe%20Mawatha%2C%20Dehiwala-Mount%20Lavinia%2C%20Sri%20Lanka!5e0!3m2!1sen!2sus!4v1620000000000!5m2!1sen!2sus';
@@ -23,6 +21,43 @@ export default function Contact() {
   const [whatsappContinueUrl, setWhatsappContinueUrl] = useState('');
   const [mapVisible, setMapVisible] = useState(false);
   const mapSectionRef = useRef<HTMLElement | null>(null);
+
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const phoneInputRef = useRef<HTMLInputElement | null>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const syncField = (key: 'name' | 'phone' | 'message', rawVal: string) => {
+    const val = key === 'phone' ? sanitizePhone(rawVal) : rawVal;
+    setFormData((prev) => {
+      if (prev[key] === val) return prev;
+      return { ...prev, [key]: val };
+    });
+    if (formError) setFormError('');
+  };
+
+  // Sync browser autofilled values (e.g. Chrome/Safari prefill that doesn't fire React events)
+  useEffect(() => {
+    const syncAutofill = () => {
+      if (nameInputRef.current?.value && !formData.name) {
+        syncField('name', nameInputRef.current.value);
+      }
+      if (phoneInputRef.current?.value && !formData.phone) {
+        syncField('phone', phoneInputRef.current.value);
+      }
+      if (messageInputRef.current?.value && !formData.message) {
+        syncField('message', messageInputRef.current.value);
+      }
+    };
+
+    const timers = [
+      setTimeout(syncAutofill, 50),
+      setTimeout(syncAutofill, 200),
+      setTimeout(syncAutofill, 600),
+      setTimeout(syncAutofill, 1200),
+      setTimeout(syncAutofill, 2000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [formData.name, formData.phone, formData.message]);
 
   useEffect(() => {
     const node = mapSectionRef.current;
@@ -40,19 +75,24 @@ export default function Contact() {
     return () => observer.disconnect();
   }, [mapVisible]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const name = formData.name.trim().replace(/\s+/g, ' ');
-    const phone = formData.phone.trim();
-    const message = formData.message.trim();
-    const phonePattern = /^[0-9+() -]{7,20}$/;
+    const form = e.currentTarget;
+
+    const domName = nameInputRef.current?.value || (form.elements.namedItem('name') as HTMLInputElement | null)?.value || formData.name || '';
+    const domPhone = phoneInputRef.current?.value || (form.elements.namedItem('phone') as HTMLInputElement | null)?.value || formData.phone || '';
+    const domMessage = messageInputRef.current?.value || (form.elements.namedItem('message') as HTMLTextAreaElement | null)?.value || formData.message || '';
+
+    const name = domName.trim().replace(/\s+/g, ' ');
+    const phone = sanitizePhone(domPhone).trim();
+    const message = domMessage.trim();
 
     if (name.length < 2) {
       setFormError('Enter a valid full name.');
       setFormSuccess('');
       return;
     }
-    if (!phonePattern.test(phone)) {
+    if (!isValidPhone(phone)) {
       setFormError('Enter a valid contact number.');
       setFormSuccess('');
       return;
@@ -67,6 +107,8 @@ export default function Contact() {
       setFormSuccess('');
       return;
     }
+
+    setFormData((prev) => ({ ...prev, name, phone, message }));
 
     const text = `Hi, I'm ${name}. My phone number is ${phone}. ${message}`;
     const whatsappUrl = `https://wa.me/94756363427?text=${encodeURIComponent(text)}`;
@@ -234,40 +276,56 @@ export default function Contact() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                   <div className="relative group">
                     <input 
+                      ref={nameInputRef}
                       type="text" 
                       required 
                       id="name"
                       name="name"
                       autoComplete="name"
                       value={formData.name} 
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                      onChange={(e) => syncField('name', e.target.value)} 
+                      onInput={(e) => syncField('name', (e.target as HTMLInputElement).value)}
+                      onBlur={(e) => syncField('name', e.target.value)}
+                      onAnimationStart={(e) => {
+                        if (e.animationName.toLowerCase().includes('autofill') && nameInputRef.current?.value) {
+                          syncField('name', nameInputRef.current.value);
+                        }
+                      }}
                       className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
                       placeholder="Full Name"
                     />
                     <label 
                       htmlFor="name" 
-                      className="absolute left-0 -top-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] transition-all peer-placeholder-shown:text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-5 peer-focus:-top-2 peer-focus:text-[10px] peer-focus:text-[#D4AF37]"
+                      className="absolute left-0 -top-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] transition-all peer-placeholder-shown:text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-5 peer-focus:-top-2 peer-focus:text-[10px] peer-focus:text-[#D4AF37] peer-autofill:-top-2 peer-autofill:text-[10px] peer-autofill:text-[#D4AF37]"
                     >
                       Full Name
                     </label>
                   </div>
                   <div className="relative group">
                     <input 
+                      ref={phoneInputRef}
                       type="tel" 
                       required 
                       id="phone"
                       name="phone"
                       autoComplete="tel"
                       value={formData.phone} 
-                      onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })} 
+                      onChange={(e) => syncField('phone', e.target.value)} 
+                      onInput={(e) => syncField('phone', (e.target as HTMLInputElement).value)}
+                      onBlur={(e) => syncField('phone', e.target.value)}
+                      onAnimationStart={(e) => {
+                        if (e.animationName.toLowerCase().includes('autofill') && phoneInputRef.current?.value) {
+                          syncField('phone', phoneInputRef.current.value);
+                        }
+                      }}
                       className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent"
                       placeholder="Contact No"
-                      maxLength={20}
-                      pattern="[0-9+() \-]{7,20}"
+                      maxLength={25}
+                      pattern="[0-9+() .\s\-/–—]{7,25}"
                     />
                     <label 
                       htmlFor="phone" 
-                      className="absolute left-0 -top-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] transition-all peer-placeholder-shown:text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-5 peer-focus:-top-2 peer-focus:text-[10px] peer-focus:text-[#D4AF37]"
+                      className="absolute left-0 -top-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] transition-all peer-placeholder-shown:text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-5 peer-focus:-top-2 peer-focus:text-[10px] peer-focus:text-[#D4AF37] peer-autofill:-top-2 peer-autofill:text-[10px] peer-autofill:text-[#D4AF37]"
                     >
                       Contact Number
                     </label>
@@ -276,18 +334,20 @@ export default function Contact() {
 
                 <div className="relative group">
                   <textarea 
+                    ref={messageInputRef}
                     rows={4} 
                     required 
                     id="message"
                     name="message"
                     value={formData.message} 
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })} 
+                    onChange={(e) => syncField('message', e.target.value)} 
+                    onInput={(e) => syncField('message', (e.target as HTMLTextAreaElement).value)}
                     className="w-full bg-transparent border-b border-white/10 py-5 text-white font-black tracking-tighter text-xl focus:outline-none focus:border-[#D4AF37] transition-all peer placeholder-transparent resize-none"
                     placeholder="Message"
                   />
                   <label 
                     htmlFor="message" 
-                    className="absolute left-0 -top-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] transition-all peer-placeholder-shown:text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-10 peer-focus:-top-2 peer-focus:text-[10px] peer-focus:text-[#D4AF37]"
+                    className="absolute left-0 -top-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37] transition-all peer-placeholder-shown:text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-10 peer-focus:-top-2 peer-focus:text-[10px] peer-focus:text-[#D4AF37] peer-autofill:-top-2 peer-autofill:text-[10px] peer-autofill:text-[#D4AF37]"
                   >
                     Your Requirements
                   </label>

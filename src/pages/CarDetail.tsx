@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Phone, MessageCircle, Calendar, Clock, Gauge, Fuel, Settings, ShieldCheck, MapPin, Share2, Award, CheckCircle2 } from 'lucide-react';
 import Footer from '../components/Footer';
@@ -16,7 +16,7 @@ import ImageLightbox from '../components/ImageLightbox';
 import { createVehicleSchema } from '../lib/seo';
 import { cleanSpec } from '../lib/utils';
 import { optimizeImageUrl } from '../lib/images';
-import { submitLead } from '../lib/leads';
+import { submitLead, sanitizePhone, isValidPhone } from '../lib/leads';
 import { BrandMark, getBrandLabel, getDisplayModel } from '../components/brand/BrandMark';
 
 export default function CarDetail() {
@@ -105,6 +105,36 @@ export default function CarDetail() {
   const [copyToast, setCopyToast] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
+  const testDriveNameRef = useRef<HTMLInputElement | null>(null);
+  const testDrivePhoneRef = useRef<HTMLInputElement | null>(null);
+
+  // Sync browser autofill values for test drive form
+  useEffect(() => {
+    const checkAutofill = () => {
+      setTestDriveForm((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        if (testDriveNameRef.current?.value && !prev.name) {
+          next.name = testDriveNameRef.current.value;
+          changed = true;
+        }
+        if (testDrivePhoneRef.current?.value && !prev.phone) {
+          next.phone = sanitizePhone(testDrivePhoneRef.current.value);
+          changed = true;
+        }
+        return changed ? next : prev;
+      });
+    };
+    const timers = [
+      setTimeout(checkAutofill, 50),
+      setTimeout(checkAutofill, 200),
+      setTimeout(checkAutofill, 600),
+      setTimeout(checkAutofill, 1200),
+      setTimeout(checkAutofill, 2000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [testDriveForm.name, testDriveForm.phone]);
+
   // Track active image updates and Log View
   useEffect(() => {
     if (car?.image) {
@@ -134,12 +164,15 @@ export default function CarDetail() {
 
   const whatsappMessage = `Hi Serendib Trading! I'm interested in the ${car.year} ${car.make} ${car.model}. Could you share more details?`;
 
-  const handleTestDriveSubmit = async (e: React.FormEvent) => {
+  const handleTestDriveSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
 
-    const name = testDriveForm.name.trim().replace(/\s+/g, ' ');
-    const phone = testDriveForm.phone.trim();
-    const phonePattern = /^[0-9+() -]{7,20}$/;
+    const domName = testDriveNameRef.current?.value || (form.elements.namedItem('test-drive-name') as HTMLInputElement | null)?.value || testDriveForm.name || '';
+    const domPhone = testDrivePhoneRef.current?.value || (form.elements.namedItem('test-drive-phone') as HTMLInputElement | null)?.value || testDriveForm.phone || '';
+
+    const name = domName.trim().replace(/\s+/g, ' ');
+    const phone = sanitizePhone(domPhone).trim();
     const requestedDate = new Date(`${testDriveForm.date}T00:00:00`);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -148,7 +181,7 @@ export default function CarDetail() {
       setLeadError('Enter a valid full name.');
       return;
     }
-    if (!phonePattern.test(phone)) {
+    if (!isValidPhone(phone)) {
       setLeadError('Enter a valid contact number.');
       return;
     }
@@ -160,6 +193,8 @@ export default function CarDetail() {
       setLeadError('Please accept the privacy policy so we can arrange your viewing.');
       return;
     }
+
+    setTestDriveForm((prev) => ({ ...prev, name, phone }));
 
     setLeadError('');
     setLeadSuccess('');
@@ -472,9 +507,61 @@ export default function CarDetail() {
                 <form onSubmit={handleTestDriveSubmit} className="space-y-4 relative z-10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="sr-only" htmlFor="test-drive-name">Your Full Name</label>
-                    <input id="test-drive-name" type="text" placeholder="Your Full Name" required minLength={2} maxLength={120} value={testDriveForm.name} onChange={e => setTestDriveForm({ ...testDriveForm, name: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                    <input 
+                      ref={testDriveNameRef}
+                      id="test-drive-name" 
+                      name="test-drive-name"
+                      autoComplete="name"
+                      type="text" 
+                      placeholder="Your Full Name" 
+                      required 
+                      minLength={2} 
+                      maxLength={120} 
+                      value={testDriveForm.name} 
+                      onChange={e => {
+                        setTestDriveForm(prev => ({ ...prev, name: e.target.value }));
+                        if (leadError) setLeadError('');
+                      }} 
+                      onInput={e => {
+                        const val = (e.target as HTMLInputElement).value;
+                        setTestDriveForm(prev => ({ ...prev, name: val }));
+                        if (leadError) setLeadError('');
+                      }}
+                      onAnimationStart={(e) => {
+                        if (e.animationName.toLowerCase().includes('autofill') && testDriveNameRef.current?.value) {
+                          setTestDriveForm(prev => ({ ...prev, name: testDriveNameRef.current!.value }));
+                        }
+                      }}
+                      className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" 
+                    />
                     <label className="sr-only" htmlFor="test-drive-phone">Contact Number</label>
-                    <input id="test-drive-phone" type="tel" placeholder="Contact Number" required maxLength={20} pattern="[0-9+() -]{7,20}" value={testDriveForm.phone} onChange={e => setTestDriveForm({ ...testDriveForm, phone: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" />
+                    <input 
+                      ref={testDrivePhoneRef}
+                      id="test-drive-phone" 
+                      name="test-drive-phone"
+                      autoComplete="tel"
+                      type="tel" 
+                      placeholder="Contact Number" 
+                      required 
+                      maxLength={25} 
+                      pattern="[0-9+() .\s\-/–—]{7,25}" 
+                      value={testDriveForm.phone} 
+                      onChange={e => {
+                        setTestDriveForm(prev => ({ ...prev, phone: sanitizePhone(e.target.value) }));
+                        if (leadError) setLeadError('');
+                      }} 
+                      onInput={e => {
+                        const val = sanitizePhone((e.target as HTMLInputElement).value);
+                        setTestDriveForm(prev => ({ ...prev, phone: val }));
+                        if (leadError) setLeadError('');
+                      }}
+                      onAnimationStart={(e) => {
+                        if (e.animationName.toLowerCase().includes('autofill') && testDrivePhoneRef.current?.value) {
+                          setTestDriveForm(prev => ({ ...prev, phone: sanitizePhone(testDrivePhoneRef.current!.value) }));
+                        }
+                      }}
+                      className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-medium focus:outline-none focus:border-[#D4AF37] transition-all" 
+                    />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative">

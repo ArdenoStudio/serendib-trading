@@ -3,7 +3,7 @@ import { query } from './_db.js';
 
 const ALLOWED_TYPES = new Set(['Test Drive', 'General Inquiry']);
 const ALLOWED_TIMES = new Set(['9:30am', '1:00pm', '4:30pm']);
-const PHONE_PATTERN = /^[0-9+() -]{7,20}$/;
+const PHONE_PATTERN = /^[0-9+() ./\-–—]{7,25}$/;
 const MAX_BODY_BYTES = 8192;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_PHONE_SUBMISSIONS_PER_WINDOW = 3;
@@ -147,7 +147,7 @@ const validateLead = (body) => {
 
   const type = cleanText(body.type, 40);
   const name = cleanText(body.name, 120);
-  const phone = cleanText(body.phone, 20);
+  const phone = cleanText(body.phone, 25);
   const vehicleModel = cleanText(body.vehicle_model, 160);
   const message = cleanText(body.message, 1000);
   const date = cleanText(body.date, 10);
@@ -159,7 +159,8 @@ const validateLead = (body) => {
     throw error;
   }
 
-  if (name.length < 2 || !PHONE_PATTERN.test(phone)) {
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (name.length < 2 || !PHONE_PATTERN.test(phone) || phoneDigits.length < 7 || phoneDigits.length > 16) {
     const error = new Error('Enter a valid name and contact number.');
     error.status = 400;
     throw error;
