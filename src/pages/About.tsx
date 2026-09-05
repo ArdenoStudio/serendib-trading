@@ -12,17 +12,12 @@ import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import FAQAccordion, { serendibFaqs } from '../components/FAQAccordion';
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
-import { isAppleTouchDevice } from '../lib/device';
+import { isTouchOrMobileDevice } from '../lib/device';
 import { createFAQSchema, createOrganizationSchema } from '../lib/seo';
 
 export default function About() {
   const shouldReduceMotion = useReducedMotion();
-  const [isTouch, setIsTouch] = useState(false);
-  useEffect(() => {
-    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
-  }, []);
-
-  const noParallax = isTouch || shouldReduceMotion;
+  const noParallax = isTouchOrMobileDevice() || Boolean(shouldReduceMotion);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#0d0b09] text-white selection:bg-[#D4AF37] selection:text-black">
@@ -56,7 +51,7 @@ export default function About() {
           <img
             src={SHOWROOM_IMAGES[0].src}
             alt="Serendib Trading showroom vehicle display"
-            className={`w-full h-full object-cover ${isAppleTouchDevice() ? '' : 'brightness-[0.68] contrast-[1.05]'}`}
+            className={`w-full h-full object-cover ${noParallax ? '' : 'brightness-[0.68] contrast-[1.05]'}`}
             decoding="async"
             loading="eager"
           />

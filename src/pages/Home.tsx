@@ -16,7 +16,7 @@ import SEO from '../components/SEO';
 import { HERO_SHOWROOM_SLIDES } from '../data/showroomImages';
 import { createOrganizationSchema, createWebsiteSchema } from '../lib/seo';
 import { optimizeImageUrl } from '../lib/images';
-import { isAppleTouchDevice } from '../lib/device';
+import { isTouchOrMobileDevice } from '../lib/device';
 
 export default function Home() {
   const [cars, setCars] = useState<Car[]>(getInitialInventory);
@@ -56,12 +56,8 @@ export default function Home() {
   });
 
   const shouldReduceMotion = useReducedMotion();
-  const isAppleTouch = isAppleTouchDevice();
-  const freezeHeroMotion = isAppleTouch || Boolean(shouldReduceMotion);
-  const [isTouch, setIsTouch] = React.useState(false);
-  React.useEffect(() => {
-    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
-  }, []);
+  const isTouchDevice = isTouchOrMobileDevice();
+  const freezeHeroMotion = isTouchDevice || Boolean(shouldReduceMotion);
 
   useEffect(() => {
     if (freezeHeroMotion) return;
@@ -108,10 +104,9 @@ export default function Home() {
   // visibility listeners so the state never fights itself.
   useAnimationFrame((_, delta) => {
     if (
-      isAppleTouch ||
+      freezeHeroMotion ||
       marqueePaused ||
       marqueeOffscreen ||
-      shouldReduceMotion ||
       document.hidden ||
       marqueeSetWidth === 0
     ) {
@@ -265,10 +260,10 @@ export default function Home() {
           <motion.div
             className="absolute inset-0 origin-center"
             style={{
-              ...(isTouch || freezeHeroMotion ? {} : { scale: bgScale, willChange: "transform" })
+              ...(freezeHeroMotion ? {} : { scale: bgScale, willChange: "transform" })
             }}
           >
-            {isAppleTouch ? (
+            {freezeHeroMotion ? (
               <img
                 data-testid="hero-showroom-photo"
                 src={currentHeroSlide.src}
@@ -305,7 +300,7 @@ export default function Home() {
           {/* Cinematic gradient overlays with dynamic opacity instead of blur */}
           <motion.div
             className="absolute inset-0 bg-black/45 md:bg-black/35 z-[1]"
-            style={(!isTouch && !shouldReduceMotion && !isAppleTouch) ? { opacity: overlayOpacity } : { opacity: 0.38 }}
+            style={!freezeHeroMotion ? { opacity: overlayOpacity } : { opacity: 0.38 }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/82 via-black/18 to-black/95 z-[2]" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/78 via-black/36 to-black/10 z-[2]" />
@@ -359,10 +354,7 @@ export default function Home() {
 
           {/* Left-Aligned Text Content */}
           <motion.div
-            initial={{ opacity: 0.001, y: 0 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={isAppleTouch || isTouch ? undefined : { opacity: textOpacity }}
+            style={freezeHeroMotion ? undefined : { opacity: textOpacity }}
             className="flex w-full max-w-[calc(100vw-3rem)] flex-col relative z-10 md:max-w-[920px]"
           >
             {/* Top Status Bar: Eyebrow */}
@@ -370,7 +362,7 @@ export default function Home() {
 
               {/* Elegant Eyebrow */}
               <motion.div 
-                initial={{ opacity: 0, x: -20 }}
+                initial={freezeHeroMotion ? false : { opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="inline-flex max-w-full items-center gap-3 px-4 py-2.5 border border-[#D4AF37]/30 bg-[#D4AF37]/10 rounded-full backdrop-blur-md sm:px-5"
@@ -386,7 +378,7 @@ export default function Home() {
             </div>
 
             <motion.h1
-              initial="hidden"
+              initial={freezeHeroMotion ? false : "hidden"}
               animate="visible"
               variants={{
                 hidden: { opacity: 0.001 },
@@ -428,7 +420,7 @@ export default function Home() {
 
             {/* Premium Description */}
             <motion.p
-               initial={{ opacity: 0, y: 15 }}
+               initial={freezeHeroMotion ? false : { opacity: 0, y: 15 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ duration: 0.8, delay: 0.5 }}
               className="relative z-10 mb-11 w-full max-w-[22rem] whitespace-normal break-words text-[16px] font-semibold leading-8 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:max-w-[34rem] md:max-w-[580px] md:text-xl md:leading-9 md:text-white/82 md:drop-shadow-md"
@@ -439,7 +431,7 @@ export default function Home() {
 
             {/* Dual CTA Buttons — matched width/height so desktop alignment stays stable */}
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
+              initial={freezeHeroMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex w-full max-w-[19.5rem] flex-col items-stretch gap-3.5 sm:w-auto sm:max-w-none sm:flex-row sm:items-center sm:gap-4"
@@ -647,7 +639,7 @@ export default function Home() {
         <div
           data-testid="featured-arrivals-marquee"
           className={
-            isAppleTouch || shouldReduceMotion
+            freezeHeroMotion
               ? 'w-full overflow-x-auto overscroll-x-contain py-12 [-webkit-overflow-scrolling:touch]'
               : 'w-full overflow-hidden py-12'
           }
@@ -668,7 +660,7 @@ export default function Home() {
                 </p>
               )}
             </div>
-          ) : isAppleTouch || shouldReduceMotion ? (
+          ) : freezeHeroMotion ? (
             <div className="flex w-max gap-8 px-6">
               {marqueeCars.map((car, i) => renderFeaturedCard(car, `set1-${car.id}-${i}`))}
             </div>

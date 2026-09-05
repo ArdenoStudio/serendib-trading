@@ -2,7 +2,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { isAppleTouchDevice } from "@/lib/device"
+import { isTouchOrMobileDevice } from "@/lib/device"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -101,7 +101,7 @@ function LiquidButton({
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot : "button"
-  const appleTouch = isAppleTouchDevice()
+  const appleTouch = isTouchOrMobileDevice()
 
   return (
     <div className={cn(

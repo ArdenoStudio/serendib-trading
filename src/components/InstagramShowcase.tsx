@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ExternalLink, Instagram } from 'lucide-react';
 
 import { SHOWROOM_IMAGES } from '../data/showroomImages';
-import { isAppleTouchDevice } from '../lib/device';
+import { isTouchOrMobileDevice } from '../lib/device';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/socialLinks';
 import { cn } from '../lib/utils';
 
@@ -24,8 +24,7 @@ const profileStats = [
 export default function InstagramShowcase() {
   const [activeSlide, setActiveSlide] = useState(0);
   const shouldReduceMotion = useReducedMotion();
-  const isAppleTouch = isAppleTouchDevice();
-  const freezeSlideshow = isAppleTouch || Boolean(shouldReduceMotion);
+  const freezeSlideshow = isTouchOrMobileDevice() || Boolean(shouldReduceMotion);
   const currentSlide = showroomSlides[activeSlide];
 
   useEffect(() => {
@@ -118,7 +117,7 @@ export default function InstagramShowcase() {
 
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
           <div className="relative h-[240px] overflow-hidden sm:h-[320px] lg:h-[390px]">
-            {isAppleTouch ? (
+            {freezeSlideshow ? (
               <img
                 src={currentSlide.src}
                 alt={currentSlide.alt}

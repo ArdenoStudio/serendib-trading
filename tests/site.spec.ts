@@ -354,3 +354,18 @@ test.describe('iOS compositor-safe homepage', () => {
     await expect(marquee).toHaveCSS('overflow-x', 'auto');
   });
 });
+
+test.describe('Android and mobile homepage hero visibility', () => {
+  test('hero text and heading are fully visible with opacity 1', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'Run once under the mobile project');
+    await stubVehicles(page);
+    await page.goto('/');
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible();
+    await expect(h1).toContainText(/drive/i);
+    const heroTextContainer = h1.locator('..');
+    await expect(heroTextContainer).toHaveCSS('opacity', '1');
+    await expect(page.getByRole('link', { name: /explore collection/i })).toBeVisible();
+  });
+});
+
