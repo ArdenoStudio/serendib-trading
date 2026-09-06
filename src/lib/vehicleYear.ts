@@ -1,10 +1,17 @@
-const CURRENT_YEAR = new Date().getFullYear();
+const MIN_VEHICLE_YEAR = 1980;
+const MAX_VEHICLE_YEAR = 2035;
+
+const getSafeCurrentYear = () => {
+  const y = new Date().getUTCFullYear();
+  return y >= 2000 && y <= 2100 ? y : 2026;
+};
+
 const YEAR_TOKEN = /\b(19[89]\d|20[0-3]\d)\b/;
 const YEAR_RANGE = /\b(19[89]\d|20[0-3]\d)\s*\/\s*(19[89]\d|20[0-3]\d)\b/;
 
 export const isCorruptVehicleYear = (year: unknown): boolean => {
   const n = Number(year);
-  return !Number.isFinite(n) || n < 1980 || n > CURRENT_YEAR + 1 || n === 1971;
+  return !Number.isFinite(n) || n < MIN_VEHICLE_YEAR || n > MAX_VEHICLE_YEAR || n === 1971;
 };
 
 export const extractYearFromText = (text?: string | null): number | null => {
@@ -12,14 +19,14 @@ export const extractYearFromText = (text?: string | null): number | null => {
   const slash = text.match(YEAR_RANGE);
   if (slash) {
     const registrationYear = parseInt(slash[2], 10);
-    if (registrationYear >= 1980 && registrationYear <= CURRENT_YEAR + 1) {
+    if (registrationYear >= MIN_VEHICLE_YEAR && registrationYear <= MAX_VEHICLE_YEAR) {
       return registrationYear;
     }
   }
   const match = text.match(YEAR_TOKEN);
   if (!match) return null;
   const year = parseInt(match[0], 10);
-  return year >= 1980 && year <= CURRENT_YEAR + 1 ? year : null;
+  return year >= MIN_VEHICLE_YEAR && year <= MAX_VEHICLE_YEAR ? year : null;
 };
 
 const coerceStoredYear = (value: unknown): number => {
@@ -46,5 +53,5 @@ export const resolveVehicleYear = (vehicle: {
   const fromModel = extractYearFromText(vehicle.model);
   if (fromModel) return fromModel;
 
-  return Math.min(CURRENT_YEAR + 1, Math.max(1980, CURRENT_YEAR));
+  return getSafeCurrentYear();
 };

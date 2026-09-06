@@ -14,7 +14,6 @@ import {
   normalizeVehicleRowForRead,
   repairVehicleYearInDb,
   isCorruptVehicleYear,
-  resolveVehicleYear,
 } from '../_db.js';
 import { getSessionFromRequest } from '../auth/_session.js';
 
@@ -115,12 +114,7 @@ export default async function handler(req, res) {
         if (!Array.isArray(rows) || rows.length === 0) {
           return sendJson(res, 404, { error: 'Vehicle not found' });
         }
-        const prepared = prepareVehicleForRead(rows[0]);
-        res.setHeader('X-Resolved-Year', String(prepared?.year ?? ''));
-        res.setHeader('X-Stored-Year', String(rows[0]?.year ?? ''));
-        res.setHeader('X-Year-Corrupt', String(isCorruptVehicleYear(rows[0]?.year)));
-        res.setHeader('X-Year-Resolved-Raw', String(resolveVehicleYear(rows[0])));
-        return sendJson(res, 200, prepared, 'public, max-age=0, s-maxage=0, must-revalidate');
+        return sendJson(res, 200, prepareVehicleForRead(rows[0]), 'public, s-maxage=30, stale-while-revalidate=120');
       }
 
       // Admin dashboard needs gallery/description/views. Keep that on a
@@ -143,7 +137,7 @@ export default async function handler(req, res) {
         res,
         200,
         prepareVehiclesForPublicRead(rows),
-        'public, max-age=0, s-maxage=0, must-revalidate'
+        'public, s-maxage=60, stale-while-revalidate=300'
       );
     } catch (err) {
       console.error('Failed to fetch vehicles:', err);

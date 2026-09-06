@@ -34,3 +34,15 @@ test('resolveVehicleYear recovers from description when DB year is corrupt', () 
     2018
   );
 });
+
+test('resolveVehicleYear accepts future model years when worker clock is stale', () => {
+  assert.equal(
+    resolveVehicleYear({
+      year: 1971,
+      make: 'Toyota',
+      model: 'Raize Z',
+      description: '2026 Toyota Raize Z 1.2L Hybrid.',
+    }),
+    2026
+  );
+});

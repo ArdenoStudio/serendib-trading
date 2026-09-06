@@ -24,7 +24,14 @@ const TRANSMISSION = new Set(['Automatic', 'Manual']);
 const CONDITION = new Set(['New', 'Used', 'Registered', 'Reconditioned']);
 const LEAD_STATUSES = new Set(['New', 'Contacted', 'Closed']);
 const MAX_HTTPS_URL = 2048;
-const CURRENT_YEAR = new Date().getFullYear();
+const MIN_VEHICLE_YEAR = 1980;
+const MAX_VEHICLE_YEAR = 2035;
+
+/** Cloudflare Workers can boot with a stale system clock (~1970). Never gate years on it. */
+export const getSafeCurrentYear = () => {
+  const y = new Date().getUTCFullYear();
+  return y >= 2000 && y <= 2100 ? y : 2026;
+};
 
 export const sanitizeText = (value, max = 200) => {
   if (typeof value !== 'string') return '';
@@ -57,7 +64,10 @@ export const clampInt = (value, min, max, fallback) => {
   return Math.min(max, Math.max(min, Math.round(n)));
 };
 
-export const sanitizeYear = (value) => clampInt(value, 1980, CURRENT_YEAR + 1, CURRENT_YEAR);
+export const sanitizeYear = (value) => {
+  const currentYear = getSafeCurrentYear();
+  return clampInt(value, MIN_VEHICLE_YEAR, MAX_VEHICLE_YEAR, currentYear);
+};
 
 const YEAR_TOKEN = /\b(19[89]\d|20[0-3]\d)\b/;
 const YEAR_RANGE = /\b(19[89]\d|20[0-3]\d)\s*\/\s*(19[89]\d|20[0-3]\d)\b/;
@@ -65,7 +75,7 @@ const YEAR_RANGE = /\b(19[89]\d|20[0-3]\d)\s*\/\s*(19[89]\d|20[0-3]\d)\b/;
 /** True when the stored year is missing or known-bad (Neon migration corruption). */
 export const isCorruptVehicleYear = (year) => {
   const n = Number(year);
-  return !Number.isFinite(n) || n < 1980 || n > CURRENT_YEAR + 1 || n === 1971;
+  return !Number.isFinite(n) || n < MIN_VEHICLE_YEAR || n > MAX_VEHICLE_YEAR || n === 1971;
 };
 
 export const extractYearFromText = (text) => {
@@ -74,14 +84,14 @@ export const extractYearFromText = (text) => {
   const slash = value.match(YEAR_RANGE);
   if (slash) {
     const registrationYear = parseInt(slash[2], 10);
-    if (registrationYear >= 1980 && registrationYear <= CURRENT_YEAR + 1) {
+    if (registrationYear >= MIN_VEHICLE_YEAR && registrationYear <= MAX_VEHICLE_YEAR) {
       return registrationYear;
     }
   }
   const match = value.match(YEAR_TOKEN);
   if (!match) return null;
   const year = parseInt(match[0], 10);
-  return year >= 1980 && year <= CURRENT_YEAR + 1 ? year : null;
+  return year >= MIN_VEHICLE_YEAR && year <= MAX_VEHICLE_YEAR ? year : null;
 };
 
 const coerceStoredYear = (value) => {
