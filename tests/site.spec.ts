@@ -389,7 +389,7 @@ test.describe('first-visit welcome', () => {
     await page.goto('/');
 
     const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
-    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeVisible({ timeout: 12_000 });
     await expect(dialog.getByRole('link', { name: /message us on whatsapp/i })).toBeVisible();
     await expect(dialog.getByRole('link', { name: /explore the collection/i })).toBeVisible();
     const viewport = page.viewportSize();
@@ -411,7 +411,7 @@ test.describe('first-visit welcome', () => {
     await page.goto('/?welcome=1');
 
     const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
-    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeVisible({ timeout: 12_000 });
     await dialog.getByRole('link', { name: /explore the collection/i }).click();
     await expect(page).toHaveURL(/\/inventory/);
     await expect(dialog).toHaveCount(0);
@@ -425,7 +425,7 @@ test.describe('first-visit welcome', () => {
     await page.goto('/?welcome=1');
 
     const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
-    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeVisible({ timeout: 12_000 });
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
   });
@@ -448,8 +448,13 @@ test.describe('first-visit welcome', () => {
         if (document.fonts?.ready) await document.fonts.ready;
       });
 
+      const skip = page.getByRole('button', { name: /^skip$/i });
+      if (await skip.isVisible().catch(() => false)) {
+        await skip.click();
+      }
+
       const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
-      await expect(dialog, `${phone.name}: welcome is visible`).toBeVisible();
+      await expect(dialog, `${phone.name}: welcome is visible`).toBeVisible({ timeout: 12_000 });
 
       const actions = [
         dialog.getByRole('link', { name: /message us on whatsapp/i }),
@@ -479,6 +484,29 @@ test.describe('first-visit welcome', () => {
         }
       }
     }
+  });
+
+  test('cinematic opening plays, then the welcome sheet', async ({ page }) => {
+    await stubVehicles(page, { skipWelcomeOverlay: false });
+    await page.goto('/?welcome=1');
+
+    await expect(page.getByTestId('welcome-intro')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^serendib$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^skip$/i })).toBeVisible();
+
+    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
+    await expect(dialog).toBeVisible({ timeout: 12_000 });
+    await expect(page.getByTestId('welcome-intro')).toHaveCount(0);
+  });
+
+  test('skip advances from the opening to the welcome sheet', async ({ page }) => {
+    await stubVehicles(page, { skipWelcomeOverlay: false });
+    await page.goto('/?welcome=1');
+
+    await expect(page.getByTestId('welcome-intro')).toBeVisible();
+    await page.getByRole('button', { name: /^skip$/i }).click();
+    await expect(page.getByRole('dialog', { name: /welcome to serendib trading/i })).toBeVisible();
+    await expect(page.getByTestId('welcome-intro')).toHaveCount(0);
   });
 });
 
