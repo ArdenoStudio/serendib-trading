@@ -1,4 +1,5 @@
 import { prepareImageForUpload } from './images';
+import { isCorruptVehicleYear, resolveVehicleYear } from './vehicleYear';
 
 export const isSupabaseConfigured = true;
 
@@ -53,12 +54,34 @@ export const supabase = {
 };
 
 // ── Vehicles ────────────────────────────────────────────────
+const hydrateVehicleYear = async (row: Record<string, unknown>) => {
+  if (!row?.id || !isCorruptVehicleYear(row.year)) {
+    return row;
+  }
+
+  let source = row;
+  if (!row.description) {
+    try {
+      const detailRes = await fetch(`/api/db/vehicles?id=${encodeURIComponent(String(row.id))}`);
+      if (detailRes.ok) {
+        source = await detailRes.json();
+      }
+    } catch {
+      // Keep list row if detail fetch fails.
+    }
+  }
+
+  const year = resolveVehicleYear(source);
+  return year === row.year ? row : { ...row, year };
+};
+
 export const getVehicles = async () => {
   try {
     const res = await fetch('/api/db/vehicles');
     if (!res.ok) throw new Error('Failed to fetch vehicles');
     const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    const rows = Array.isArray(data) ? data : [];
+    return Promise.all(rows.map((row) => hydrateVehicleYear(row)));
   } catch (error) {
     console.error('Failed to fetch vehicles:', error);
     return [];

@@ -114,7 +114,7 @@ export default async function handler(req, res) {
         if (!Array.isArray(rows) || rows.length === 0) {
           return sendJson(res, 404, { error: 'Vehicle not found' });
         }
-        return sendJson(res, 200, prepareVehicleForRead(rows[0]), 'public, s-maxage=30, stale-while-revalidate=120');
+        return sendJson(res, 200, prepareVehicleForRead(rows[0]), 'public, max-age=0, s-maxage=0, must-revalidate');
       }
 
       // Admin dashboard needs gallery/description/views. Keep that on a
@@ -137,7 +137,7 @@ export default async function handler(req, res) {
         res,
         200,
         prepareVehiclesForPublicRead(rows),
-        'public, s-maxage=60, stale-while-revalidate=300'
+        'public, max-age=0, s-maxage=0, must-revalidate'
       );
     } catch (err) {
       console.error('Failed to fetch vehicles:', err);
