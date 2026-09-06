@@ -25,7 +25,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
  * keeps Neon egress bounded — photos themselves live in Supabase Storage.
  */
 const PUBLIC_LIST_COLUMNS = `
-  id, make, model, year, price, mileage, fuel, transmission,
+  id, make, model, year, description, price, mileage, fuel, transmission,
   "bodyType", color, image, condition, key_features, is_sold, sold_at, created_at
 `;
 
@@ -47,6 +47,17 @@ const prepareVehicleForRead = (row) => {
 
 const prepareVehiclesForRead = (rows) =>
   Array.isArray(rows) ? rows.map(prepareVehicleForRead) : [];
+
+/** Public cards only need the corrected year, not the full description body. */
+const prepareVehicleForPublicRead = (row) => {
+  const normalized = prepareVehicleForRead(row);
+  if (!normalized || typeof normalized !== 'object') return normalized;
+  const { description: _description, ...publicRow } = normalized;
+  return publicRow;
+};
+
+const prepareVehiclesForPublicRead = (rows) =>
+  Array.isArray(rows) ? rows.map(prepareVehicleForPublicRead) : [];
 
 const ensureCarsTable = async () => {
   try {
@@ -125,7 +136,7 @@ export default async function handler(req, res) {
       return sendJson(
         res,
         200,
-        prepareVehiclesForRead(rows),
+        prepareVehiclesForPublicRead(rows),
         'public, s-maxage=60, stale-while-revalidate=300'
       );
     } catch (err) {
