@@ -358,8 +358,6 @@ a, button, [role="button"], input, select, textarea, label, summary {
   body.mobile-nav-open .compare-float,
   body.welcome-open .wa-float,
   body.welcome-open .compare-float {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+    display: none;
   }
 }
