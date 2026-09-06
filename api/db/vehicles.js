@@ -14,6 +14,7 @@ import {
   normalizeVehicleRowForRead,
   repairVehicleYearInDb,
   isCorruptVehicleYear,
+  resolveVehicleYear,
 } from '../_db.js';
 import { getSessionFromRequest } from '../auth/_session.js';
 
@@ -116,6 +117,9 @@ export default async function handler(req, res) {
         }
         const prepared = prepareVehicleForRead(rows[0]);
         res.setHeader('X-Resolved-Year', String(prepared?.year ?? ''));
+        res.setHeader('X-Stored-Year', String(rows[0]?.year ?? ''));
+        res.setHeader('X-Year-Corrupt', String(isCorruptVehicleYear(rows[0]?.year)));
+        res.setHeader('X-Year-Resolved-Raw', String(resolveVehicleYear(rows[0])));
         return sendJson(res, 200, prepared, 'public, max-age=0, s-maxage=0, must-revalidate');
       }
 
