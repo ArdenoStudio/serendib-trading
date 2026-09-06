@@ -430,5 +430,31 @@ test.describe('first-visit welcome', () => {
     await expect(page.getByRole('dialog', { name: /welcome to serendib trading/i })).toHaveCount(0);
     await expect(page.locator('h1').first()).toContainText(/dashboard\s+access/i);
   });
+
+  test('all welcome paths stay on-screen on a phone', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'Phone layout check');
+
+    await stubVehicles(page, { skipWelcomeOverlay: false });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/?welcome=1');
+
+    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
+    await expect(dialog).toBeVisible();
+
+    for (const name of [
+      /browse the collection/i,
+      /estimate monthly payments/i,
+      /book a dehiwala viewing/i,
+      /explore the collection/i,
+      /message us on whatsapp/i,
+    ]) {
+      const link = dialog.getByRole('link', { name });
+      await expect(link).toBeVisible();
+      const box = (await link.boundingBox())!;
+      expect(box.y, `${name} top stays in the viewport`).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height, `${name} bottom stays in the viewport`).toBeLessThanOrEqual(845);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    }
+  });
 });
 

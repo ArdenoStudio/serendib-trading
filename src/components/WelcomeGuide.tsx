@@ -193,7 +193,7 @@ export default function WelcomeGuide() {
             animate={{ opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
             transition={{ duration: motionDuration, ease: 'easeOut' }}
-            className="relative z-10 flex max-h-[min(36rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#0d0b09] shadow-2xl"
+            className="relative z-10 flex max-h-[min(42rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#0d0b09] shadow-2xl"
             style={{
               paddingBottom: 'max(1rem, var(--safe-bottom))',
             }}
@@ -220,24 +220,24 @@ export default function WelcomeGuide() {
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-2 pt-5 sm:px-8">
-              <h2 id={titleId} className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-2 pt-4 sm:px-8 sm:pt-5">
+              <h2 id={titleId} className="text-balance text-2xl font-black tracking-tight text-white sm:text-4xl">
                 Welcome to Serendib Trading
               </h2>
               <p
                 id={descriptionId}
-                className="mt-3 max-w-md text-pretty text-sm leading-6 text-white/70 sm:text-base sm:leading-7"
+                className="mt-2 max-w-md text-pretty text-sm leading-6 text-white/70 sm:mt-3 sm:text-base sm:leading-7"
               >
                 The Dehiwala showroom is live. Start with the collection, check finance, or message us — we will take it from there.
               </p>
 
-              <ul className="mt-6 space-y-2">
+              <ul className="mt-4 space-y-2 sm:mt-6">
                 {PATHS.map((path) => (
                   <li key={path.id}>
                     <Link
                       to={path.to}
                       onClick={() => dismiss(path.id)}
-                      className="group flex min-h-14 items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors duration-200 hover:border-[#D4AF37]/35 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                      className="group flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 transition-colors duration-200 hover:border-[#D4AF37]/35 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] sm:min-h-14 sm:gap-4 sm:px-4 sm:py-3"
                     >
                       <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#D4AF37]">
                         <path.Icon className="size-4" aria-hidden="true" />
@@ -255,7 +255,7 @@ export default function WelcomeGuide() {
               </ul>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-white/10 px-6 pt-4 sm:px-8">
+            <div className="flex flex-col gap-2.5 border-t border-white/10 px-6 pt-3 sm:gap-3 sm:px-8 sm:pt-4">
               <Link
                 to="/inventory"
                 onClick={() => dismiss('browse')}
