@@ -390,10 +390,12 @@ test.describe('first-visit welcome', () => {
 
     const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
     await expect(dialog).toBeVisible({ timeout: 12_000 });
+    await expect(page.getByTestId('welcome-intro')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^skip$/i })).toHaveCount(0);
     await expect(dialog.getByRole('link', { name: /message us on whatsapp/i })).toBeVisible();
     await expect(dialog.getByRole('link', { name: /explore the collection/i })).toBeVisible();
     const viewport = page.viewportSize();
-    if ((viewport?.height ?? 0) >= 800) {
+    if ((viewport?.height ?? 0) >= 640) {
       await expect(dialog.getByRole('link', { name: /browse the collection/i })).toBeVisible();
       await expect(dialog.getByRole('link', { name: /estimate monthly payments/i })).toBeVisible();
       await expect(dialog.getByRole('link', { name: /book a dehiwala viewing/i })).toBeVisible();
@@ -448,13 +450,9 @@ test.describe('first-visit welcome', () => {
         if (document.fonts?.ready) await document.fonts.ready;
       });
 
-      const skip = page.getByRole('button', { name: /^skip$/i });
-      if (await skip.isVisible().catch(() => false)) {
-        await skip.click();
-      }
-
       const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
       await expect(dialog, `${phone.name}: welcome is visible`).toBeVisible({ timeout: 12_000 });
+      await expect(page.getByTestId('welcome-intro'), `${phone.name}: no cinematic intro`).toHaveCount(0);
 
       const actions = [
         dialog.getByRole('link', { name: /message us on whatsapp/i }),
@@ -470,7 +468,7 @@ test.describe('first-visit welcome', () => {
         expect(box.height, `${phone.name}: action is tappable`).toBeGreaterThanOrEqual(44);
       }
 
-      if (phone.height >= 800) {
+      if (phone.height >= 640) {
         for (const name of [
           /browse the collection/i,
           /estimate monthly payments/i,
@@ -484,29 +482,6 @@ test.describe('first-visit welcome', () => {
         }
       }
     }
-  });
-
-  test('cinematic opening plays, then the welcome sheet', async ({ page }) => {
-    await stubVehicles(page, { skipWelcomeOverlay: false });
-    await page.goto('/?welcome=1');
-
-    await expect(page.getByTestId('welcome-intro')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /^serendib$/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^skip$/i })).toBeVisible();
-
-    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
-    await expect(dialog).toBeVisible({ timeout: 12_000 });
-    await expect(page.getByTestId('welcome-intro')).toHaveCount(0);
-  });
-
-  test('skip advances from the opening to the welcome sheet', async ({ page }) => {
-    await stubVehicles(page, { skipWelcomeOverlay: false });
-    await page.goto('/?welcome=1');
-
-    await expect(page.getByTestId('welcome-intro')).toBeVisible();
-    await page.getByRole('button', { name: /^skip$/i }).click();
-    await expect(page.getByRole('dialog', { name: /welcome to serendib trading/i })).toBeVisible();
-    await expect(page.getByTestId('welcome-intro')).toHaveCount(0);
   });
 });
 
