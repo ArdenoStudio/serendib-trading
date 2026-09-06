@@ -114,7 +114,9 @@ export default async function handler(req, res) {
         if (!Array.isArray(rows) || rows.length === 0) {
           return sendJson(res, 404, { error: 'Vehicle not found' });
         }
-        return sendJson(res, 200, prepareVehicleForRead(rows[0]), 'public, max-age=0, s-maxage=0, must-revalidate');
+        const prepared = prepareVehicleForRead(rows[0]);
+        res.setHeader('X-Resolved-Year', String(prepared?.year ?? ''));
+        return sendJson(res, 200, prepared, 'public, max-age=0, s-maxage=0, must-revalidate');
       }
 
       // Admin dashboard needs gallery/description/views. Keep that on a
