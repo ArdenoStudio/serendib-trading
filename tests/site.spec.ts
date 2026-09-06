@@ -390,9 +390,14 @@ test.describe('first-visit welcome', () => {
 
     const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('link', { name: /browse the collection/i })).toBeVisible();
-    await expect(dialog.getByRole('link', { name: /estimate monthly payments/i })).toBeVisible();
-    await expect(dialog.getByRole('link', { name: /book a dehiwala viewing/i })).toBeVisible();
+    await expect(dialog.getByRole('link', { name: /message us on whatsapp/i })).toBeVisible();
+    await expect(dialog.getByRole('link', { name: /explore the collection/i })).toBeVisible();
+    const viewport = page.viewportSize();
+    if ((viewport?.height ?? 0) >= 800) {
+      await expect(dialog.getByRole('link', { name: /browse the collection/i })).toBeVisible();
+      await expect(dialog.getByRole('link', { name: /estimate monthly payments/i })).toBeVisible();
+      await expect(dialog.getByRole('link', { name: /book a dehiwala viewing/i })).toBeVisible();
+    }
 
     await dialog.getByRole('button', { name: /continue exploring/i }).click();
     await expect(dialog).toHaveCount(0);
@@ -431,29 +436,48 @@ test.describe('first-visit welcome', () => {
     await expect(page.locator('h1').first()).toContainText(/dashboard\s+access/i);
   });
 
-  test('all welcome paths stay on-screen on a phone', async ({ page }, testInfo) => {
+  test('primary welcome actions stay on-screen across phones', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'mobile', 'Phone layout check');
 
     await stubVehicles(page, { skipWelcomeOverlay: false });
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/?welcome=1');
 
-    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
-    await expect(dialog).toBeVisible();
+    for (const phone of phoneViewports) {
+      await page.setViewportSize({ width: phone.width, height: phone.height });
+      await page.goto('/?welcome=1');
+      await page.evaluate(async () => {
+        if (document.fonts?.ready) await document.fonts.ready;
+      });
 
-    for (const name of [
-      /browse the collection/i,
-      /estimate monthly payments/i,
-      /book a dehiwala viewing/i,
-      /explore the collection/i,
-      /message us on whatsapp/i,
-    ]) {
-      const link = dialog.getByRole('link', { name });
-      await expect(link).toBeVisible();
-      const box = (await link.boundingBox())!;
-      expect(box.y, `${name} top stays in the viewport`).toBeGreaterThanOrEqual(0);
-      expect(box.y + box.height, `${name} bottom stays in the viewport`).toBeLessThanOrEqual(845);
-      expect(box.height).toBeGreaterThanOrEqual(44);
+      const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
+      await expect(dialog, `${phone.name}: welcome is visible`).toBeVisible();
+
+      const actions = [
+        dialog.getByRole('link', { name: /message us on whatsapp/i }),
+        dialog.getByRole('link', { name: /explore the collection/i }),
+        dialog.getByRole('button', { name: /continue exploring/i }),
+      ];
+
+      for (const action of actions) {
+        await expect(action, `${phone.name}: action visible`).toBeVisible();
+        const box = (await action.boundingBox())!;
+        expect(box.y, `${phone.name}: action top`).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.height, `${phone.name}: action bottom`).toBeLessThanOrEqual(phone.height + 1);
+        expect(box.height, `${phone.name}: action is tappable`).toBeGreaterThanOrEqual(44);
+      }
+
+      if (phone.height >= 800) {
+        for (const name of [
+          /browse the collection/i,
+          /estimate monthly payments/i,
+          /book a dehiwala viewing/i,
+        ]) {
+          const link = dialog.getByRole('link', { name });
+          await expect(link, `${phone.name}: ${name} visible`).toBeVisible();
+          const box = (await link.boundingBox())!;
+          expect(box.y + box.height).toBeLessThanOrEqual(phone.height + 1);
+          expect(box.height).toBeGreaterThanOrEqual(44);
+        }
+      }
     }
   });
 });

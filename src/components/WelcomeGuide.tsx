@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Calculator, MapPin, Search, X } from 'lucide-react';
 import { useBodyScrollLock } from '../lib/bodyScrollLock';
+import { isTouchOrMobileDevice } from '../lib/device';
 import { logCtaClick } from '../lib/supabase';
 import {
   hasSeenWelcome,
@@ -16,6 +17,8 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
 const OPEN_DELAY_MS = 480;
+const WHATSAPP_HREF =
+  'https://wa.me/94756363427?text=Hi%20Serendib%20Trading%20%E2%80%94%20I%20just%20opened%20the%20new%20site%20and%20would%20like%20help%20finding%20a%20vehicle.';
 
 type WelcomePath = 'browse' | 'finance' | 'visit' | 'whatsapp' | 'dismiss';
 
@@ -76,7 +79,7 @@ export default function WelcomeGuide() {
     const force = shouldForceWelcome(location.search);
     if (!force && hasSeenWelcome()) return;
 
-    const delay = force || shouldReduceMotion ? 0 : OPEN_DELAY_MS;
+    const delay = force || shouldReduceMotion || isTouchOrMobileDevice() ? 0 : OPEN_DELAY_MS;
     const timer = window.setTimeout(() => setOpen(true), delay);
     return () => window.clearTimeout(timer);
   }, [isAdmin, location.pathname, location.search, shouldReduceMotion]);
@@ -154,7 +157,14 @@ export default function WelcomeGuide() {
     };
 
     window.addEventListener('keydown', onKeyDown);
-    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    const focusTimer = window.setTimeout(() => {
+      // Autofocusing the close control jumps the iOS viewport. Keep focus on the sheet.
+      if (isTouchOrMobileDevice()) {
+        dialogRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      closeButtonRef.current?.focus();
+    }, 0);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.clearTimeout(focusTimer);
@@ -168,7 +178,7 @@ export default function WelcomeGuide() {
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center sm:p-6">
+        <div className="fixed inset-0 z-[110] flex items-end justify-center p-0 sm:items-center sm:p-6">
           <motion.div
             aria-hidden="true"
             initial={{ opacity: 0 }}
@@ -189,19 +199,23 @@ export default function WelcomeGuide() {
             data-testid="welcome-guide"
             data-scroll-lock-scrollable
             data-lenis-prevent="true"
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
             transition={{ duration: motionDuration, ease: 'easeOut' }}
-            className="relative z-10 flex max-h-[min(42rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#0d0b09] shadow-2xl"
+            className="relative z-10 box-border flex h-auto max-h-full max-h-[100svh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-white/10 bg-[#0d0b09] shadow-2xl sm:max-h-[min(42rem,calc(100svh-2rem))] sm:rounded-[28px]"
             style={{
-              paddingBottom: 'max(1rem, var(--safe-bottom))',
+              paddingBottom: 'max(0.5rem, var(--safe-bottom))',
+              paddingLeft: 'max(1.25rem, var(--safe-left))',
+              paddingRight: 'max(1.25rem, var(--safe-right))',
             }}
           >
-            <div className="flex items-start justify-between gap-4 px-6 pt-[max(1.5rem,var(--safe-top))] sm:px-8 sm:pt-[max(2rem,var(--safe-top))]">
-              <div className="inline-flex items-center gap-3 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2">
+            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20 sm:hidden" aria-hidden="true" />
+
+            <div className="flex items-start justify-between gap-3 pt-3 [@media(min-height:700px)]:pt-6">
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1.5 sm:px-4 sm:py-2">
                 <span className="relative flex size-2" aria-hidden="true">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#D4AF37] opacity-75 motion-reduce:animate-none" />
+                  <span className="absolute hidden size-full animate-ping rounded-full bg-[#D4AF37] opacity-75 motion-reduce:hidden [@media(pointer:fine)]:inline-flex" />
                   <span className="relative inline-flex size-2 rounded-full bg-[#D4AF37]" />
                 </span>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">
@@ -214,37 +228,41 @@ export default function WelcomeGuide() {
                 type="button"
                 onClick={() => dismiss('dismiss')}
                 aria-label="Close welcome"
-                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors duration-200 hover:border-white/25 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                className="flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors duration-200 hover:border-white/25 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
               >
                 <X className="size-5" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-2 pt-4 sm:px-8 sm:pt-5">
-              <h2 id={titleId} className="text-balance text-2xl font-black tracking-tight text-white sm:text-4xl">
+            <div className="shrink-0 pt-3 [@media(min-height:700px)]:pt-5">
+              <h2 id={titleId} className="text-balance text-xl font-black leading-tight tracking-tight text-white [@media(min-height:500px)]:text-2xl [@media(min-height:800px)]:text-4xl">
                 Welcome to Serendib Trading
               </h2>
               <p
                 id={descriptionId}
-                className="mt-2 max-w-md text-pretty text-sm leading-6 text-white/70 sm:mt-3 sm:text-base sm:leading-7"
+                className="mt-2 hidden text-pretty text-sm leading-6 text-white/70 [@media(min-height:560px)]:block [@media(min-height:800px)]:text-base [@media(min-height:800px)]:leading-7"
               >
                 The Dehiwala showroom is live. Start with the collection, check finance, or message us — we will take it from there.
               </p>
+            </div>
 
-              <ul className="mt-4 space-y-2 sm:mt-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
+              <ul className="mt-4 hidden space-y-2 [@media(min-height:800px)]:block">
                 {PATHS.map((path) => (
                   <li key={path.id}>
                     <Link
                       to={path.to}
                       onClick={() => dismiss(path.id)}
-                      className="group flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 transition-colors duration-200 hover:border-[#D4AF37]/35 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] sm:min-h-14 sm:gap-4 sm:px-4 sm:py-3"
+                      className="group flex min-h-12 touch-manipulation items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 transition-colors duration-200 hover:border-[#D4AF37]/35 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] sm:min-h-14 sm:gap-4 sm:px-4 sm:py-3"
                     >
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#D4AF37]">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#D4AF37] sm:size-11">
                         <path.Icon className="size-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-bold text-white">{path.title}</span>
-                        <span className="mt-0.5 block truncate text-xs text-white/65">{path.detail}</span>
+                        <span className="mt-0.5 hidden truncate text-xs text-white/65 [@media(min-height:720px)]:block">
+                          {path.detail}
+                        </span>
                       </span>
                       <span className="text-[#D4AF37]" aria-hidden="true">
                         →
@@ -255,28 +273,27 @@ export default function WelcomeGuide() {
               </ul>
             </div>
 
-            <div className="flex flex-col gap-2.5 border-t border-white/10 px-6 pt-3 sm:gap-3 sm:px-8 sm:pt-4">
-              <Link
-                to="/inventory"
-                onClick={() => dismiss('browse')}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full text-[12px] font-black uppercase tracking-[0.12em] text-black transition-transform duration-200 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
-                style={{ background: 'linear-gradient(135deg, #E5C158 0%, #D4AF37 100%)' }}
-              >
-                Explore the collection
-              </Link>
+            <div className="flex flex-col gap-2 border-t border-white/10 pt-3 [@media(min-height:700px)]:gap-3 [@media(min-height:700px)]:pt-4">
               <a
-                href="https://wa.me/94756363427?text=Hi%20Serendib%20Trading%20%E2%80%94%20I%20just%20opened%20the%20new%20site%20and%20would%20like%20help%20finding%20a%20vehicle."
+                href={WHATSAPP_HREF}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => dismiss('whatsapp')}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 bg-white/5 text-[12px] font-black uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:border-white/30 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                className="order-1 inline-flex h-11 w-full touch-manipulation items-center justify-center rounded-full bg-[#D4AF37] text-[12px] font-black uppercase tracking-[0.12em] text-black transition-transform duration-200 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] [@media(min-height:500px)]:h-12 sm:order-2 sm:border sm:border-white/15 sm:bg-white/5 sm:text-white"
               >
                 Message us on WhatsApp
               </a>
+              <Link
+                to="/inventory"
+                onClick={() => dismiss('browse')}
+                className="order-2 inline-flex h-11 w-full touch-manipulation items-center justify-center rounded-full border border-white/15 bg-white/5 text-[12px] font-black uppercase tracking-[0.12em] text-white transition-transform duration-200 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] [@media(min-height:500px)]:h-12 sm:order-1 sm:border-0 sm:bg-[#D4AF37] sm:text-black"
+              >
+                Explore the collection
+              </Link>
               <button
                 type="button"
                 onClick={() => dismiss('dismiss')}
-                className="inline-flex h-11 w-full items-center justify-center text-[11px] font-bold uppercase tracking-[0.18em] text-white/70 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                className="order-3 inline-flex h-11 w-full touch-manipulation items-center justify-center text-[11px] font-bold uppercase tracking-[0.18em] text-white/70 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
               >
                 Continue exploring
               </button>

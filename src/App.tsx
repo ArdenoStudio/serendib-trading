@@ -7,10 +7,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import ComparisonTray from './components/ComparisonTray';
 import WhatsAppFloat from './components/WhatsAppFloat';
-import WelcomeGuide from './components/WelcomeGuide';
 import ErrorBoundary from './components/ErrorBoundary';
 import Loader from './components/Loader';
 import { logPageView } from './lib/supabase';
+
+const WelcomeGuide = lazy(() => import('./components/WelcomeGuide'));
 
 const Home = lazy(() => import('./pages/Home'));
 const Inventory = lazy(() => import('./pages/Inventory'));
@@ -124,7 +125,11 @@ export default function App() {
         </ErrorBoundary>
       </main>
       {!isAdmin && <WhatsAppFloat />}
-      {!isAdmin && <WelcomeGuide />}
+      {!isAdmin && (
+        <Suspense fallback={null}>
+          <WelcomeGuide />
+        </Suspense>
+      )}
     </>
   );
 }
