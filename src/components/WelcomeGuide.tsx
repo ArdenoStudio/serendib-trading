@@ -1,0 +1,290 @@
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Calculator, MapPin, Search, X } from 'lucide-react';
+import { useBodyScrollLock } from '../lib/bodyScrollLock';
+import { logCtaClick } from '../lib/supabase';
+import {
+  hasSeenWelcome,
+  markWelcomeSeen,
+  shouldForceWelcome,
+  stripWelcomeQuery,
+} from '../lib/welcome';
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+const OPEN_DELAY_MS = 480;
+
+type WelcomePath = 'browse' | 'finance' | 'visit' | 'whatsapp' | 'dismiss';
+
+const PATHS: ReadonlyArray<{
+  id: Exclude<WelcomePath, 'whatsapp' | 'dismiss'>;
+  to: string;
+  title: string;
+  detail: string;
+  Icon: typeof Search;
+}> = [
+  {
+    id: 'browse',
+    to: '/inventory',
+    title: 'Browse the collection',
+    detail: 'Inspected UK and Japan imports, ready to view.',
+    Icon: Search,
+  },
+  {
+    id: 'finance',
+    to: '/calculator',
+    title: 'Estimate monthly payments',
+    detail: 'Check a first figure before you visit the floor.',
+    Icon: Calculator,
+  },
+  {
+    id: 'visit',
+    to: '/contact',
+    title: 'Book a Dehiwala viewing',
+    detail: 'Share the model, budget, and a time that works.',
+    Icon: MapPin,
+  },
+];
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled welcome path: ${String(value)}`);
+}
+
+export default function WelcomeGuide() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const shouldReduceMotion = useReducedMotion();
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dismissedRef = useRef(false);
+  const [open, setOpen] = useState(false);
+
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  useEffect(() => {
+    if (isAdmin) {
+      setOpen(false);
+      return;
+    }
+    if (dismissedRef.current) return;
+
+    const force = shouldForceWelcome(location.search);
+    if (!force && hasSeenWelcome()) return;
+
+    const delay = force || shouldReduceMotion ? 0 : OPEN_DELAY_MS;
+    const timer = window.setTimeout(() => setOpen(true), delay);
+    return () => window.clearTimeout(timer);
+  }, [isAdmin, location.pathname, location.search, shouldReduceMotion]);
+
+  useBodyScrollLock(open);
+
+  const dismiss = useCallback((path: WelcomePath) => {
+    switch (path) {
+      case 'browse':
+        logCtaClick('welcome_browse');
+        break;
+      case 'finance':
+        logCtaClick('welcome_finance');
+        break;
+      case 'visit':
+        logCtaClick('welcome_visit');
+        break;
+      case 'whatsapp':
+        logCtaClick('welcome_whatsapp');
+        break;
+      case 'dismiss':
+        logCtaClick('welcome_dismiss');
+        break;
+      default:
+        assertNever(path);
+    }
+
+    dismissedRef.current = true;
+    markWelcomeSeen();
+    const staysOnPage = path === 'dismiss' || path === 'whatsapp';
+    if (staysOnPage && shouldForceWelcome(location.search)) {
+      navigate(stripWelcomeQuery(location.pathname, location.search, location.hash), { replace: true });
+    }
+    setOpen(false);
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    document.body.classList.toggle('welcome-open', open);
+    const root = document.getElementById('root');
+    if (open) root?.setAttribute('inert', '');
+    else root?.removeAttribute('inert');
+    return () => {
+      document.body.classList.remove('welcome-open');
+      root?.removeAttribute('inert');
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const dialog = dialogRef.current;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        dismiss('dismiss');
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialog) return;
+
+      const items = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => el.tabIndex !== -1 && !el.hasAttribute('disabled'),
+      );
+      if (items.length === 0) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.clearTimeout(focusTimer);
+    };
+  }, [dismiss, open]);
+
+  if (typeof document === 'undefined') return null;
+
+  const motionDuration = shouldReduceMotion ? 0 : 0.2;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center sm:p-6">
+          <motion.div
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: motionDuration, ease: 'easeOut' }}
+            className="absolute inset-0 bg-[#080706]/80"
+            onClick={() => dismiss('dismiss')}
+          />
+
+          <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
+            tabIndex={-1}
+            data-testid="welcome-guide"
+            data-scroll-lock-scrollable
+            data-lenis-prevent="true"
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+            transition={{ duration: motionDuration, ease: 'easeOut' }}
+            className="relative z-10 flex max-h-[min(36rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#0d0b09] shadow-2xl"
+            style={{
+              paddingBottom: 'max(1rem, var(--safe-bottom))',
+            }}
+          >
+            <div className="flex items-start justify-between gap-4 px-6 pt-[max(1.5rem,var(--safe-top))] sm:px-8 sm:pt-[max(2rem,var(--safe-top))]">
+              <div className="inline-flex items-center gap-3 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2">
+                <span className="relative flex size-2" aria-hidden="true">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#D4AF37] opacity-75 motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-2 rounded-full bg-[#D4AF37]" />
+                </span>
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">
+                  Now open
+                </p>
+              </div>
+
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => dismiss('dismiss')}
+                aria-label="Close welcome"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors duration-200 hover:border-white/25 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-2 pt-5 sm:px-8">
+              <h2 id={titleId} className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl">
+                Welcome to Serendib Trading
+              </h2>
+              <p
+                id={descriptionId}
+                className="mt-3 max-w-md text-pretty text-sm leading-6 text-white/70 sm:text-base sm:leading-7"
+              >
+                The Dehiwala showroom is live. Start with the collection, check finance, or message us — we will take it from there.
+              </p>
+
+              <ul className="mt-6 space-y-2">
+                {PATHS.map((path) => (
+                  <li key={path.id}>
+                    <Link
+                      to={path.to}
+                      onClick={() => dismiss(path.id)}
+                      className="group flex min-h-14 items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors duration-200 hover:border-[#D4AF37]/35 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                    >
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#D4AF37]">
+                        <path.Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-white">{path.title}</span>
+                        <span className="mt-0.5 block truncate text-xs text-white/65">{path.detail}</span>
+                      </span>
+                      <span className="text-[#D4AF37]" aria-hidden="true">
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-white/10 px-6 pt-4 sm:px-8">
+              <Link
+                to="/inventory"
+                onClick={() => dismiss('browse')}
+                className="inline-flex h-12 w-full items-center justify-center rounded-full text-[12px] font-black uppercase tracking-[0.12em] text-black transition-transform duration-200 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                style={{ background: 'linear-gradient(135deg, #E5C158 0%, #D4AF37 100%)' }}
+              >
+                Explore the collection
+              </Link>
+              <a
+                href="https://wa.me/94756363427?text=Hi%20Serendib%20Trading%20%E2%80%94%20I%20just%20opened%20the%20new%20site%20and%20would%20like%20help%20finding%20a%20vehicle."
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => dismiss('whatsapp')}
+                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 bg-white/5 text-[12px] font-black uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:border-white/30 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+              >
+                Message us on WhatsApp
+              </a>
+              <button
+                type="button"
+                onClick={() => dismiss('dismiss')}
+                className="inline-flex h-11 w-full items-center justify-center text-[11px] font-bold uppercase tracking-[0.18em] text-white/70 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+              >
+                Continue exploring
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
+    document.body,
+  );
+}

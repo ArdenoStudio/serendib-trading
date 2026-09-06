@@ -6,7 +6,19 @@ import { resolve } from 'node:path';
 // unavailable in this environment. Stub it so the pages render real content and
 // the console stays clean — otherwise "Failed to fetch vehicles" is an expected
 // artifact of the test harness, not a client bug.
-const stubVehicles = async (page: import('@playwright/test').Page) => {
+const skipWelcome = async (page: import('@playwright/test').Page) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('serendib:welcome-seen', '1');
+  });
+};
+
+const stubVehicles = async (
+  page: import('@playwright/test').Page,
+  options: { skipWelcomeOverlay?: boolean } = {},
+) => {
+  if (options.skipWelcomeOverlay !== false) {
+    await skipWelcome(page);
+  }
   await page.route('**/api/db/vehicles', (route) =>
     route.fulfill({
       status: 200,
@@ -92,6 +104,7 @@ test('inventory renders listings from the API', async ({ page }) => {
 });
 
 test('vehicle detail renders for seeded demo id', async ({ page }) => {
+  await skipWelcome(page);
   await page.route('**/api/db/vehicles**', async (route) => {
     const url = new URL(route.request().url());
     const id = url.searchParams.get('id');
@@ -297,6 +310,7 @@ test('mobile homepage View All Makes is reachable and tappable', async ({ page }
 });
 
 test('vehicle detail shows a simple spinner while loading', async ({ page }) => {
+  await skipWelcome(page);
   await page.route('**/api/db/vehicles**', async (route) => {
     await new Promise((resolveDelay) => setTimeout(resolveDelay, 2_000));
     await route.fulfill({
@@ -366,6 +380,55 @@ test.describe('Android and mobile homepage hero visibility', () => {
     const heroTextContainer = h1.locator('..');
     await expect(heroTextContainer).toHaveCSS('opacity', '1');
     await expect(page.getByRole('link', { name: /explore collection/i })).toBeVisible();
+  });
+});
+
+test.describe('first-visit welcome', () => {
+  test('shows for a new visitor and can be dismissed', async ({ page }) => {
+    await stubVehicles(page, { skipWelcomeOverlay: false });
+    await page.goto('/');
+
+    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('link', { name: /browse the collection/i })).toBeVisible();
+    await expect(dialog.getByRole('link', { name: /estimate monthly payments/i })).toBeVisible();
+    await expect(dialog.getByRole('link', { name: /book a dehiwala viewing/i })).toBeVisible();
+
+    await dialog.getByRole('button', { name: /continue exploring/i }).click();
+    await expect(dialog).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole('dialog', { name: /welcome to serendib trading/i })).toHaveCount(0);
+  });
+
+  test('explore CTA opens inventory and does not return on the next visit', async ({ page }) => {
+    await stubVehicles(page, { skipWelcomeOverlay: false });
+    await page.goto('/?welcome=1');
+
+    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('link', { name: /explore the collection/i }).click();
+    await expect(page).toHaveURL(/\/inventory/);
+    await expect(dialog).toHaveCount(0);
+
+    await page.goto('/');
+    await expect(page.getByRole('dialog', { name: /welcome to serendib trading/i })).toHaveCount(0);
+  });
+
+  test('escape closes the welcome overlay', async ({ page }) => {
+    await stubVehicles(page);
+    await page.goto('/?welcome=1');
+
+    const dialog = page.getByRole('dialog', { name: /welcome to serendib trading/i });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+  });
+
+  test('does not appear on admin routes', async ({ page }) => {
+    await page.goto('/admin/login?welcome=1');
+    await expect(page.getByRole('dialog', { name: /welcome to serendib trading/i })).toHaveCount(0);
+    await expect(page.locator('h1').first()).toContainText(/dashboard\s+access/i);
   });
 });
 

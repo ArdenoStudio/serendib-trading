@@ -353,9 +353,11 @@ a, button, [role="button"], input, select, textarea, label, summary {
     pointer-events: none;
   }
 
-  /* Hide floating overlays while the full-screen mobile menu is open. */
+  /* Hide floating overlays while the full-screen mobile menu or welcome is open. */
   body.mobile-nav-open .wa-float,
-  body.mobile-nav-open .compare-float {
+  body.mobile-nav-open .compare-float,
+  body.welcome-open .wa-float,
+  body.welcome-open .compare-float {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
