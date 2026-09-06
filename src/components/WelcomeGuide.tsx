@@ -256,7 +256,7 @@ export default function WelcomeGuide() {
               </h2>
               <p
                 id={descriptionId}
-                className="mt-2 hidden text-pretty text-sm leading-6 text-white/70 [@media(min-height:520px)]:line-clamp-2 [@media(min-height:800px)]:line-clamp-none [@media(min-height:800px)]:text-base [@media(min-height:800px)]:leading-7"
+                className="sr-only mt-2 text-pretty text-sm leading-6 text-white/70 [@media(min-height:520px)]:not-sr-only [@media(min-height:520px)]:line-clamp-2 [@media(min-height:800px)]:line-clamp-none [@media(min-height:800px)]:text-base [@media(min-height:800px)]:leading-7"
               >
                 The Dehiwala showroom is live. Start with the collection, check finance, or message us — we will take it from there.
               </p>
