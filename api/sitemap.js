@@ -1,4 +1,4 @@
-import { query } from './_db.js';
+import { query, normalizeVehicleRowForRead } from './_db.js';
 
 const STATIC_PATHS = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
@@ -70,7 +70,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const fetchLiveCars = async () => {
   try {
     const rows = await query(
-      'SELECT id, make, model, year, image, is_sold, sold_at, updated_at, created_at FROM cars ORDER BY created_at DESC'
+      'SELECT id, make, model, year, description, image, is_sold, sold_at, updated_at, created_at FROM cars ORDER BY created_at DESC'
     );
     if (!Array.isArray(rows)) return [];
 
@@ -82,7 +82,7 @@ const fetchLiveCars = async () => {
       const soldMs = new Date(car.sold_at).getTime();
       if (Number.isNaN(soldMs)) return true;
       return Date.now() - soldMs <= maxSoldMs;
-    });
+    }).map(normalizeVehicleRowForRead);
   } catch {
     return [];
   }

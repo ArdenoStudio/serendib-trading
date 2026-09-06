@@ -11,6 +11,9 @@ import {
   sanitizeHttpsUrl,
   sanitizeHttpsUrlList,
   sanitizeFeatureList,
+  normalizeVehicleRowForRead,
+  repairVehicleYearInDb,
+  isCorruptVehicleYear,
 } from '../_db.js';
 import { getSessionFromRequest } from '../auth/_session.js';
 
@@ -33,6 +36,17 @@ const sendJson = (res, status, data, cacheControl = 'no-store') => {
 };
 
 const sanitizeVehicleId = (value) => sanitizeText(value, 80);
+
+const prepareVehicleForRead = (row) => {
+  const normalized = normalizeVehicleRowForRead(row);
+  if (normalized?.id && isCorruptVehicleYear(row.year)) {
+    void repairVehicleYearInDb(normalized.id, row.year, normalized.year);
+  }
+  return normalized;
+};
+
+const prepareVehiclesForRead = (rows) =>
+  Array.isArray(rows) ? rows.map(prepareVehicleForRead) : [];
 
 const ensureCarsTable = async () => {
   try {
@@ -89,7 +103,7 @@ export default async function handler(req, res) {
         if (!Array.isArray(rows) || rows.length === 0) {
           return sendJson(res, 404, { error: 'Vehicle not found' });
         }
-        return sendJson(res, 200, rows[0], 'public, s-maxage=30, stale-while-revalidate=120');
+        return sendJson(res, 200, prepareVehicleForRead(rows[0]), 'public, s-maxage=30, stale-while-revalidate=120');
       }
 
       // Admin dashboard needs gallery/description/views. Keep that on a
@@ -102,7 +116,7 @@ export default async function handler(req, res) {
           return sendJson(res, 401, { error: 'Unauthorized admin request' });
         }
         const rows = await query('SELECT * FROM cars ORDER BY created_at DESC');
-        return sendJson(res, 200, Array.isArray(rows) ? rows : []);
+        return sendJson(res, 200, prepareVehiclesForRead(rows));
       }
 
       const rows = await query(
@@ -111,7 +125,7 @@ export default async function handler(req, res) {
       return sendJson(
         res,
         200,
-        Array.isArray(rows) ? rows : [],
+        prepareVehiclesForRead(rows),
         'public, s-maxage=60, stale-while-revalidate=300'
       );
     } catch (err) {

@@ -1,6 +1,7 @@
 import type { Car } from '../data/types';
 import carsData from '../data/cars.json';
 import { isSupabaseConfigured } from './supabase';
+import { isCorruptVehicleYear, resolveVehicleYear } from './vehicleYear';
 
 /**
  * Demo JSON inventory is for local development without Supabase only.
@@ -22,6 +23,9 @@ export function getDemoInventory(): Car[] {
 export function normalizeVehicle(vehicle: any): Car {
   const price = Number(vehicle.price);
   const mileage = Number(vehicle.mileage);
+  const year = isCorruptVehicleYear(vehicle.year)
+    ? resolveVehicleYear(vehicle)
+    : Number(vehicle.year);
   return {
     ...vehicle,
     bodyType: vehicle.bodyType || vehicle.body_type || '',
@@ -30,6 +34,7 @@ export function normalizeVehicle(vehicle: any): Car {
     key_features: vehicle.key_features || vehicle.keyFeatures || [],
     price: Number.isFinite(price) && price > 0 ? price : 0,
     mileage: Number.isFinite(mileage) && mileage > 0 ? mileage : 0,
+    year,
   };
 }
 

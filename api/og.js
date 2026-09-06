@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { query } from './_db.js';
+import { query, normalizeVehicleRowForRead } from './_db.js';
 
 const SHELL_CANDIDATES = [
   path.join(process.cwd(), 'dist', 'index.html'),
@@ -73,7 +73,7 @@ const fetchCar = async (id) => {
   if (!id) return null;
   try {
     const rows = await query('SELECT * FROM cars WHERE id = $1 LIMIT 1', [id]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    return Array.isArray(rows) && rows.length > 0 ? normalizeVehicleRowForRead(rows[0]) : null;
   } catch {
     return null;
   }

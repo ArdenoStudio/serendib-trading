@@ -58,6 +58,83 @@ export const clampInt = (value, min, max, fallback) => {
 };
 
 export const sanitizeYear = (value) => clampInt(value, 1980, CURRENT_YEAR + 1, CURRENT_YEAR);
+
+const YEAR_TOKEN = /\b(19[89]\d|20[0-3]\d)\b/;
+const YEAR_RANGE = /\b(19[89]\d|20[0-3]\d)\s*\/\s*(19[89]\d|20[0-3]\d)\b/;
+
+/** True when the stored year is missing or known-bad (Neon migration corruption). */
+export const isCorruptVehicleYear = (year) => {
+  const n = Number(year);
+  return !Number.isFinite(n) || n < 1980 || n > CURRENT_YEAR + 1 || n === 1971;
+};
+
+export const extractYearFromText = (text) => {
+  if (!text) return null;
+  const value = String(text);
+  const slash = value.match(YEAR_RANGE);
+  if (slash) {
+    const registrationYear = parseInt(slash[2], 10);
+    if (registrationYear >= 1980 && registrationYear <= CURRENT_YEAR + 1) {
+      return registrationYear;
+    }
+  }
+  const match = value.match(YEAR_TOKEN);
+  if (!match) return null;
+  const year = parseInt(match[0], 10);
+  return year >= 1980 && year <= CURRENT_YEAR + 1 ? year : null;
+};
+
+const coerceStoredYear = (value) => {
+  if (value instanceof Date) return value.getUTCFullYear();
+  if (typeof value === 'string') {
+    const iso = value.match(/^(\d{4})-\d{2}-\d{2}/);
+    if (iso) return parseInt(iso[1], 10);
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.round(n) : NaN;
+};
+
+/** Recover a display year from stored value plus listing text. */
+export const resolveVehicleYear = (row) => {
+  const stored = coerceStoredYear(row?.year);
+  if (!isCorruptVehicleYear(stored)) return stored;
+
+  const fromDescription = extractYearFromText(row?.description);
+  if (fromDescription) return fromDescription;
+
+  const fromModel = extractYearFromText(row?.model);
+  if (fromModel) return fromModel;
+
+  return sanitizeYear(stored);
+};
+
+export const normalizeVehicleRowForRead = (row) => {
+  if (!row || typeof row !== 'object') return row;
+  const year = resolveVehicleYear(row);
+  return year === row.year ? row : { ...row, year };
+};
+
+const repairInFlight = new Set();
+
+/** Persist a recovered year when the DB row is still corrupted. */
+export const repairVehicleYearInDb = async (id, storedYear, resolvedYear) => {
+  if (!id || !resolvedYear || resolvedYear === storedYear || !isCorruptVehicleYear(storedYear)) {
+    return;
+  }
+  if (repairInFlight.has(id)) return;
+  repairInFlight.add(id);
+  try {
+    await query('UPDATE cars SET year = $1 WHERE id = $2::uuid AND year = $3', [
+      resolvedYear,
+      id,
+      storedYear,
+    ]);
+  } catch (err) {
+    console.error(`Failed to repair vehicle year for ${id}:`, err);
+  } finally {
+    repairInFlight.delete(id);
+  }
+};
 export const sanitizePrice = (value) => clampInt(value, 0, 500_000_000, 0);
 export const sanitizeMileage = (value) => clampInt(value, 0, 2_000_000, 0);
 
